@@ -1,0 +1,71 @@
+{
+    "inputFile": "/home/inf/Projects/vendotek/input/input_set_leds_state_corrupted.json",
+    "device":
+    {
+        "serialNumber": "C9sgRXNB",
+        "IntelliReaderVersion": "1.50",
+        "operationMode": "NORMAL_MODE",
+        "baudrate": "BPS_115200",
+        "security":
+        {
+            "enabled": true,
+            "pciPtsFunctionsPermitted": false,
+            "restrictionsReason": "some reasons",
+            "antiRemovalProtection": "ACTIVATED"
+        },
+
+        "lanSettings":
+        {
+            "manual":
+            {
+                "localAddress": "192.169.0.2",
+                "netmask": "255.255.255.0",
+                "gateway": "192.169.0.1"
+            }
+        },
+
+        "statistic":
+        {
+            "lwip":
+            {
+                "link": {
+                    "xmit": 3, "recv": 3, "fw": 0, "drop": 0, "chkerr": 0, "lenerr": 0,
+                    "memerr": 0, "rterr": 0, "proterr": 0, "opterr": 0, "err": 0
+                },
+                "arp": {
+                    "xmit": 18, "recv": 10, "fw": 0, "drop": 0, "chkerr": 0, "lenerr": 0,
+                    "memerr": 0, "rterr": 0, "proterr": 0, "opterr": 0, "err": 0
+                },
+                "ip": {
+                    "xmit": 205, "recv": 181, "fw": 0, "drop": 0, "chkerr": 0, "lenerr": 0,
+                    "memerr": 0, "rterr": 0, "proterr": 0, "opterr": 0, "err": 0
+                },
+                "tcp": {
+                    "xmit": 161, "recv": 164, "fw": 0, "drop": 0, "chkerr": 0, "lenerr": 0,
+                    "memerr": 0, "rterr": 0, "proterr": 0, "opterr": 0, "err": 0
+                }
+            },
+            "events": [
+                {
+                    "eventType": "DEVICE_REBOOT",
+                    "eventTimeOffset": 819755,
+                    "eventInfo": "ESP_RST_POWERON"
+                },
+                {
+                    "eventType": "IP_ADDRESS_IS_OBTAINED",
+                    "eventTimeOffset": 243350,
+                    "eventInfo": "10.42.0.10"
+                },
+                {
+                    "eventType": "CONNECTION_ESTABLISHED",
+                    "eventTimeOffset": 239535
+                }
+            ],
+            "ethernet": {
+                "port1": { "tx_packets": 181, "rx_packets": 197, "rx_errors": 0, "txrx_dropped": 0 },
+                "port2": { "tx_packets": 0, "rx_packets": 0, "rx_errors": 0, "txrx_dropped": 77 },
+                "port3": { "tx_packets": 179, "rx_packets": 223, "rx_errors": 0, "txrx_dropped": 0 }
+            }
+        }
+    }
+}

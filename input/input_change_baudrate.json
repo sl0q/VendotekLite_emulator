@@ -1,0 +1,11 @@
+{
+    "scripts": [
+        {
+            "title": "test change baudrate to BPS_230400",
+            "messages": [
+                "SVIABw0BAUoCCAE1KA=="
+            ]
+        }
+    ]
+
+}

@@ -1,0 +1,22 @@
+{
+    "scripts": [
+        {
+            "title": "blink all leds and then read device info",
+            "messages": [
+                "SVIABwEBAQoCCAEJ3w==",
+                "SVIADwEBAQoKCAEQARgBIAEoAYbX",
+                "SVIABwEBAQoCCAEJ3w==",
+                "SVIABQYBARIAc9Y="
+            ]
+        },
+        {
+            "title": "get echo with and without pending",
+            "messages": 
+            [
+                "SVIAFQkBAUIQEBAaDFBlbmRpbmcgZWNob1pJ",
+                "SVIAGAgBAUITEAgaD05vIHBlbmRpbmcgZWNobz5a"
+            ]
+        }
+    ]
+
+}
