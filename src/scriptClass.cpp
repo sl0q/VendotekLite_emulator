@@ -7,16 +7,20 @@ Script::Script()
 Script::Script(std::string new_title)
 {
     this->title = new_title;
+    this->card = nullptr;
 }
 
-Script::Script(std::string new_title, std::vector<std::string> new_messages)
+Script::Script(std::string new_title, std::vector<std::string> new_messages, SmartCard *newCard)
 {
     this->title = new_title;
     this->messages = new_messages;
+    this->card = newCard;
 }
 
 Script::~Script()
 {
+    if (this->card != nullptr)
+        delete this->card;
 }
 
 void Script::setTitle(std::string newTitle)
@@ -42,11 +46,11 @@ const std::vector<std::string> Script::getMessages()
 const std::string Script::toString()
 {
     std::string s = this->title + "\n";
-    //s.append("\n");
+    // s.append("\n");
     for (auto &m : this->messages)
         s += m + "\n";
-        //s.append(m);
-        //s.append("\n")
+    // s.append(m);
+    // s.append("\n")
 
     return s;
 }
@@ -55,13 +59,18 @@ void Script::execute_script(Device &myDevice)
 {
     std::cout << "Starting to execute [" << this->title << "]..." << std::endl;
 
-    for(std::string &strMessage : this->messages)
+    if (this->card != nullptr)
+        myDevice.insert_contact_card(*this->card);
+
+    for (std::string &strMessage : this->messages)
     {
         MessageIR currentMessage(strMessage);
-        if(currentMessage.is_command())
+        if (currentMessage.is_command())
             currentMessage.execute_message(myDevice);
     }
 
-    std::cout << "Script [" << this->title << "] has been executed.\n\n";
+    if (this->card != nullptr)
+        myDevice.remove_contact_card();
 
+    std::cout << "Script [" << this->title << "] has been executed.\n\n";
 }

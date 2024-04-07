@@ -19,12 +19,15 @@ find_package(Protobuf REQUIRED)
 
 file(GLOB COMMON_SRC CONFIGURE_DEPENDS "../proto_src/common/*.cc")
 file(GLOB MISC_SRC CONFIGURE_DEPENDS "../proto_src/intellireader/misc/*.cc")
+file(GLOB CONTACT_SRC CONFIGURE_DEPENDS "../proto_src/intellireader/contact/*.cc")
 
 # set(SRCS main.cpp MainFrame.cpp)
-set(SRCS App.cpp MainFrame.cpp deviceClass.cpp scriptClass.cpp messageClass.cpp checksum.cpp payload.cpp msg.cpp
-    ../proto_src/intellireader/commands2.pb.cc
+set(SRCS App.cpp MainFrame.cpp deviceClass.cpp scriptClass.cpp messageClass.cpp checksum.cpp payload.cpp msg.cpp SmartCard.cpp
+    ../proto_src/intellireader/commands3.pb.cc
+    # ../proto_src/intellireader/commands2.pb.cc
     ${COMMON_SRC}
     ${MISC_SRC}
+    ${CONTACT_SRC}
     )
 
 # set(SRCS App.cpp MainFrame.cpp deviceClass.cpp scriptClass.cpp 

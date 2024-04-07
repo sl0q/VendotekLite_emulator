@@ -1,0 +1,11 @@
+{
+    "scripts": [
+        {
+            "title": "test transmit apdu (get version command from example)",
+            "messages": [
+                "SVIAHQECARoYCAASFFx4ODBceDYwXHgwMFx4MDBceDAwKbM="
+            ]
+        }
+    ]
+
+}

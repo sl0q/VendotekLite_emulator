@@ -1,0 +1,19 @@
+{
+    "scripts": [
+        {
+            "title": "test try transmit apdu without power on card slot",
+            "messages": [
+                "SVIAHQQCARoYCAASFFx4ODBceDYwXHgwMFx4MDBceDAwKq4="
+            ],
+            "card":
+            {
+                "contact": true,
+                "expectedHistoricalBytes": "\\80",
+                "expectedApduTrailer": 36864,
+                "expectedResponceBody": "bytesbytes",
+                "cardSlot": "MAIN_SLOT"
+            }
+        }
+    ]
+
+}

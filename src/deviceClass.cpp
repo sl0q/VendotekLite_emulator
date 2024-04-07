@@ -16,12 +16,17 @@ Device::Device()
 
     misc::lan_settings::Dhcp dhcp;
     this->lanSettings.set_allocated_dhcp(&dhcp);
+
+    this->contactCardSlots = {false, false, false, false, false};
+
+    this->cardInSlot = nullptr;
     // this->lanMode = true; // true - dhcp; false - manual
 }
 
 Device::Device(std::string configFilePath)
 {
     loadConfig(configFilePath);
+    this->contactCardSlots = {false, false, false, false, false};
 }
 
 DeviceInfoStruct Device::get_device_info()
@@ -34,14 +39,48 @@ DeviceStatusStruct Device::get_device_status()
     return {this->timeToRestart, *this->security};
 }
 
-bool Device::isConfigLoaded()
+const ContactCardSlots &Device::get_contact_cards_slots_power()
+{
+    return this->contactCardSlots;
+}
+
+bool Device::get_single_contact_card_slot_power(contact::card_slot::CardSlot cardSlot)
+{
+    switch (cardSlot)
+    {
+    case contact::card_slot::MAIN_SLOT:
+        return this->contactCardSlots.MAIN_SLOT;
+    case contact::card_slot::SAM2_SLOT:
+        return this->contactCardSlots.SAM2_SLOT;
+    case contact::card_slot::SAM3_SLOT:
+        return this->contactCardSlots.SAM3_SLOT;
+    case contact::card_slot::SAM4_SLOT:
+        return this->contactCardSlots.SAM4_SLOT;
+    case contact::card_slot::SAM5_SLOT:
+        return this->contactCardSlots.SAM5_SLOT;
+    default:
+        return false;
+    }
+}
+
+const SmartCard &Device::get_card_in_slot()
+{
+    return *this->cardInSlot;
+}
+
+bool Device::is_config_loaded()
 {
     return !this->configFilePath.empty();
 }
 
-bool Device::isScriptLoaded()
+bool Device::is_script_loaded()
 {
     return !this->inputFilePath.empty();
+}
+
+bool Device::is_contact_card_present()
+{
+    return this->cardInSlot != nullptr;
 }
 
 void Device::loadConfig(std::string configFilePath)
@@ -272,6 +311,12 @@ void Device::loadInputScriptFile(std::string inputScriptFilePath)
     if (json_content.count("scripts") == 0)
         throw ex::JsonParsingException("Could not find required [scripts] field in [" + inputScriptFilePath + "] file.");
 
+    if (this->scripts.size())
+    {
+        this->scripts.clear();
+        std::cout << "Old scripts were deleted.\n";
+    }
+
     for (const auto &scriptJson : json_content["scripts"])
     {
         std::vector<std::string> readedMessages;
@@ -286,7 +331,30 @@ void Device::loadInputScriptFile(std::string inputScriptFilePath)
         else
             newTitle = "Unnamed script";
 
-        this->scripts.push_back(*(new Script(newTitle, readedMessages)));
+        SmartCard *newSmartCard = nullptr;
+        if (scriptJson.count("card") != 0)
+        {
+            if (scriptJson["card"].count("contact") == 0)
+                throw ex::JsonParsingException("Could not find required [scripts:card:contact] field in [" + inputScriptFilePath + "] file.");
+            if (scriptJson["card"].at("contact").get<bool>()) // if it is contact
+            {
+                if (scriptJson["card"].count("expectedHistoricalBytes") == 0)
+                    throw ex::JsonParsingException("Could not find required [scripts:card:expectedHistoricalBytes] field in [" + inputScriptFilePath + "] file.");
+                if (scriptJson["card"].count("expectedApduTrailer") == 0)
+                    throw ex::JsonParsingException("Could not find required [scripts:card:expectedApduTrailer] field in [" + inputScriptFilePath + "] file.");
+                if (scriptJson["card"].count("expectedResponceBody") == 0)
+                    throw ex::JsonParsingException("Could not find required [scripts:card:expectedResponceBody] field in [" + inputScriptFilePath + "] file.");
+                if (scriptJson["card"].count("cardSlot") == 0)
+                    throw ex::JsonParsingException("Could not find required [scripts:card:cardSlot] field in [" + inputScriptFilePath + "] file.");
+
+                newSmartCard = new SmartCard(scriptJson["card"].at("expectedHistoricalBytes").get<std::string>(),
+                                             scriptJson["card"].at("expectedApduTrailer").get<uint32_t>(),
+                                             scriptJson["card"].at("expectedResponceBody").get<std::string>(),
+                                             scriptJson["card"].at("cardSlot").get<std::string>());
+            }
+        }
+
+        this->scripts.push_back(*(new Script(newTitle, readedMessages, newSmartCard)));
     }
 
     std::cout << "Scripts were successfuly loaded." << std::endl;
@@ -394,6 +462,17 @@ void Device::execute_scripts()
     }
 }
 
+void Device::insert_contact_card(const SmartCard &newCard)
+{
+    this->cardInSlot = &newCard;
+}
+
+void Device::remove_contact_card()
+{
+    this->contactCardSlots = {false, false, false, false, false};
+    this->cardInSlot = nullptr;
+}
+
 void Device::set_leds_state(const misc::leds::Leds &newLedsState)
 {
     this->leds = newLedsState;
@@ -412,6 +491,30 @@ void Device::set_baudrate(const misc::baudrate::Baudrate &newBaudrate)
 void Device::set_lan_settings(const misc::lan_settings::LanSettings &newLanSettings)
 {
     this->lanSettings = newLanSettings;
+}
+
+void Device::set_contact_card_slot(contact::card_slot::CardSlot cardSlot, bool value)
+{
+    switch (cardSlot)
+    {
+    case contact::card_slot::MAIN_SLOT:
+        this->contactCardSlots.MAIN_SLOT = value;
+        break;
+    case contact::card_slot::SAM2_SLOT:
+        this->contactCardSlots.SAM2_SLOT = value;
+        break;
+    case contact::card_slot::SAM3_SLOT:
+        this->contactCardSlots.SAM3_SLOT = value;
+        break;
+    case contact::card_slot::SAM4_SLOT:
+        this->contactCardSlots.SAM4_SLOT = value;
+        break;
+    case contact::card_slot::SAM5_SLOT:
+        this->contactCardSlots.SAM5_SLOT = value;
+        break;
+    default:
+        std::cout << "Unknown contact card slot." << std::endl;
+    }
 }
 
 misc::leds::Leds &Device::get_leds_state()

@@ -12,12 +12,18 @@
 #include "../proto_src/intellireader/misc/event.pb.h"
 #include "../proto_src/intellireader/misc/ethernet.pb.h"
 
+#include "../proto_src/intellireader/contact/power_on.pb.h"
+#include "../proto_src/intellireader/contact/power_off.pb.h"
+#include "../proto_src/intellireader/contact/card_slot.pb.h"
+#include "../proto_src/intellireader/contact/iso7816_4.pb.h"
+
 #include "nlohmann/json.hpp"
 
 class Script;
 
 #include "myExceptions.h"
 #include "scriptClass.h"
+#include "SmartCard.h"
 
 struct DeviceInfoStruct
 {
@@ -29,6 +35,15 @@ struct DeviceStatusStruct
 {
     uint32_t timeToRestart;
     misc::device::Security security;
+};
+
+struct ContactCardSlots
+{
+    bool MAIN_SLOT,
+        SAM2_SLOT,
+        SAM3_SLOT,
+        SAM4_SLOT,
+        SAM5_SLOT;
 };
 
 class Device
@@ -45,16 +60,12 @@ private:
     misc::baudrate::Baudrate baudrate;
     uint32_t timeToRestart = 0;
     misc::device::Security *security;
-
     misc::lan_settings::LanSettings lanSettings;
-    // bool lanMode; // true - dhcp; false - manual
-    // std::string localAddress;
-    // std::string netmask;
-    // std::string gateway;
-
     misc::leds::Leds leds;
-
     misc::stats::DeviceStatistic statistic;
+
+    ContactCardSlots contactCardSlots;
+    const SmartCard *cardInSlot;
 
     std::vector<Script> scripts;
 
@@ -62,11 +73,9 @@ public:
     Device();
     Device(std::string configFilePath);
 
-    DeviceInfoStruct get_device_info();
-    DeviceStatusStruct get_device_status();
-
-    bool isConfigLoaded();
-    bool isScriptLoaded();
+    bool is_config_loaded();
+    bool is_script_loaded();
+    bool is_contact_card_present();
 
     void loadConfig(std::string configFilePath);
     void loadInputScriptFile(std::string inputScriptFilePath);
@@ -75,6 +84,8 @@ public:
 
     void _print_scripts();
     void execute_scripts();
+    void insert_contact_card(const SmartCard &newCard);
+    void remove_contact_card();
 
     // if needed make a buzzer implimentation
     // until then messageClass::execute_make_sound() will print in terminal playing notes properties
@@ -82,16 +93,17 @@ public:
     void reboot(misc::reboot::Reboot_OperationMode operationMode);
     void set_baudrate(const misc::baudrate::Baudrate &newBaudrate);
     void set_lan_settings(const misc::lan_settings::LanSettings &newLanSettings);
+    void set_contact_card_slot(contact::card_slot::CardSlot cardSlot, bool value);
 
     // make const return values
+    DeviceInfoStruct get_device_info();
+    DeviceStatusStruct get_device_status();
+    const ContactCardSlots &get_contact_cards_slots_power();
+    bool get_single_contact_card_slot_power(contact::card_slot::CardSlot cardSlot);
+    const SmartCard &get_card_in_slot();
     misc::leds::Leds &get_leds_state();
     misc::reboot::Reboot_OperationMode &get_operation_mode();
     misc::stats::DeviceStatistic &get_device_statistic();
     misc::baudrate::Baudrate &get_baudrate();
     misc::lan_settings::LanSettings &get_lan_settings();
-};
-
-class Statistic
-{
-private:
 };

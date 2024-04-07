@@ -1,7 +1,8 @@
 #include "MainFrame.h"
 
 /*
-    исправить парсинг свойств, представленных в json как строка, а в protobuf как enum
+    unknown error
+    go debugging
 */
 
 MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
@@ -84,6 +85,14 @@ void MainFrame::OnLoadConfigButtonClicked(wxCommandEvent &evt)
         wxLogMessage(wxString(ex.what()));
     }
     catch (const ex::JsonParsingException &ex)
+    {
+        wxLogMessage(wxString(ex.what()));
+    }
+    catch (const ex::InvalidMessageIR &ex)
+    {
+        wxLogMessage(wxString(ex.what()));
+    }
+    catch (const std::invalid_argument &ex)
     {
         wxLogMessage(wxString(ex.what()));
     }

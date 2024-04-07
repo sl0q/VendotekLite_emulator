@@ -10,7 +10,8 @@
 
 #include "../proto_src/common/failure.pb.h"
 
-#include "../proto_src/intellireader/commands.pb.h"
+#include "../proto_src/intellireader/commands3.pb.h"
+
 #include "../proto_src/intellireader/misc/leds.pb.h"
 #include "../proto_src/intellireader/misc/device.pb.h"
 #include "../proto_src/intellireader/misc/reboot.pb.h"
@@ -20,6 +21,11 @@
 #include "../proto_src/intellireader/misc/baudrate.pb.h"
 #include "../proto_src/intellireader/misc/lan_settings.pb.h"
 
+#include "../proto_src/intellireader/contact/power_on.pb.h"
+#include "../proto_src/intellireader/contact/power_off.pb.h"
+#include "../proto_src/intellireader/contact/card_slot.pb.h"
+#include "../proto_src/intellireader/contact/iso7816_4.pb.h"
+
 class Device;
 
 #include "base64.h"
@@ -28,6 +34,7 @@ class Device;
 #include "deviceClass.h"
 #include "payload.h"
 #include "msg.h"
+#include "SmartCard.h"
 
 #define IR "IR"
 
@@ -64,8 +71,8 @@ private:
 
     void append_big_endian(std::vector<uint8_t> &buf, uint16_t n);
 
-    void execute_misc(google::protobuf::Message *message, Device &myDevice);
-    void execute_leds(Miscellaneous &miscMessage, Device &myDevice); // returns messageType of future response message
+    void execute_misc(Device &myDevice);
+    void execute_leds(Miscellaneous &miscMessage, Device &myDevice);
     void execute_read_device_info(Miscellaneous &miscMessage, Device &myDevice);
     void execute_reboot_device(Miscellaneous &miscMessage, Device &myDevice);
     void execute_get_device_status(Miscellaneous &miscMessage, Device &myDevice);
@@ -75,6 +82,11 @@ private:
     void execute_change_baudrate(Miscellaneous &miscMessage, Device &myDevice);
     void execute_change_lan_settings(Miscellaneous &miscMessage, Device &myDevice);
 
+    void execute_contact(Device &myDevice);
+    void execute_power_on(ContactLevel1 &contactLvl1Message, Device &myDevice);
+    void execute_power_off(ContactLevel1 &contactLvl1Message, Device &myDevice);
+    void execute_transmit_apdu(ContactLevel1 &contactLvl1Message, Device &myDevice);
+
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
 
     const Payload &generate_device_info_payload(Device &myDevice);
@@ -82,6 +94,9 @@ private:
     const Payload &generate_device_statistic_payload(Device &myDevice);
     const Payload &generate_echo_payload(uint32_t replySize, const std::string &data);
     const Payload &generate_lan_settings_payload(Device &myDevice);
+
+    const Payload &generate_power_on_payload(Device &myDevice);
+    const Payload &generate_transmit_apdu_payload(const SmartCard &card);
 
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());
 

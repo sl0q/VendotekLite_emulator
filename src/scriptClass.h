@@ -8,17 +8,19 @@ class Device;
 
 #include "messageClass.h"
 #include "deviceClass.h"
+#include "SmartCard.h"
 
 class Script
 {
 private:
     std::string title = "Untitled script";
     std::vector<std::string> messages;
+    SmartCard *card;
 
 public:
     Script();
     Script(std::string new_title);
-    Script(std::string new_title, std::vector<std::string> new_messages);
+    Script(std::string new_title, std::vector<std::string> new_messages, SmartCard *card = nullptr);
     ~Script();
 
     void setTitle(std::string newTitle);
