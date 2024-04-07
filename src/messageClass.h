@@ -10,7 +10,7 @@
 
 #include "../proto_src/common/failure.pb.h"
 
-#include "../proto_src/intellireader/commands3.pb.h"
+#include "../proto_src/intellireader/commands4.pb.h"
 
 #include "../proto_src/intellireader/misc/leds.pb.h"
 #include "../proto_src/intellireader/misc/device.pb.h"
@@ -26,6 +26,10 @@
 #include "../proto_src/intellireader/contact/card_slot.pb.h"
 #include "../proto_src/intellireader/contact/iso7816_4.pb.h"
 
+#include "../proto_src/intellireader/contactless/poll_for_token.pb.h"
+#include "../proto_src/intellireader/contactless/token.pb.h"
+#include "../proto_src/intellireader/contactless/token_type.pb.h"
+
 class Device;
 
 #include "base64.h"
@@ -34,7 +38,7 @@ class Device;
 #include "deviceClass.h"
 #include "payload.h"
 #include "msg.h"
-#include "SmartCard.h"
+#include "cards.h"
 
 #define IR "IR"
 
@@ -87,6 +91,9 @@ private:
     void execute_power_off(ContactLevel1 &contactLvl1Message, Device &myDevice);
     void execute_transmit_apdu(ContactLevel1 &contactLvl1Message, Device &myDevice);
 
+    void execute_contactless_1(Device &myDevice);
+    void execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice);
+
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
 
     const Payload &generate_device_info_payload(Device &myDevice);
@@ -96,7 +103,7 @@ private:
     const Payload &generate_lan_settings_payload(Device &myDevice);
 
     const Payload &generate_power_on_payload(Device &myDevice);
-    const Payload &generate_transmit_apdu_payload(const SmartCard &card);
+    const Payload &generate_transmit_apdu_payload(const ContactCard &card);
 
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());
 

@@ -1,0 +1,44 @@
+{
+    "scripts": [
+        {
+            "title": "test poll for token 1000 ms",
+            "cards": [
+                {
+                    "contact": false,
+                    "tokenType": "ISO_14443_4A",
+                    "id": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                },
+                {
+                    "contact": false,
+                    "tokenType": "MIFARE_CLASSIC_1K",
+                    "id": "4321uniqueID"
+                }
+            ],
+            "actions": [
+                {
+                    "attach_contactless_card": "1234uniqueID"
+                },
+                {
+                    "attach_contactless_card": "4321uniqueID"
+                },
+                {
+                    "send_messages": [
+                        "SVIACgEDAQoFCOgHIAJqhw=="
+                    ]
+                },
+                {
+                    "wait_ms": 2000
+                },
+                {
+                    "remove_card": "4321uniqueID"
+                },
+                {
+                    "send_messages": [
+                        "SVIACgEDAQoFCOgHIAJqhw=="
+                    ]
+                }
+            ]
+        }
+    ]
+}

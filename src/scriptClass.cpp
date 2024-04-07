@@ -7,20 +7,25 @@ Script::Script()
 Script::Script(std::string new_title)
 {
     this->title = new_title;
-    this->card = nullptr;
+    this->contactCard = nullptr;
 }
 
-Script::Script(std::string new_title, std::vector<std::string> new_messages, SmartCard *newCard)
+Script::Script(std::string new_title, std::vector<std::string> new_messages)
 {
     this->title = new_title;
     this->messages = new_messages;
-    this->card = newCard;
 }
 
 Script::~Script()
 {
-    if (this->card != nullptr)
-        delete this->card;
+    if (this->contactCard != nullptr)
+        delete this->contactCard;
+    for (auto contactlessCard : this->cardsInFiled)
+    {
+        if (contactlessCard != nullptr)
+            delete contactlessCard;
+    }
+    this->cardsInFiled.clear();
 }
 
 void Script::setTitle(std::string newTitle)
@@ -43,6 +48,16 @@ const std::vector<std::string> Script::getMessages()
     return this->messages;
 }
 
+void Script::set_contact_card(ContactCard *newContactCard)
+{
+    this->contactCard = newContactCard;
+}
+
+void Script::add_contactless_card(ContactlessCard *newContactlessCard)
+{
+    this->cardsInFiled.push_back(newContactlessCard);
+}
+
 const std::string Script::toString()
 {
     std::string s = this->title + "\n";
@@ -59,8 +74,8 @@ void Script::execute_script(Device &myDevice)
 {
     std::cout << "Starting to execute [" << this->title << "]..." << std::endl;
 
-    if (this->card != nullptr)
-        myDevice.insert_contact_card(*this->card);
+    if (this->contactCard != nullptr)
+        myDevice.insert_contact_card(*this->contactCard);
 
     for (std::string &strMessage : this->messages)
     {
@@ -69,7 +84,7 @@ void Script::execute_script(Device &myDevice)
             currentMessage.execute_message(myDevice);
     }
 
-    if (this->card != nullptr)
+    if (this->contactCard != nullptr)
         myDevice.remove_contact_card();
 
     std::cout << "Script [" << this->title << "] has been executed.\n\n";

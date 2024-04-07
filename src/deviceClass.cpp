@@ -29,6 +29,15 @@ Device::Device(std::string configFilePath)
     this->contactCardSlots = {false, false, false, false, false};
 }
 
+Device::~Device()
+{
+    for (auto script : this->scripts)
+    {
+        if (script != nullptr)
+            delete script;
+    }
+}
+
 DeviceInfoStruct Device::get_device_info()
 {
     return {this->serialNumber, this->IntelliReaderVersion};
@@ -63,7 +72,7 @@ bool Device::get_single_contact_card_slot_power(contact::card_slot::CardSlot car
     }
 }
 
-const SmartCard &Device::get_card_in_slot()
+const ContactCard &Device::get_card_in_slot()
 {
     return *this->cardInSlot;
 }
@@ -331,7 +340,8 @@ void Device::loadInputScriptFile(std::string inputScriptFilePath)
         else
             newTitle = "Unnamed script";
 
-        SmartCard *newSmartCard = nullptr;
+        auto newScript = new Script(newTitle, readedMessages);
+
         if (scriptJson.count("card") != 0)
         {
             if (scriptJson["card"].count("contact") == 0)
@@ -347,14 +357,19 @@ void Device::loadInputScriptFile(std::string inputScriptFilePath)
                 if (scriptJson["card"].count("cardSlot") == 0)
                     throw ex::JsonParsingException("Could not find required [scripts:card:cardSlot] field in [" + inputScriptFilePath + "] file.");
 
-                newSmartCard = new SmartCard(scriptJson["card"].at("expectedHistoricalBytes").get<std::string>(),
-                                             scriptJson["card"].at("expectedApduTrailer").get<uint32_t>(),
-                                             scriptJson["card"].at("expectedResponceBody").get<std::string>(),
-                                             scriptJson["card"].at("cardSlot").get<std::string>());
+                ContactCard *newContactCard = new ContactCard(scriptJson["card"].at("expectedHistoricalBytes").get<std::string>(),
+                                                              scriptJson["card"].at("expectedApduTrailer").get<uint32_t>(),
+                                                              scriptJson["card"].at("expectedResponceBody").get<std::string>(),
+                                                              scriptJson["card"].at("cardSlot").get<std::string>());
+
+                newScript->set_contact_card(newContactCard);
+            }
+            else //  if it is contactless
+            {
             }
         }
 
-        this->scripts.push_back(*(new Script(newTitle, readedMessages, newSmartCard)));
+        this->scripts.push_back(newScript);
     }
 
     std::cout << "Scripts were successfuly loaded." << std::endl;
@@ -439,9 +454,9 @@ void Device::_print_scripts()
 {
     for (auto &s : this->scripts)
     {
-        std::cout << "Title: " << s.getTitle() << std::endl
+        std::cout << "Title: " << s->getTitle() << std::endl
                   << "Messages: " << std::endl;
-        for (auto &m : s.getMessages())
+        for (auto &m : s->getMessages())
             std::cout << "\t" << m << std::endl;
         std::cout << std::endl;
     }
@@ -458,11 +473,11 @@ void Device::execute_scripts()
     for (auto &s : this->scripts)
     {
         std::cout << "Script #" << i++ << ":\n";
-        s.execute_script(*this);
+        s->execute_script(*this);
     }
 }
 
-void Device::insert_contact_card(const SmartCard &newCard)
+void Device::insert_contact_card(const ContactCard &newCard)
 {
     this->cardInSlot = &newCard;
 }
@@ -471,6 +486,19 @@ void Device::remove_contact_card()
 {
     this->contactCardSlots = {false, false, false, false, false};
     this->cardInSlot = nullptr;
+}
+
+void Device::attach_contactless_card(const ContactlessCard &newCard)
+{
+    this->cardsInField.push_back(&newCard);
+}
+
+void Device::remove_contactless_card(const std::string cardID)
+{
+    int i = 0;
+    for (auto card : this->cardsInField)
+        if (cardID == card->get_id())
+            this->cardsInField.erase(this->cardsInField.begin() + i);
 }
 
 void Device::set_leds_state(const misc::leds::Leds &newLedsState)

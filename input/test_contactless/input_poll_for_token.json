@@ -1,0 +1,17 @@
+{
+    "scripts": [
+        {
+            "title": "test poll for token 1000 ms",
+            "messages": [
+                "SVIACgEDAQoFCOgHIAJqhw=="
+            ],
+            "card":
+            {
+                "contact": false,
+                "tokenType": "ISO_14443_4A",
+                "answerToSelect": "bytesbytes"
+            }
+        }
+    ]
+
+}

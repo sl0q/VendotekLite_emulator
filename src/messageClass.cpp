@@ -187,6 +187,9 @@ void MessageIR::execute_message(Device &myDevice)
     case 2:
         execute_contact(myDevice);
         break;
+    case 3:
+        execute_contactless_1(myDevice);
+        break;
     // more modules
     default:
         std::ostringstream errorMessage;
@@ -577,6 +580,36 @@ void MessageIR::execute_transmit_apdu(ContactLevel1 &contactLvl1Message, Device 
     generatedResponce.print_MSG();
 }
 
+void MessageIR::execute_contactless_1(Device &myDevice)
+{
+    ContactlessLevel1 contactlessLvl1Message = *(dynamic_cast<ContactlessLevel1 *>(this->msg));
+    switch (contactlessLvl1Message.contactless_level1_cmd_case())
+    {
+    case ContactlessLevel1::kPollForToken:
+        execute_poll_for_token(contactlessLvl1Message, myDevice);
+        break;
+    // case ContactlessLevel1::kEmvRemoval:
+    //     execute_power_off(contactLvl1Message, myDevice);
+    //     break;
+    // case ContactlessLevel1::kTsvBitArray:
+    //     execute_transmit_apdu(contactLvl1Message, myDevice);
+    //     break;
+    default:
+        std::ostringstream errorMessage;
+        errorMessage << "Failed to execute [ContactlessLevel1] command message. Unrecognised [command]."
+                     << "\nMSG_ID: " << std::to_string(this->msgID)
+                     << "\ncontactless_level1_cmd_case: " << std::to_string(contactlessLvl1Message.contactless_level1_cmd_case());
+        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage.str()));
+        std::cout << "Generated responce:" << std::endl;
+        generatedResponce.print_MSG();
+        throw ex::FailedExecution(errorMessage.str());
+    }
+}
+
+void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice)
+{
+}
+
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)
 {
     auto failureResponce = new common::failure::FailureResponse();
@@ -696,7 +729,7 @@ const Payload &MessageIR::generate_power_on_payload(Device &myDevice)
     return generatedPayload;
 }
 
-const Payload &MessageIR::generate_transmit_apdu_payload(const SmartCard &card)
+const Payload &MessageIR::generate_transmit_apdu_payload(const ContactCard &card)
 {
     auto responceApdu = new contact::iso7816_4::ResponseApdu();
 
@@ -770,22 +803,6 @@ const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &gen
 
     return *(new Msg(generatedPayload.getDebugString(), buf));
 }
-
-/*
-  enum MiscCmdCase {
-    kSetLedsState = 1,
-    kReadDeviceInfo = 2,
-    kRebootDevice = 3,
-    kGetDeviceStatus = 4,
-    kMakeSound = 6,
-    kGetDeviceStatistic = 7,
-    kGetEcho = 8,
-    kChangeBaudrate = 9,
-    kChangeLanSettings = 10,
-    MISC_CMD_NOT_SET = 0,
-  };
-
-*/
 
 void MessageIR::append_big_endian(std::vector<uint8_t> &buf, uint16_t n)
 {

@@ -9,8 +9,8 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
 {
     wxPanel *panel = new wxPanel(this);
 
+    wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Input file path:", wxPoint(50, 25), wxDefaultSize);
     this->_configPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/config.json", wxPoint(150, 50), wxSize(200, -1));
-    this->_configPathTC->SetLabelText("Config path");
 
     // wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Config path", wxPoint(50, 50), wxDefaultSize);
 
@@ -27,27 +27,34 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
 
 void MainFrame::OnStartButtonClicked(wxCommandEvent &evt)
 {
+    wxLogStatus("Executing...");
     try
     {
         this->myDevice->_print_scripts();
         this->myDevice->execute_scripts();
+        wxLogStatus("Scripts were executed.");
     }
     catch (const ex::JsonParsingException &ex)
     {
         wxLogMessage(wxString(ex.what()));
+        wxLogStatus("Error");
     }
     catch (const ex::FailedExecution &ex)
     {
         wxLogMessage(wxString(ex.what()));
+        wxLogStatus("Error");
     }
     catch (const ex::InvalidMessageIR &ex)
     {
         wxLogMessage(wxString(ex.what()));
+        wxLogStatus("Error");
     }
     catch (...)
     {
         wxLogMessage("Unknown problem");
+        wxLogStatus("Error");
     }
+    wxLogStatus("Finished execution.");
 }
 
 void MainFrame::OnLoadConfigButtonClicked(wxCommandEvent &evt)
@@ -76,28 +83,36 @@ void MainFrame::OnLoadConfigButtonClicked(wxCommandEvent &evt)
     else
         configPath = this->_configPathTC->GetLineText(0).ToStdString();
 
+    wxLogStatus("Loading config...");
+
     try
     {
         this->myDevice->loadConfig(configPath);
+        wxLogStatus("Config was loaded successful.");
     }
     catch (const ex::CantOpenFile &ex)
     {
         wxLogMessage(wxString(ex.what()));
+        wxLogStatus("Error");
     }
     catch (const ex::JsonParsingException &ex)
     {
         wxLogMessage(wxString(ex.what()));
+        wxLogStatus("Error");
     }
     catch (const ex::InvalidMessageIR &ex)
     {
         wxLogMessage(wxString(ex.what()));
+        wxLogStatus("Error");
     }
     catch (const std::invalid_argument &ex)
     {
         wxLogMessage(wxString(ex.what()));
+        wxLogStatus("Error");
     }
     catch (...)
     {
         wxLogMessage("Unknown problem");
+        wxLogStatus("Error");
     }
 }

@@ -23,7 +23,7 @@ class Script;
 
 #include "myExceptions.h"
 #include "scriptClass.h"
-#include "SmartCard.h"
+#include "cards.h"
 
 struct DeviceInfoStruct
 {
@@ -65,13 +65,16 @@ private:
     misc::stats::DeviceStatistic statistic;
 
     ContactCardSlots contactCardSlots;
-    const SmartCard *cardInSlot;
+    const ContactCard *cardInSlot;
 
-    std::vector<Script> scripts;
+    std::vector<const ContactlessCard *> cardsInField; // contactless cards in RF field of the terminal
+
+    std::vector<Script *> scripts;
 
 public:
     Device();
     Device(std::string configFilePath);
+    ~Device();
 
     bool is_config_loaded();
     bool is_script_loaded();
@@ -84,8 +87,10 @@ public:
 
     void _print_scripts();
     void execute_scripts();
-    void insert_contact_card(const SmartCard &newCard);
+    void insert_contact_card(const ContactCard &newCard);
     void remove_contact_card();
+    void attach_contactless_card(const ContactlessCard &newCard);
+    void remove_contactless_card(const std::string cardID);
 
     // if needed make a buzzer implimentation
     // until then messageClass::execute_make_sound() will print in terminal playing notes properties
@@ -100,7 +105,7 @@ public:
     DeviceStatusStruct get_device_status();
     const ContactCardSlots &get_contact_cards_slots_power();
     bool get_single_contact_card_slot_power(contact::card_slot::CardSlot cardSlot);
-    const SmartCard &get_card_in_slot();
+    const ContactCard &get_card_in_slot();
     misc::leds::Leds &get_leds_state();
     misc::reboot::Reboot_OperationMode &get_operation_mode();
     misc::stats::DeviceStatistic &get_device_statistic();
