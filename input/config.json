@@ -1,5 +1,5 @@
 {
-    "inputFile": "/home/inf/Projects/vendotek/input/input_try_transmit_without_power.json",
+    "inputFile": "/home/inf/Projects/vendotek/input/test_contact/input_many_actions.json",
     "device":
     {
         "serialNumber": "C9sgRXNB",

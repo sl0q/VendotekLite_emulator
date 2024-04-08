@@ -25,6 +25,15 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
     this->myDevice = new Device();
 }
 
+MainFrame::~MainFrame()
+{
+    if (myDevice != nullptr)
+        delete myDevice;
+
+    if (_configPathTC != nullptr)
+        delete _configPathTC;
+}
+
 void MainFrame::OnStartButtonClicked(wxCommandEvent &evt)
 {
     wxLogStatus("Executing...");
@@ -88,7 +97,7 @@ void MainFrame::OnLoadConfigButtonClicked(wxCommandEvent &evt)
     try
     {
         this->myDevice->loadConfig(configPath);
-        wxLogStatus("Config was loaded successful.");
+        wxLogStatus("Config was loaded successfuly.");
     }
     catch (const ex::CantOpenFile &ex)
     {

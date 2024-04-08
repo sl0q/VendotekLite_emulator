@@ -23,7 +23,8 @@ public:
     const std::string &get_historical_bytes() const;
     const uint32_t get_expected_apdu_trailer() const;
     const std::string &get_expected_responce_body() const;
-    const contact::card_slot::CardSlot get_card_slot();
+    contact::card_slot::CardSlot get_card_slot();
+    const std::string str() const;
 };
 
 class ContactlessCard
@@ -35,6 +36,7 @@ private:
 
 public:
     ContactlessCard();
-    ContactlessCard(contactless::token_type::TokenType newTokenType, std::string newAnswerToSelect);
+    ContactlessCard(const contactless::token_type::TokenType newTokenType, const std::string newID, const std::string newAnswerToSelect);
     const std::string get_id() const;
+    const std::string str() const;
 };

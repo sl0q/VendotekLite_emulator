@@ -90,7 +90,8 @@ public:
     void insert_contact_card(const ContactCard &newCard);
     void remove_contact_card();
     void attach_contactless_card(const ContactlessCard &newCard);
-    void remove_contactless_card(const std::string cardID);
+    void remove_contactless_card(const ContactlessCard &cardToRemove);
+    void wait(uint32_t timeToWait_ms);
 
     // if needed make a buzzer implimentation
     // until then messageClass::execute_make_sound() will print in terminal playing notes properties

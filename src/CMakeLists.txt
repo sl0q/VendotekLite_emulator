@@ -23,7 +23,7 @@ file(GLOB CONTACT_SRC CONFIGURE_DEPENDS "../proto_src/intellireader/contact/*.cc
 file(GLOB CONTACTLESS_SRC CONFIGURE_DEPENDS "../proto_src/intellireader/contactless/*.cc")
 
 # set(SRCS main.cpp MainFrame.cpp)
-set(SRCS App.cpp MainFrame.cpp deviceClass.cpp scriptClass.cpp messageClass.cpp checksum.cpp payload.cpp msg.cpp SmartCard.cpp
+set(SRCS App.cpp MainFrame.cpp deviceClass.cpp scriptClass.cpp messageClass.cpp checksum.cpp payload.cpp msg.cpp cards.cpp 
     ../proto_src/intellireader/commands4.pb.cc
     # ../proto_src/intellireader/commands3.pb.cc
     # ../proto_src/intellireader/commands2.pb.cc

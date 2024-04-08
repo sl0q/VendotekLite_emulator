@@ -31,7 +31,7 @@ Device::Device(std::string configFilePath)
 
 Device::~Device()
 {
-    for (auto script : this->scripts)
+    for (auto &script : this->scripts)
     {
         if (script != nullptr)
             delete script;
@@ -322,50 +322,99 @@ void Device::loadInputScriptFile(std::string inputScriptFilePath)
 
     if (this->scripts.size())
     {
+        for (auto &s : this->scripts)
+            delete s;
         this->scripts.clear();
         std::cout << "Old scripts were deleted.\n";
     }
 
     for (const auto &scriptJson : json_content["scripts"])
     {
-        std::vector<std::string> readedMessages;
-
-        if (scriptJson.count("messages") != 0)
-            for (auto &m : scriptJson["messages"]) //&m ВОЗМОЖНО НЕ string
-                readedMessages.push_back(m);
-
         std::string newTitle;
         if (scriptJson.count("title") != 0)
             newTitle = scriptJson.at("title").get<std::string>();
         else
             newTitle = "Unnamed script";
 
-        auto newScript = new Script(newTitle, readedMessages);
+        auto newScript = new Script(newTitle);
 
-        if (scriptJson.count("card") != 0)
+        // adding cards
+        if (scriptJson.count("cards") != 0)
         {
-            if (scriptJson["card"].count("contact") == 0)
-                throw ex::JsonParsingException("Could not find required [scripts:card:contact] field in [" + inputScriptFilePath + "] file.");
-            if (scriptJson["card"].at("contact").get<bool>()) // if it is contact
+            int i = 0;
+            for (auto &cardJson : scriptJson["cards"])
             {
-                if (scriptJson["card"].count("expectedHistoricalBytes") == 0)
-                    throw ex::JsonParsingException("Could not find required [scripts:card:expectedHistoricalBytes] field in [" + inputScriptFilePath + "] file.");
-                if (scriptJson["card"].count("expectedApduTrailer") == 0)
-                    throw ex::JsonParsingException("Could not find required [scripts:card:expectedApduTrailer] field in [" + inputScriptFilePath + "] file.");
-                if (scriptJson["card"].count("expectedResponceBody") == 0)
-                    throw ex::JsonParsingException("Could not find required [scripts:card:expectedResponceBody] field in [" + inputScriptFilePath + "] file.");
-                if (scriptJson["card"].count("cardSlot") == 0)
-                    throw ex::JsonParsingException("Could not find required [scripts:card:cardSlot] field in [" + inputScriptFilePath + "] file.");
+                if (cardJson.count("contact") == 0)
+                    throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":contact] field in [" + inputScriptFilePath + "] file.");
+                if (cardJson.at("contact").get<bool>()) // if it is contact
+                {
+                    if (cardJson.count("expectedHistoricalBytes") == 0)
+                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":expectedHistoricalBytes] field in [" + inputScriptFilePath + "] file.");
+                    if (cardJson.count("expectedApduTrailer") == 0)
+                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":expectedApduTrailer] field in [" + inputScriptFilePath + "] file.");
+                    if (cardJson.count("expectedResponceBody") == 0)
+                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":expectedResponceBody] field in [" + inputScriptFilePath + "] file.");
+                    if (cardJson.count("cardSlot") == 0)
+                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":cardSlot] field in [" + inputScriptFilePath + "] file.");
 
-                ContactCard *newContactCard = new ContactCard(scriptJson["card"].at("expectedHistoricalBytes").get<std::string>(),
-                                                              scriptJson["card"].at("expectedApduTrailer").get<uint32_t>(),
-                                                              scriptJson["card"].at("expectedResponceBody").get<std::string>(),
-                                                              scriptJson["card"].at("cardSlot").get<std::string>());
+                    newScript->set_contact_card(new ContactCard(cardJson.at("expectedHistoricalBytes").get<std::string>(),
+                                                                cardJson.at("expectedApduTrailer").get<uint32_t>(),
+                                                                cardJson.at("expectedResponceBody").get<std::string>(),
+                                                                cardJson.at("cardSlot").get<std::string>()));
 
-                newScript->set_contact_card(newContactCard);
+                    // newScript->set_contact_card(newContactCard);
+                }
+                else //  if it is contactless
+                {
+                    if (cardJson.count("tokenType") == 0)
+                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":tokentype] field in [" + inputScriptFilePath + "] file.");
+                    if (cardJson.count("id") == 0)
+                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":id] field in [" + inputScriptFilePath + "] file.");
+
+                    // getting answer to select if given
+                    std::string ats;
+                    if (cardJson.count("answerToSelect") != 0)
+                        ats = cardJson.at("answerToSelect").get<std::string>();
+
+                    // getting token type
+                    contactless::token_type::TokenType newTokenType;
+                    if (!contactless::token_type::TokenType_Parse(cardJson.at("tokenType").get<std::string>(), &newTokenType))
+                        throw std::invalid_argument("Failed to parse [tokenType] parameter correctly in [scripts:cards:" + std::to_string(i) + ":tokenType].");
+
+                    newScript->add_contactless_card(new ContactlessCard(newTokenType,
+                                                                        cardJson.at("id").get<std::string>(),
+                                                                        ats));
+                }
+                ++i;
             }
-            else //  if it is contactless
+        }
+
+        // adding actions
+        if (scriptJson.count("actions") != 0)
+        {
+            for (auto &actionJson : scriptJson["actions"])
             {
+                Action *newAction;
+                if (actionJson.count("insert_contact_card") != 0)
+                    newAction = new CCardInserter(newScript->get_contact_card());
+                else if (actionJson.count("remove_contact_card") != 0)
+                    newAction = new CCardRemover();
+                else if (actionJson.count("attach_contactless_card") != 0)
+                    newAction = new CLCardAttacher(*newScript->find_cl_card(actionJson.at("attach_contactless_card").get<std::string>()));
+                else if (actionJson.count("remove_contactless_card") != 0)
+                    newAction = new CLCardRemover(*newScript->find_cl_card(actionJson.at("remove_contactless_card").get<std::string>()));
+                else if (actionJson.count("exe_messages") != 0)
+                {
+                    auto newMessages = new std::vector<std::string>();
+
+                    for (auto &m : actionJson["exe_messages"])
+                        newMessages->push_back(m); // maybe not a string
+                    newAction = new MessageExecuter(*newMessages);
+                }
+                else if (actionJson.count("wait_ms") != 0)
+                    newAction = new Waiter(actionJson.at("wait_ms").get<uint32_t>());
+
+                newScript->add_action(newAction);
             }
         }
 
@@ -454,11 +503,12 @@ void Device::_print_scripts()
 {
     for (auto &s : this->scripts)
     {
-        std::cout << "Title: " << s->getTitle() << std::endl
-                  << "Messages: " << std::endl;
-        for (auto &m : s->getMessages())
-            std::cout << "\t" << m << std::endl;
-        std::cout << std::endl;
+        std::cout << s->str() << std::endl;
+        // std::cout << "Title: " << s->getTitle() << std::endl
+        //           << "Messages: " << std::endl;
+        // for (auto &m : s->getMessages())
+        //     std::cout << "\t" << m << std::endl;
+        // std::cout << std::endl;
     }
 }
 
@@ -469,7 +519,7 @@ void Device::execute_scripts()
         std::cout << "No scripts are available" << std::endl;
         return;
     }
-    int i = 1;
+    int i = 0;
     for (auto &s : this->scripts)
     {
         std::cout << "Script #" << i++ << ":\n";
@@ -493,12 +543,22 @@ void Device::attach_contactless_card(const ContactlessCard &newCard)
     this->cardsInField.push_back(&newCard);
 }
 
-void Device::remove_contactless_card(const std::string cardID)
+void Device::remove_contactless_card(const ContactlessCard &cardToRemove)
 {
+
+    // int i = 0;
+    // for (auto &cardPointer : this->cardsInField)
+    //     if (cardPointer == &cardToRemove)
+    //         this->cardsInField.erase(this->cardsInField.begin() + i++);
     int i = 0;
     for (auto card : this->cardsInField)
-        if (cardID == card->get_id())
-            this->cardsInField.erase(this->cardsInField.begin() + i);
+        if (cardToRemove.get_id() == card->get_id())
+            this->cardsInField.erase(this->cardsInField.begin() + i++);
+}
+
+void Device::wait(uint32_t timeToWait_ms)
+{
+    std::cout << "Waiting for " << timeToWait_ms << "ms...\n";
 }
 
 void Device::set_leds_state(const misc::leds::Leds &newLedsState)

@@ -27,4 +27,5 @@ private:
 public:
     // MainFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
     MainFrame(const wxString &title);
+    ~MainFrame();
 };

@@ -23,7 +23,7 @@
                     "attach_contactless_card": "4321uniqueID"
                 },
                 {
-                    "send_messages": [
+                    "exe_messages": [
                         "SVIACgEDAQoFCOgHIAJqhw=="
                     ]
                 },
@@ -34,7 +34,7 @@
                     "remove_card": "4321uniqueID"
                 },
                 {
-                    "send_messages": [
+                    "exe_messages": [
                         "SVIACgEDAQoFCOgHIAJqhw=="
                     ]
                 }

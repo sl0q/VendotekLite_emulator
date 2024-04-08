@@ -1,0 +1,35 @@
+{
+    "scripts": [
+        {
+            "title": "test power on main card slot, then transmit apdu, then power off",
+            "cards": [
+                {
+                    "contact": true,
+                    "expectedHistoricalBytes": "\\80",
+                    "expectedApduTrailer": 36864,
+                    "expectedResponceBody": "bytesbytes",
+                    "cardSlot": "MAIN_SLOT"
+                }
+            ],
+            "actions": [
+                {
+                    "insert_contact_card": 0
+                },
+                {
+                    "exe_messages": [
+                        "SVIABwECAQoCCADXHg==",
+                        "SVIAHQQCARoYCAASFFx4ODBceDYwXHgwMFx4MDBceDAwKq4=",
+                        "SVIABwMCARICCAApmQ=="
+                    ]
+                },
+                {
+                    "wait_ms": 1000
+                },
+                {
+                    "remove_contact_card": 0
+                }
+            ]
+        }
+    ]
+
+}
