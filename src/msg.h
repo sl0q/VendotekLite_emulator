@@ -24,5 +24,5 @@ public:
     const std::vector<uint8_t> &get_data() const;
     const std::string get_data_as_string() const;
     const std::string &get_encoded_data() const;
-    void print_MSG();
+    void print_MSG() const;
 };

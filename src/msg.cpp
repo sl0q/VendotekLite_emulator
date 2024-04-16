@@ -42,7 +42,7 @@ const std::string &Msg::get_encoded_data() const
     return this->encodedData;
 }
 
-void Msg::print_MSG()
+void Msg::print_MSG() const
 {
     std::cout << this->debugString << std::endl
               << this->get_data_as_string() << std::endl

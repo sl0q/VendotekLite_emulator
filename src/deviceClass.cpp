@@ -16,17 +16,11 @@ Device::Device()
 
     misc::lan_settings::Dhcp dhcp;
     this->lanSettings.set_allocated_dhcp(&dhcp);
-
-    this->contactCardSlots = {false, false, false, false, false};
-
-    this->cardInSlot = nullptr;
-    // this->lanMode = true; // true - dhcp; false - manual
 }
 
 Device::Device(std::string configFilePath)
 {
     loadConfig(configFilePath);
-    this->contactCardSlots = {false, false, false, false, false};
 }
 
 Device::~Device()
@@ -48,35 +42,6 @@ DeviceStatusStruct Device::get_device_status()
     return {this->timeToRestart, *this->security};
 }
 
-const ContactCardSlots &Device::get_contact_cards_slots_power()
-{
-    return this->contactCardSlots;
-}
-
-bool Device::get_single_contact_card_slot_power(contact::card_slot::CardSlot cardSlot)
-{
-    switch (cardSlot)
-    {
-    case contact::card_slot::MAIN_SLOT:
-        return this->contactCardSlots.MAIN_SLOT;
-    case contact::card_slot::SAM2_SLOT:
-        return this->contactCardSlots.SAM2_SLOT;
-    case contact::card_slot::SAM3_SLOT:
-        return this->contactCardSlots.SAM3_SLOT;
-    case contact::card_slot::SAM4_SLOT:
-        return this->contactCardSlots.SAM4_SLOT;
-    case contact::card_slot::SAM5_SLOT:
-        return this->contactCardSlots.SAM5_SLOT;
-    default:
-        return false;
-    }
-}
-
-const ContactCard &Device::get_card_in_slot()
-{
-    return *this->cardInSlot;
-}
-
 bool Device::is_config_loaded()
 {
     return !this->configFilePath.empty();
@@ -85,11 +50,6 @@ bool Device::is_config_loaded()
 bool Device::is_script_loaded()
 {
     return !this->inputFilePath.empty();
-}
-
-bool Device::is_contact_card_present()
-{
-    return this->cardInSlot != nullptr;
 }
 
 void Device::loadConfig(std::string configFilePath)
@@ -108,11 +68,13 @@ void Device::loadConfig(std::string configFilePath)
     // парсинг
     std::string tempStr;
 
+    //  parse input scripts
     if (json_content.count("inputFile") != 0)
         loadInputScriptFile(json_content.at("inputFile").get<std::string>());
     else
         std::cout << "WARNING: Input script file was not provided.";
 
+    //  parse device properties
     if (json_content.count("device") == 0)
         throw ex::JsonParsingException("Could not find required [device] field in [" + configFilePath + "] file.");
 
@@ -199,9 +161,6 @@ void Device::loadConfig(std::string configFilePath)
             manualSettings->set_local_address(manualJson.at("localAddress").get<std::string>());
             manualSettings->set_netmask(manualJson.at("netmask").get<std::string>());
             manualSettings->set_gateway(manualJson.at("gateway").get<std::string>());
-            // this->localAddress = manualJson.at("localAddress").get<std::string>();
-            // this->netmask = manualJson.at("netmask").get<std::string>();
-            // this->gateway = manualJson.at("gateway").get<std::string>();
         }
         else
         {
@@ -209,7 +168,6 @@ void Device::loadConfig(std::string configFilePath)
             if (this->lanSettings.has_manual())
                 this->lanSettings.release_manual();
             this->lanSettings.set_allocated_dhcp(&dhcp);
-            // this->lanMode = true; // means dhcp lan mode
         }
     }
     else
@@ -218,7 +176,6 @@ void Device::loadConfig(std::string configFilePath)
         if (this->lanSettings.has_manual())
             this->lanSettings.release_manual();
         this->lanSettings.set_allocated_dhcp(&dhcp);
-        // this->lanMode = true; // means dhcp lan mode
     }
 
     if (deviceJson.count("statistic") != 0)
@@ -305,6 +262,8 @@ void Device::loadConfig(std::string configFilePath)
 
 void Device::loadInputScriptFile(std::string inputScriptFilePath)
 {
+    this->inputFilePath = inputScriptFilePath;
+
     // открыть JSON
     std::ifstream file(inputScriptFilePath);
     if (!file.is_open())
@@ -320,6 +279,7 @@ void Device::loadInputScriptFile(std::string inputScriptFilePath)
     if (json_content.count("scripts") == 0)
         throw ex::JsonParsingException("Could not find required [scripts] field in [" + inputScriptFilePath + "] file.");
 
+    //  Удаление старых скриптов
     if (this->scripts.size())
     {
         for (auto &s : this->scripts)
@@ -341,80 +301,22 @@ void Device::loadInputScriptFile(std::string inputScriptFilePath)
         // adding cards
         if (scriptJson.count("cards") != 0)
         {
-            int i = 0;
+            this->iCard = 0;
             for (auto &cardJson : scriptJson["cards"])
             {
-                if (cardJson.count("contact") == 0)
-                    throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":contact] field in [" + inputScriptFilePath + "] file.");
-                if (cardJson.at("contact").get<bool>()) // if it is contact
-                {
-                    if (cardJson.count("expectedHistoricalBytes") == 0)
-                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":expectedHistoricalBytes] field in [" + inputScriptFilePath + "] file.");
-                    if (cardJson.count("expectedApduTrailer") == 0)
-                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":expectedApduTrailer] field in [" + inputScriptFilePath + "] file.");
-                    if (cardJson.count("expectedResponceBody") == 0)
-                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":expectedResponceBody] field in [" + inputScriptFilePath + "] file.");
-                    if (cardJson.count("cardSlot") == 0)
-                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":cardSlot] field in [" + inputScriptFilePath + "] file.");
-
-                    newScript->set_contact_card(new ContactCard(cardJson.at("expectedHistoricalBytes").get<std::string>(),
-                                                                cardJson.at("expectedApduTrailer").get<uint32_t>(),
-                                                                cardJson.at("expectedResponceBody").get<std::string>(),
-                                                                cardJson.at("cardSlot").get<std::string>()));
-
-                    // newScript->set_contact_card(newContactCard);
-                }
-                else //  if it is contactless
-                {
-                    if (cardJson.count("tokenType") == 0)
-                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":tokentype] field in [" + inputScriptFilePath + "] file.");
-                    if (cardJson.count("id") == 0)
-                        throw ex::JsonParsingException("Could not find required [scripts:cards:" + std::to_string(i) + ":id] field in [" + inputScriptFilePath + "] file.");
-
-                    // getting answer to select if given
-                    std::string ats;
-                    if (cardJson.count("answerToSelect") != 0)
-                        ats = cardJson.at("answerToSelect").get<std::string>();
-
-                    // getting token type
-                    contactless::token_type::TokenType newTokenType;
-                    if (!contactless::token_type::TokenType_Parse(cardJson.at("tokenType").get<std::string>(), &newTokenType))
-                        throw std::invalid_argument("Failed to parse [tokenType] parameter correctly in [scripts:cards:" + std::to_string(i) + ":tokenType].");
-
-                    newScript->add_contactless_card(new ContactlessCard(newTokenType,
-                                                                        cardJson.at("id").get<std::string>(),
-                                                                        ats));
-                }
-                ++i;
+                // try
+                newScript->parse_card(cardJson);
+                // catch
+                ++this->iCard;
             }
         }
 
-        // adding actions
-        if (scriptJson.count("actions") != 0)
+        // adding steps
+        if (scriptJson.count("steps") != 0)
         {
-            for (auto &actionJson : scriptJson["actions"])
+            for (auto &stepJson : scriptJson["steps"])
             {
-                Action *newAction;
-                if (actionJson.count("insert_contact_card") != 0)
-                    newAction = new CCardInserter(newScript->get_contact_card());
-                else if (actionJson.count("remove_contact_card") != 0)
-                    newAction = new CCardRemover();
-                else if (actionJson.count("attach_contactless_card") != 0)
-                    newAction = new CLCardAttacher(*newScript->find_cl_card(actionJson.at("attach_contactless_card").get<std::string>()));
-                else if (actionJson.count("remove_contactless_card") != 0)
-                    newAction = new CLCardRemover(*newScript->find_cl_card(actionJson.at("remove_contactless_card").get<std::string>()));
-                else if (actionJson.count("exe_messages") != 0)
-                {
-                    auto newMessages = new std::vector<std::string>();
-
-                    for (auto &m : actionJson["exe_messages"])
-                        newMessages->push_back(m); // maybe not a string
-                    newAction = new MessageExecuter(*newMessages);
-                }
-                else if (actionJson.count("wait_ms") != 0)
-                    newAction = new Waiter(actionJson.at("wait_ms").get<uint32_t>());
-
-                newScript->add_action(newAction);
+                newScript->parse_step(stepJson);
             }
         }
 
@@ -519,41 +421,33 @@ void Device::execute_scripts()
         std::cout << "No scripts are available" << std::endl;
         return;
     }
-    int i = 0;
+    iScript = 0;
     for (auto &s : this->scripts)
     {
-        std::cout << "Script #" << i++ << ":\n";
+        std::cout << "Script #" << iScript << ":\n";
         s->execute_script(*this);
+        ++iScript;
     }
 }
 
-void Device::insert_contact_card(const ContactCard &newCard)
+void Device::attach_contactless_card(uint32_t cardID)
 {
-    this->cardInSlot = &newCard;
+    this->cardsInField.push_back(scripts[iScript]->find_cl_card(cardID));
 }
 
-void Device::remove_contact_card()
+void Device::remove_contactless_card(uint32_t cardID)
 {
-    this->contactCardSlots = {false, false, false, false, false};
-    this->cardInSlot = nullptr;
-}
-
-void Device::attach_contactless_card(const ContactlessCard &newCard)
-{
-    this->cardsInField.push_back(&newCard);
-}
-
-void Device::remove_contactless_card(const ContactlessCard &cardToRemove)
-{
-
-    // int i = 0;
-    // for (auto &cardPointer : this->cardsInField)
-    //     if (cardPointer == &cardToRemove)
-    //         this->cardsInField.erase(this->cardsInField.begin() + i++);
     int i = 0;
-    for (auto card : this->cardsInField)
-        if (cardToRemove.get_id() == card->get_id())
-            this->cardsInField.erase(this->cardsInField.begin() + i++);
+    auto cardToRemove = scripts[iScript]->find_cl_card(cardID);
+    for (auto &card : this->cardsInField)
+    {
+        if (cardToRemove == card)
+        {
+            this->cardsInField.erase(this->cardsInField.begin() + i);
+            return;
+        }
+        ++i;
+    }
 }
 
 void Device::wait(uint32_t timeToWait_ms)
@@ -579,30 +473,6 @@ void Device::set_baudrate(const misc::baudrate::Baudrate &newBaudrate)
 void Device::set_lan_settings(const misc::lan_settings::LanSettings &newLanSettings)
 {
     this->lanSettings = newLanSettings;
-}
-
-void Device::set_contact_card_slot(contact::card_slot::CardSlot cardSlot, bool value)
-{
-    switch (cardSlot)
-    {
-    case contact::card_slot::MAIN_SLOT:
-        this->contactCardSlots.MAIN_SLOT = value;
-        break;
-    case contact::card_slot::SAM2_SLOT:
-        this->contactCardSlots.SAM2_SLOT = value;
-        break;
-    case contact::card_slot::SAM3_SLOT:
-        this->contactCardSlots.SAM3_SLOT = value;
-        break;
-    case contact::card_slot::SAM4_SLOT:
-        this->contactCardSlots.SAM4_SLOT = value;
-        break;
-    case contact::card_slot::SAM5_SLOT:
-        this->contactCardSlots.SAM5_SLOT = value;
-        break;
-    default:
-        std::cout << "Unknown contact card slot." << std::endl;
-    }
 }
 
 misc::leds::Leds &Device::get_leds_state()

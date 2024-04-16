@@ -12,23 +12,23 @@
 
 #include "../proto_src/intellireader/commands4.pb.h"
 
-#include "../proto_src/intellireader/misc/leds.pb.h"
-#include "../proto_src/intellireader/misc/device.pb.h"
-#include "../proto_src/intellireader/misc/reboot.pb.h"
-#include "../proto_src/intellireader/misc/buzzer.pb.h"
-#include "../proto_src/intellireader/misc/stats.pb.h"
-#include "../proto_src/intellireader/misc/echo.pb.h"
-#include "../proto_src/intellireader/misc/baudrate.pb.h"
-#include "../proto_src/intellireader/misc/lan_settings.pb.h"
+// #include "../proto_src/intellireader/misc/leds.pb.h"
+// #include "../proto_src/intellireader/misc/device.pb.h"
+// #include "../proto_src/intellireader/misc/reboot.pb.h"
+// #include "../proto_src/intellireader/misc/buzzer.pb.h"
+// #include "../proto_src/intellireader/misc/stats.pb.h"
+// #include "../proto_src/intellireader/misc/echo.pb.h"
+// #include "../proto_src/intellireader/misc/baudrate.pb.h"
+// #include "../proto_src/intellireader/misc/lan_settings.pb.h"
 
-#include "../proto_src/intellireader/contact/power_on.pb.h"
-#include "../proto_src/intellireader/contact/power_off.pb.h"
-#include "../proto_src/intellireader/contact/card_slot.pb.h"
-#include "../proto_src/intellireader/contact/iso7816_4.pb.h"
+// #include "../proto_src/intellireader/contact/power_on.pb.h"
+// #include "../proto_src/intellireader/contact/power_off.pb.h"
+// #include "../proto_src/intellireader/contact/card_slot.pb.h"
+// #include "../proto_src/intellireader/contact/iso7816_4.pb.h"
 
-#include "../proto_src/intellireader/contactless/poll_for_token.pb.h"
-#include "../proto_src/intellireader/contactless/token.pb.h"
-#include "../proto_src/intellireader/contactless/token_type.pb.h"
+// #include "../proto_src/intellireader/contactless/poll_for_token.pb.h"
+// #include "../proto_src/intellireader/contactless/token.pb.h"
+// #include "../proto_src/intellireader/contactless/token_type.pb.h"
 
 class Device;
 
@@ -41,6 +41,10 @@ class Device;
 #include "cards.h"
 
 #define IR "IR"
+
+class Action;
+
+// implement str() method
 
 class MessageIR
 {
@@ -56,6 +60,8 @@ public:
     };
 
 private:
+    std::vector<Action *> actions; // actions to do until timeout of IR message runs out if there is any
+
     std::vector<uint8_t> origMsg;
     uint8_t msgID;
     uint8_t moduleID;
@@ -75,6 +81,7 @@ private:
 
     void append_big_endian(std::vector<uint8_t> &buf, uint16_t n);
 
+    //  Miscelaneous
     void execute_misc(Device &myDevice);
     void execute_leds(Miscellaneous &miscMessage, Device &myDevice);
     void execute_read_device_info(Miscellaneous &miscMessage, Device &myDevice);
@@ -86,24 +93,21 @@ private:
     void execute_change_baudrate(Miscellaneous &miscMessage, Device &myDevice);
     void execute_change_lan_settings(Miscellaneous &miscMessage, Device &myDevice);
 
-    void execute_contact(Device &myDevice);
-    void execute_power_on(ContactLevel1 &contactLvl1Message, Device &myDevice);
-    void execute_power_off(ContactLevel1 &contactLvl1Message, Device &myDevice);
-    void execute_transmit_apdu(ContactLevel1 &contactLvl1Message, Device &myDevice);
-
+    //  ContactlessLevel1
     void execute_contactless_1(Device &myDevice);
     void execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
 
+    // Misc util
     const Payload &generate_device_info_payload(Device &myDevice);
     const Payload &generate_device_status_payload(Device &myDevice);
     const Payload &generate_device_statistic_payload(Device &myDevice);
     const Payload &generate_echo_payload(uint32_t replySize, const std::string &data);
     const Payload &generate_lan_settings_payload(Device &myDevice);
 
-    const Payload &generate_power_on_payload(Device &myDevice);
-    const Payload &generate_transmit_apdu_payload(const ContactCard &card);
+    // const Payload &generate_power_on_payload(Device &myDevice);
+    // const Payload &generate_transmit_apdu_payload(const ContactCard &card);
 
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());
 
@@ -116,4 +120,109 @@ public:
     bool is_control();
 
     void execute_message(Device &myDevice);
+    void add_action(Action &newAction);
+    const std::string str() const;
+};
+
+/////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////
+enum ActionType
+{
+    UNKNOWN = 1,
+    ATTACH_CARD = 4,
+    REMOVE_CARD = 5,
+    SEND_CANCEL_MESSAGE = 6,
+    EXE_MESSAGES = 7,
+    WAIT_MS = 8
+};
+
+///////////////////////////////////////////////////////////////////////
+
+class Action
+{
+protected:
+    ActionType actionType;
+
+public:
+    Action();
+    explicit Action(ActionType newActionType);
+
+    const ActionType get_type() const;
+
+    virtual void make_action(Device &myDevice) = 0;
+    virtual const std::string str() = 0;
+};
+
+////////////////////////////////////////////////////////////////////////
+
+class CardAttacher : public Action
+{
+private:
+    uint32_t cardToAttachID;
+
+public:
+    CardAttacher(uint32_t cardID);
+    // CLCardAttacher(const ContactlessCard &newCard);
+    void make_action(Device &myDevice);
+    void set_card_to_attach(uint32_t cardID);
+    const std::string str();
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+class CardRemover : public Action
+{
+private:
+    uint32_t cardToRemoveID;
+
+public:
+    CardRemover(uint32_t cardID);
+    void make_action(Device &myDevice);
+    void set_card_to_remove(uint32_t cardID);
+    const std::string str();
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+
+class Canceller : public Action
+{
+private:
+    std::string cancelMessage;
+
+public:
+    Canceller();
+    Canceller(const std::string newCancelMessage);
+    ~Canceller();
+    void set_cancel_message(const std::string newCancelMessage);
+    void make_action(Device &myDevice);
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+
+class MessageExecuter : public Action
+{
+private:
+    std::vector<std::string> *messages;
+
+public:
+    MessageExecuter();
+    MessageExecuter(std::vector<std::string> &newMessages);
+
+    void make_action(Device &myDevice);
+    void add_message(std::string newMessage);
+    const std::string str();
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+
+class Waiter : public Action
+{
+private:
+    uint32_t timeToWait_ms{};
+
+public:
+    Waiter(uint32_t timeToWait_ms);
+    void make_action(Device &myDevice);
+    const std::string str();
 };

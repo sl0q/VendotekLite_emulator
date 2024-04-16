@@ -20,6 +20,7 @@
 #include "nlohmann/json.hpp"
 
 class Script;
+// class Step;
 
 #include "myExceptions.h"
 #include "scriptClass.h"
@@ -54,6 +55,7 @@ private:
     std::string configFilePath;
     std::string inputFilePath;
 
+    // Device properties
     std::string serialNumber;
     std::string IntelliReaderVersion;
     misc::reboot::Reboot_OperationMode operationMode;
@@ -64,12 +66,12 @@ private:
     misc::leds::Leds leds;
     misc::stats::DeviceStatistic statistic;
 
-    ContactCardSlots contactCardSlots;
-    const ContactCard *cardInSlot;
-
     std::vector<const ContactlessCard *> cardsInField; // contactless cards in RF field of the terminal
 
     std::vector<Script *> scripts;
+    uint32_t iScript,
+        iCard,
+        iStep;
 
 public:
     Device();
@@ -78,19 +80,17 @@ public:
 
     bool is_config_loaded();
     bool is_script_loaded();
-    bool is_contact_card_present();
 
     void loadConfig(std::string configFilePath);
     void loadInputScriptFile(std::string inputScriptFilePath);
     misc::lwip::ProtocolStats *parseProtocolStatsJson(json &protocolStatsJson, const std::string protocolStatsName);
     misc::ethernet::PortStats *parsePortStatsJson(json &portStatsJson, const std::string portName);
+    // void parse_card(json cardJson, ContactlessCard &newContactlessCard);
 
     void _print_scripts();
     void execute_scripts();
-    void insert_contact_card(const ContactCard &newCard);
-    void remove_contact_card();
-    void attach_contactless_card(const ContactlessCard &newCard);
-    void remove_contactless_card(const ContactlessCard &cardToRemove);
+    void attach_contactless_card(uint32_t cardID);
+    void remove_contactless_card(uint32_t cardID);
     void wait(uint32_t timeToWait_ms);
 
     // if needed make a buzzer implimentation
@@ -99,14 +99,10 @@ public:
     void reboot(misc::reboot::Reboot_OperationMode operationMode);
     void set_baudrate(const misc::baudrate::Baudrate &newBaudrate);
     void set_lan_settings(const misc::lan_settings::LanSettings &newLanSettings);
-    void set_contact_card_slot(contact::card_slot::CardSlot cardSlot, bool value);
 
     // make const return values
     DeviceInfoStruct get_device_info();
     DeviceStatusStruct get_device_status();
-    const ContactCardSlots &get_contact_cards_slots_power();
-    bool get_single_contact_card_slot_power(contact::card_slot::CardSlot cardSlot);
-    const ContactCard &get_card_in_slot();
     misc::leds::Leds &get_leds_state();
     misc::reboot::Reboot_OperationMode &get_operation_mode();
     misc::stats::DeviceStatistic &get_device_statistic();

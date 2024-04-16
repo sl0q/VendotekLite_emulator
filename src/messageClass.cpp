@@ -63,6 +63,10 @@ MessageIR::MessageIR(std::string encodedStringMessage)
 
 MessageIR::~MessageIR()
 {
+    for (auto &action : this->actions)
+        if (action)
+            delete action;
+
     if (this->msg)
         delete this->msg;
 }
@@ -185,8 +189,15 @@ void MessageIR::execute_message(Device &myDevice)
         execute_misc(myDevice);
         break;
     case 2:
-        execute_contact(myDevice);
-        break;
+    {
+        std::ostringstream errorMessage;
+        errorMessage << "Failed to execute command message. Module [Contact] is not supported."
+                     << "\nMSG_ID: " << std::to_string(this->msgID);
+        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage.str()));
+        std::cout << "Generated responce:" << std::endl;
+        generatedResponce.print_MSG();
+        throw ex::FailedExecution(errorMessage.str());
+    }
     case 3:
         execute_contactless_1(myDevice);
         break;
@@ -201,6 +212,16 @@ void MessageIR::execute_message(Device &myDevice)
         generatedResponce.print_MSG();
         throw ex::FailedExecution(errorMessage.str());
     }
+}
+
+void MessageIR::add_action(Action &newAction)
+{
+    this->actions.push_back(&newAction);
+}
+
+const std::string MessageIR::str() const
+{
+    return "executed message information here";
 }
 
 void MessageIR::execute_misc(Device &myDevice)
@@ -442,143 +463,143 @@ void MessageIR::execute_change_lan_settings(Miscellaneous &miscMessage, Device &
     generatedResponce.print_MSG();
 }
 
-void MessageIR::execute_contact(Device &myDevice)
-{
-    ContactLevel1 contactLvl1Message = *(dynamic_cast<ContactLevel1 *>(this->msg));
-    switch (contactLvl1Message.contact_level1_cmd_case())
-    {
-    case ContactLevel1::kPowerOnCard:
-        execute_power_on(contactLvl1Message, myDevice);
-        break;
-    case ContactLevel1::kPowerOffCard:
-        execute_power_off(contactLvl1Message, myDevice);
-        break;
+// void MessageIR::execute_contact(Device &myDevice)
+// {
+//     ContactLevel1 contactLvl1Message = *(dynamic_cast<ContactLevel1 *>(this->msg));
+//     switch (contactLvl1Message.contact_level1_cmd_case())
+//     {
+//     case ContactLevel1::kPowerOnCard:
+//         execute_power_on(contactLvl1Message, myDevice);
+//         break;
+//     case ContactLevel1::kPowerOffCard:
+//         execute_power_off(contactLvl1Message, myDevice);
+//         break;
 
-    case ContactLevel1::kTransmitApdu:
-        execute_transmit_apdu(contactLvl1Message, myDevice);
-        break;
-    default:
-        std::ostringstream errorMessage;
-        errorMessage << "Failed to execute [ContactLevel1] command message. Unrecognised [command]."
-                     << "\nMSG_ID: " << std::to_string(this->msgID)
-                     << "\ncontact_level1_cmd_case: " << std::to_string(contactLvl1Message.contact_level1_cmd_case());
-        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage.str()));
-        std::cout << "Generated responce:" << std::endl;
-        generatedResponce.print_MSG();
-        throw ex::FailedExecution(errorMessage.str());
-    }
-}
+//     case ContactLevel1::kTransmitApdu:
+//         execute_transmit_apdu(contactLvl1Message, myDevice);
+//         break;
+//     default:
+//         std::ostringstream errorMessage;
+//         errorMessage << "Failed to execute [ContactLevel1] command message. Unrecognised [command]."
+//                      << "\nMSG_ID: " << std::to_string(this->msgID)
+//                      << "\ncontact_level1_cmd_case: " << std::to_string(contactLvl1Message.contact_level1_cmd_case());
+//         Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage.str()));
+//         std::cout << "Generated responce:" << std::endl;
+//         generatedResponce.print_MSG();
+//         throw ex::FailedExecution(errorMessage.str());
+//     }
+// }
 
-void MessageIR::execute_power_on(ContactLevel1 &contactLvl1Message, Device &myDevice)
-{
-    std::cout << "Executing [power_on_card]...\n\n";
+// void MessageIR::execute_power_on(ContactLevel1 &contactLvl1Message, Device &myDevice)
+// {
+//     std::cout << "Executing [power_on_card]...\n\n";
 
-    auto powerOnCard = contactLvl1Message.power_on_card();
+//     auto powerOnCard = contactLvl1Message.power_on_card();
 
-    if (!myDevice.is_contact_card_present())
-    {
-        std::string errorMessage = "Contact card in not present.";
-        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::ICC_IS_NOT_PRESENT, errorMessage));
-        std::cout << "Generated responce:" << std::endl;
-        generatedResponce.print_MSG();
-        std::cout << "Finised execution.\n\n";
-        return;
-    }
+//     if (!myDevice.is_contact_card_present())
+//     {
+//         std::string errorMessage = "Contact card in not present.";
+//         Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::ICC_IS_NOT_PRESENT, errorMessage));
+//         std::cout << "Generated responce:" << std::endl;
+//         generatedResponce.print_MSG();
+//         std::cout << "Finised execution.\n\n";
+//         return;
+//     }
 
-    std::cout << "Original power state on card slots:\n"
-              << "\tMAIN_SLOT: " << myDevice.get_contact_cards_slots_power().MAIN_SLOT << std::endl
-              << "\tSAM2_SLOT: " << myDevice.get_contact_cards_slots_power().SAM2_SLOT << std::endl
-              << "\tSAM3_SLOT: " << myDevice.get_contact_cards_slots_power().SAM3_SLOT << std::endl
-              << "\tSAM4_SLOT: " << myDevice.get_contact_cards_slots_power().SAM4_SLOT << std::endl
-              << "\tSAM5_SLOT: " << myDevice.get_contact_cards_slots_power().SAM5_SLOT << std::endl;
+//     std::cout << "Original power state on card slots:\n"
+//               << "\tMAIN_SLOT: " << myDevice.get_contact_cards_slots_power().MAIN_SLOT << std::endl
+//               << "\tSAM2_SLOT: " << myDevice.get_contact_cards_slots_power().SAM2_SLOT << std::endl
+//               << "\tSAM3_SLOT: " << myDevice.get_contact_cards_slots_power().SAM3_SLOT << std::endl
+//               << "\tSAM4_SLOT: " << myDevice.get_contact_cards_slots_power().SAM4_SLOT << std::endl
+//               << "\tSAM5_SLOT: " << myDevice.get_contact_cards_slots_power().SAM5_SLOT << std::endl;
 
-    myDevice.set_contact_card_slot(powerOnCard.slot(), true);
+//     myDevice.set_contact_card_slot(powerOnCard.slot(), true);
 
-    std::cout << "New power state on card slots:\n"
-              << "\tMAIN_SLOT: " << myDevice.get_contact_cards_slots_power().MAIN_SLOT << std::endl
-              << "\tSAM2_SLOT: " << myDevice.get_contact_cards_slots_power().SAM2_SLOT << std::endl
-              << "\tSAM3_SLOT: " << myDevice.get_contact_cards_slots_power().SAM3_SLOT << std::endl
-              << "\tSAM4_SLOT: " << myDevice.get_contact_cards_slots_power().SAM4_SLOT << std::endl
-              << "\tSAM5_SLOT: " << myDevice.get_contact_cards_slots_power().SAM5_SLOT << std::endl;
+//     std::cout << "New power state on card slots:\n"
+//               << "\tMAIN_SLOT: " << myDevice.get_contact_cards_slots_power().MAIN_SLOT << std::endl
+//               << "\tSAM2_SLOT: " << myDevice.get_contact_cards_slots_power().SAM2_SLOT << std::endl
+//               << "\tSAM3_SLOT: " << myDevice.get_contact_cards_slots_power().SAM3_SLOT << std::endl
+//               << "\tSAM4_SLOT: " << myDevice.get_contact_cards_slots_power().SAM4_SLOT << std::endl
+//               << "\tSAM5_SLOT: " << myDevice.get_contact_cards_slots_power().SAM5_SLOT << std::endl;
 
-    std::cout << "Finised execution.\n\n";
+//     std::cout << "Finised execution.\n\n";
 
-    Msg generatedResponce = generate_responce(SUCCESS, generate_power_on_payload(myDevice));
+//     Msg generatedResponce = generate_responce(SUCCESS, generate_power_on_payload(myDevice));
 
-    std::cout << "Generated responce:" << std::endl;
-    generatedResponce.print_MSG();
-}
+//     std::cout << "Generated responce:" << std::endl;
+//     generatedResponce.print_MSG();
+// }
 
-void MessageIR::execute_power_off(ContactLevel1 &contactLvl1Message, Device &myDevice)
-{
-    std::cout << "Executing [power_off_card]...\n\n";
+// void MessageIR::execute_power_off(ContactLevel1 &contactLvl1Message, Device &myDevice)
+// {
+//     std::cout << "Executing [power_off_card]...\n\n";
 
-    auto powerOffCard = contactLvl1Message.power_off_card();
+//     auto powerOffCard = contactLvl1Message.power_off_card();
 
-    std::cout << "Original power state on card slots:\n"
-              << "\tMAIN_SLOT: " << myDevice.get_contact_cards_slots_power().MAIN_SLOT << std::endl
-              << "\tSAM2_SLOT: " << myDevice.get_contact_cards_slots_power().SAM2_SLOT << std::endl
-              << "\tSAM3_SLOT: " << myDevice.get_contact_cards_slots_power().SAM3_SLOT << std::endl
-              << "\tSAM4_SLOT: " << myDevice.get_contact_cards_slots_power().SAM4_SLOT << std::endl
-              << "\tSAM5_SLOT: " << myDevice.get_contact_cards_slots_power().SAM5_SLOT << std::endl;
+//     std::cout << "Original power state on card slots:\n"
+//               << "\tMAIN_SLOT: " << myDevice.get_contact_cards_slots_power().MAIN_SLOT << std::endl
+//               << "\tSAM2_SLOT: " << myDevice.get_contact_cards_slots_power().SAM2_SLOT << std::endl
+//               << "\tSAM3_SLOT: " << myDevice.get_contact_cards_slots_power().SAM3_SLOT << std::endl
+//               << "\tSAM4_SLOT: " << myDevice.get_contact_cards_slots_power().SAM4_SLOT << std::endl
+//               << "\tSAM5_SLOT: " << myDevice.get_contact_cards_slots_power().SAM5_SLOT << std::endl;
 
-    myDevice.set_contact_card_slot(powerOffCard.slot(), false);
+//     myDevice.set_contact_card_slot(powerOffCard.slot(), false);
 
-    std::cout << "New power state on card slots:\n"
-              << "\tMAIN_SLOT: " << myDevice.get_contact_cards_slots_power().MAIN_SLOT << std::endl
-              << "\tSAM2_SLOT: " << myDevice.get_contact_cards_slots_power().SAM2_SLOT << std::endl
-              << "\tSAM3_SLOT: " << myDevice.get_contact_cards_slots_power().SAM3_SLOT << std::endl
-              << "\tSAM4_SLOT: " << myDevice.get_contact_cards_slots_power().SAM4_SLOT << std::endl
-              << "\tSAM5_SLOT: " << myDevice.get_contact_cards_slots_power().SAM5_SLOT << std::endl;
+//     std::cout << "New power state on card slots:\n"
+//               << "\tMAIN_SLOT: " << myDevice.get_contact_cards_slots_power().MAIN_SLOT << std::endl
+//               << "\tSAM2_SLOT: " << myDevice.get_contact_cards_slots_power().SAM2_SLOT << std::endl
+//               << "\tSAM3_SLOT: " << myDevice.get_contact_cards_slots_power().SAM3_SLOT << std::endl
+//               << "\tSAM4_SLOT: " << myDevice.get_contact_cards_slots_power().SAM4_SLOT << std::endl
+//               << "\tSAM5_SLOT: " << myDevice.get_contact_cards_slots_power().SAM5_SLOT << std::endl;
 
-    std::cout << "Finised execution.\n\n";
+//     std::cout << "Finised execution.\n\n";
 
-    Msg generatedResponce = generate_responce(SUCCESS);
+//     Msg generatedResponce = generate_responce(SUCCESS);
 
-    std::cout << "Generated responce:" << std::endl;
-    generatedResponce.print_MSG();
-}
+//     std::cout << "Generated responce:" << std::endl;
+//     generatedResponce.print_MSG();
+// }
 
-void MessageIR::execute_transmit_apdu(ContactLevel1 &contactLvl1Message, Device &myDevice)
-{
-    std::cout << "Executing [power_transmit_apdu]...\n\n";
+// void MessageIR::execute_transmit_apdu(ContactLevel1 &contactLvl1Message, Device &myDevice)
+// {
+//     std::cout << "Executing [power_transmit_apdu]...\n\n";
 
-    auto transmitApdu = contactLvl1Message.transmit_apdu();
+//     auto transmitApdu = contactLvl1Message.transmit_apdu();
 
-    if (!myDevice.is_contact_card_present())
-    {
-        std::string errorMessage = "Contact card in not present.";
-        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::ICC_IS_NOT_PRESENT, errorMessage));
-        std::cout << "Generated responce:" << std::endl;
-        generatedResponce.print_MSG();
-        std::cout << "Finised execution.\n\n";
-        return;
-    }
+//     if (!myDevice.is_contact_card_present())
+//     {
+//         std::string errorMessage = "Contact card in not present.";
+//         Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::ICC_IS_NOT_PRESENT, errorMessage));
+//         std::cout << "Generated responce:" << std::endl;
+//         generatedResponce.print_MSG();
+//         std::cout << "Finised execution.\n\n";
+//         return;
+//     }
 
-    if (!myDevice.get_single_contact_card_slot_power(transmitApdu.slot()))
-    {
-        std::ostringstream errorMessage;
-        errorMessage << "Contact card in slot ["
-                     << contact::card_slot::CardSlot_Name(transmitApdu.slot()) << "]"
-                     << " is not powered";
-        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::ICC_IS_NOT_READY, errorMessage.str()));
-        std::cout << "Generated responce:" << std::endl;
-        generatedResponce.print_MSG();
-        std::cout << "Finised execution.\n\n";
-        return;
-    }
+//     if (!myDevice.get_single_contact_card_slot_power(transmitApdu.slot()))
+//     {
+//         std::ostringstream errorMessage;
+//         errorMessage << "Contact card in slot ["
+//                      << contact::card_slot::CardSlot_Name(transmitApdu.slot()) << "]"
+//                      << " is not powered";
+//         Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::ICC_IS_NOT_READY, errorMessage.str()));
+//         std::cout << "Generated responce:" << std::endl;
+//         generatedResponce.print_MSG();
+//         std::cout << "Finised execution.\n\n";
+//         return;
+//     }
 
-    std::cout
-        << "Apdu command:\t" << transmitApdu.command_apdu() << std::endl
-        << "For slot:\t" << contact::card_slot::CardSlot_Name(transmitApdu.slot()) << std::endl;
+//     std::cout
+//         << "Apdu command:\t" << transmitApdu.command_apdu() << std::endl
+//         << "For slot:\t" << contact::card_slot::CardSlot_Name(transmitApdu.slot()) << std::endl;
 
-    std::cout << "Finised execution.\n\n";
+//     std::cout << "Finised execution.\n\n";
 
-    Msg generatedResponce = generate_responce(SUCCESS, generate_transmit_apdu_payload(myDevice.get_card_in_slot()));
+//     Msg generatedResponce = generate_responce(SUCCESS, generate_transmit_apdu_payload(myDevice.get_card_in_slot()));
 
-    std::cout << "Generated responce:" << std::endl;
-    generatedResponce.print_MSG();
-}
+//     std::cout << "Generated responce:" << std::endl;
+//     generatedResponce.print_MSG();
+// }
 
 void MessageIR::execute_contactless_1(Device &myDevice)
 {
@@ -608,6 +629,33 @@ void MessageIR::execute_contactless_1(Device &myDevice)
 
 void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice)
 {
+    /*
+        - проверить ледс
+        - отправить пендинг
+        - проверить таймаут
+    */
+
+    std::cout << "Executing [poll_for_token]...\n\n";
+
+    std::cout << "Returning Pending message..." << std::endl;
+    generate_responce(PENDING).print_MSG();
+
+    auto pollForToken = miscMessage.poll_for_token();
+
+    for (auto &action : this->actions)
+    {
+        action->make_action(myDevice);
+
+        // как отреагирует система после этого действия
+    }
+
+    std::cout
+        << "Finised execution.\n\n";
+
+    Msg generatedResponce = generate_responce(SUCCESS);
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce.print_MSG();
 }
 
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)
@@ -711,42 +759,42 @@ const Payload &MessageIR::generate_lan_settings_payload(Device &myDevice)
     return generatedPayload;
 }
 
-const Payload &MessageIR::generate_power_on_payload(Device &myDevice)
-{
-    auto contactCard = new contact::power_on::ContactCard();
+// const Payload &MessageIR::generate_power_on_payload(Device &myDevice)
+// {
+//     auto contactCard = new contact::power_on::ContactCard();
 
-    contactCard->set_historical_bytes(myDevice.get_card_in_slot().get_historical_bytes());
+//     contactCard->set_historical_bytes(myDevice.get_card_in_slot().get_historical_bytes());
 
-    std::cout << "Historical bytes:" << std::endl
-              << contactCard->DebugString() << std::endl;
+//     std::cout << "Historical bytes:" << std::endl
+//               << contactCard->DebugString() << std::endl;
 
-    std::vector<uint8_t> buf;
-    buf.resize(contactCard->ByteSizeLong());
-    int buf_size = buf.size();
-    contactCard->SerializeToArray(buf.data(), buf_size);
+//     std::vector<uint8_t> buf;
+//     buf.resize(contactCard->ByteSizeLong());
+//     int buf_size = buf.size();
+//     contactCard->SerializeToArray(buf.data(), buf_size);
 
-    Payload &generatedPayload = *(new Payload(contactCard->DebugString(), buf));
-    return generatedPayload;
-}
+//     Payload &generatedPayload = *(new Payload(contactCard->DebugString(), buf));
+//     return generatedPayload;
+// }
 
-const Payload &MessageIR::generate_transmit_apdu_payload(const ContactCard &card)
-{
-    auto responceApdu = new contact::iso7816_4::ResponseApdu();
+// const Payload &MessageIR::generate_transmit_apdu_payload(const ContactCard &card)
+// {
+//     auto responceApdu = new contact::iso7816_4::ResponseApdu();
 
-    responceApdu->set_trailer(card.get_expected_apdu_trailer());
-    responceApdu->set_body(card.get_expected_responce_body());
+//     responceApdu->set_trailer(card.get_expected_apdu_trailer());
+//     responceApdu->set_body(card.get_expected_responce_body());
 
-    std::cout << "Apdu responce: " << std::endl
-              << responceApdu->DebugString() << std::endl;
+//     std::cout << "Apdu responce: " << std::endl
+//               << responceApdu->DebugString() << std::endl;
 
-    std::vector<uint8_t> buf;
-    buf.resize(responceApdu->ByteSizeLong());
-    int buf_size = buf.size();
-    responceApdu->SerializeToArray(buf.data(), buf_size);
+//     std::vector<uint8_t> buf;
+//     buf.resize(responceApdu->ByteSizeLong());
+//     int buf_size = buf.size();
+//     responceApdu->SerializeToArray(buf.data(), buf_size);
 
-    Payload &generatedPayload = *(new Payload(responceApdu->DebugString(), buf));
-    return generatedPayload;
-}
+//     Payload &generatedPayload = *(new Payload(responceApdu->DebugString(), buf));
+//     return generatedPayload;
+// }
 
 const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &generatedPayload /* = Payload()*/)
 {
@@ -808,4 +856,139 @@ void MessageIR::append_big_endian(std::vector<uint8_t> &buf, uint16_t n)
 {
     buf.push_back((n & 0xFF00) >> 8); // добавили старший разряд
     buf.push_back(n & 0xFF);          // добавили младший разряд
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+Action::Action()
+{
+}
+
+Action::Action(ActionType newActionType)
+{
+    this->actionType = newActionType;
+}
+
+const ActionType Action::get_type() const
+{
+    return this->actionType;
+}
+
+// void Action::make_action(Device &myDevice)
+// {
+//     switch(this->actionType)
+//     {
+//         case INSERT_CONTATC_CARD:
+//             myDevice.insert_contact_card()
+//     }
+// }
+
+CardAttacher::CardAttacher(uint32_t cardID)
+{
+    this->cardToAttachID = cardID;
+}
+
+void CardAttacher::make_action(Device &myDevice)
+{
+    myDevice.attach_contactless_card(cardToAttachID);
+}
+
+void CardAttacher::set_card_to_attach(uint32_t cardID)
+{
+    this->cardToAttachID = cardID;
+}
+
+const std::string CardAttacher::str()
+{
+    return std::string("Attach card with id " + std::to_string(cardToAttachID) + " to card reader RF-field");
+}
+
+CardRemover::CardRemover(uint32_t cardID)
+{
+    this->cardToRemoveID = cardID;
+}
+
+void CardRemover::make_action(Device &myDevice)
+{
+    myDevice.remove_contactless_card(cardToRemoveID);
+}
+
+void CardRemover::set_card_to_remove(uint32_t cardID)
+{
+    this->cardToRemoveID = cardID;
+}
+
+const std::string CardRemover::str()
+{
+    return std::string("Remove card with id " + std::to_string(cardToRemoveID) + " from card reader RF-field");
+}
+
+Canceller::Canceller()
+{
+}
+
+Canceller::Canceller(const std::string newCancelMessage)
+{
+    this->cancelMessage = newCancelMessage;
+}
+
+Canceller::~Canceller()
+{
+}
+
+void Canceller::set_cancel_message(const std::string newCancelMessage)
+{
+    this->cancelMessage = newCancelMessage;
+}
+
+void Canceller::make_action(Device &myDevice)
+{
+}
+
+MessageExecuter::MessageExecuter()
+{
+}
+
+MessageExecuter::MessageExecuter(std::vector<std::string> &newMessages)
+{
+    this->messages = &newMessages;
+}
+
+void MessageExecuter::make_action(Device &myDevice)
+{
+    for (std::string &strMessage : *this->messages)
+    {
+        MessageIR currentMessage(strMessage);
+        if (currentMessage.is_command())
+            currentMessage.execute_message(myDevice);
+    }
+}
+
+void MessageExecuter::add_message(std::string newMessage)
+{
+    this->messages->push_back(newMessage);
+}
+
+const std::string MessageExecuter::str()
+{
+    std::string s("Encoded messages to execute:\n");
+    for (auto &m : *this->messages)
+        s += "\t" + m + "\n";
+    s.pop_back(); // delete last \n
+    return s;
+}
+
+Waiter::Waiter(uint32_t timeToWait_ms)
+{
+    this->timeToWait_ms = timeToWait_ms;
+}
+
+void Waiter::make_action(Device &myDevice)
+{
+    myDevice.wait(this->timeToWait_ms);
+}
+
+const std::string Waiter::str()
+{
+    return std::string("Wait for " + std::to_string(this->timeToWait_ms) + " ms");
 }

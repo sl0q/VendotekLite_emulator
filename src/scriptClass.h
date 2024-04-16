@@ -5,13 +5,8 @@
 #include <string>
 
 class Device;
-class Action;
-class CCardInserter;
-class CCardRemover;
-class CLCardAttacher;
-class CLCardRemover;
-class MessageExecuter;
-class Waiter;
+class Step;
+class MessageIR;
 
 #include "messageClass.h"
 #include "deviceClass.h"
@@ -19,145 +14,51 @@ class Waiter;
 
 class Script
 {
+    using json = nlohmann::json;
+
 private:
+    static uint32_t scriptCount;
+    uint32_t iScript;
     std::string title = "Untitled script";
-    std::vector<Action *> actions;
-    // std::vector<std::string> messages;
-    ContactCard *contactCard;
-    std::vector<ContactlessCard *> cardsInFiled; // Contactless cards in RF field of the terminal
+    std::vector<Step *> steps;
+    std::vector<ContactlessCard *> contactlessCards; // Contactless cards in RF field of the terminal
 
 public:
     Script();
     Script(std::string new_title);
-    // Script(std::string new_title, std::vector<std::string> new_messages);
     ~Script();
 
     const std::string str(); // return script data as a string to print
 
     void setTitle(std::string newTitle);
     const std::string getTitle();
-    // void addMessage(std::string newMessage);
-    // const std::vector<std::string> getMessages();
+    const ContactlessCard *find_cl_card(uint32_t cardID);
 
-    void set_contact_card(ContactCard *newContactCard);
-    void add_contactless_card(ContactlessCard *newContactlessCard);
-    void add_action(Action *newAction);
-
-    const ContactlessCard *find_cl_card(const std::string cardID);
-    const ContactCard &get_contact_card();
+    void parse_card(json cardJson);
+    void parse_step(json stepJson);
+    void add_contactless_card(ContactlessCard &newContactlessCard);
+    void add_step(Step &newStep);
 
     void execute_script(Device &myDevice);
-    // void deserializeMessage();
 };
 /////////////////////////////////////////////////////////////
 
-enum ActionType
+class Step
 {
-    UNKNOWN = 1,
-    INSERT_CONTATC_CARD = 2,
-    REMOVE_CONTACT_CARD = 3,
-    ATTACH_CONTACTLESS_CARD = 4,
-    REMOVE_CONTACTLESS_CARD = 5,
-    EXE_MESSAGES = 6,
-    WAIT_MS = 7
-};
+    using json = nlohmann::json;
 
-///////////////////////////////////////////////////////////////////////
-
-class Action
-{
-protected:
-    ActionType actionType;
-
-public:
-    Action();
-    explicit Action(ActionType newActionType);
-
-    const ActionType get_type() const;
-
-    virtual void make_action(Device &myDevice) = 0;
-    virtual const std::string str() = 0;
-};
-
-/////////////////////////////////////////////////////////////////
-
-class CCardInserter : public Action
-{
 private:
-    const ContactCard *cardToInsert;
+    MessageIR *messageIR;
+    std::string origMsg;
 
 public:
-    CCardInserter(const ContactCard &newCard);
-    // CCardInserter(const ContactCard &newCard);
-    void make_action(Device &myDevice);
-    const std::string str();
-};
+    Step();
+    Step(const std::string newMsg);
+    ~Step();
+    const std::string str() const;
+    void parse_action(json actionJson);
 
-////////////////////////////////////////////////////////////////////////
+    void set_message(const std::string newMsg);
 
-class CCardRemover : public Action
-{
-public:
-    CCardRemover();
-    void make_action(Device &myDevice);
-    const std::string str();
-};
-
-////////////////////////////////////////////////////////////////////////
-
-class CLCardAttacher : public Action
-{
-private:
-    const ContactlessCard *cardToAttach;
-
-public:
-    CLCardAttacher(const ContactlessCard &newCard);
-    // CLCardAttacher(const ContactlessCard &newCard);
-    void make_action(Device &myDevice);
-    void set_card_to_attach(const ContactlessCard &newCard);
-    const std::string str();
-};
-
-/////////////////////////////////////////////////////////////////////////////
-
-class CLCardRemover : public Action
-{
-private:
-    const ContactlessCard *cardToRemove;
-
-public:
-    CLCardRemover(const ContactlessCard &cardToRemove);
-    // CLCardRemover(const ContactlessCard &newCard);
-    void make_action(Device &myDevice);
-    void set_card_to_remove(const ContactlessCard &cardToRemove);
-    const std::string str();
-};
-
-/////////////////////////////////////////////////////////////////////////////////
-
-class MessageExecuter : public Action
-{
-private:
-    std::vector<std::string> *messages;
-
-public:
-    MessageExecuter();
-    MessageExecuter(std::vector<std::string> &newMessages);
-
-    void make_action(Device &myDevice);
-    void add_message(std::string newMessage);
-    const std::string str();
-};
-
-/////////////////////////////////////////////////////////////////////////////////
-
-class Waiter : public Action
-{
-private:
-    uint32_t timeToWait_ms{};
-
-public:
-    Waiter(uint32_t timeToWait_ms);
-    void make_action(Device &myDevice);
-    const std::string str();
+    void execute_step(Device &myDevice);
 };

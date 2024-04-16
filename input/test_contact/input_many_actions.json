@@ -1,32 +1,14 @@
 {
     "scripts": [
         {
-            "title": "test power on main card slot, then transmit apdu, then power off",
-            "cards": [
+            "title": "set leds then read device info",
+            "steps": 
+            [
                 {
-                    "contact": true,
-                    "expectedHistoricalBytes": "\\80",
-                    "expectedApduTrailer": 36864,
-                    "expectedResponceBody": "bytesbytes",
-                    "cardSlot": "MAIN_SLOT"
-                }
-            ],
-            "actions": [
-                {
-                    "insert_contact_card": 0
+                    "message": "SVIADwEBAQoKCAEQARgBIAEoAYbX"
                 },
                 {
-                    "exe_messages": [
-                        "SVIABwECAQoCCADXHg==",
-                        "SVIAHQQCARoYCAASFFx4ODBceDYwXHgwMFx4MDBceDAwKq4=",
-                        "SVIABwMCARICCAApmQ=="
-                    ]
-                },
-                {
-                    "wait_ms": 1000
-                },
-                {
-                    "remove_contact_card": 0
+                    "message": "SVIABQYBARIAc9Y="
                 }
             ]
         }
