@@ -15,6 +15,18 @@ Msg::~Msg()
 {
 }
 
+bool Msg::is_empty() const
+{
+    return this->encodedData.empty();
+}
+
+void Msg::clear()
+{
+    this->debugString = "";
+    this->data.clear();
+    this->encodedData = "";
+}
+
 const std::string &Msg::get_debug_string() const
 {
     return this->debugString;

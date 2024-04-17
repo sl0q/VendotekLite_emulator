@@ -9,6 +9,7 @@
 // #include <google/protobuf/util/json_util.h>
 
 #include "../proto_src/common/failure.pb.h"
+#include "../proto_src/common/notification.pb.h"
 
 #include "../proto_src/intellireader/commands4.pb.h"
 
@@ -60,7 +61,8 @@ public:
     };
 
 private:
-    std::vector<Action *> actions; // actions to do until timeout of IR message runs out if there is any
+    std::vector<Action *> preactions; // actions to do befor executing a message
+    std::vector<Action *> actions;    // actions to do until timeout of IR message runs out if there is any
 
     std::vector<uint8_t> origMsg;
     uint8_t msgID;
@@ -98,6 +100,8 @@ private:
     void execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
+    const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");
+    const Payload &generate_user_notification_payload(common::notification::UserMessage_MessageId id);
 
     // Misc util
     const Payload &generate_device_info_payload(Device &myDevice);
@@ -108,6 +112,10 @@ private:
 
     // const Payload &generate_power_on_payload(Device &myDevice);
     // const Payload &generate_transmit_apdu_payload(const ContactCard &card);
+
+    //  Contactless 1 util
+    const Payload &generate_poll_for_token_payload(Device &myDevice);
+    const Payload &generate_empty_poll_for_token_payload(Device &myDevice);
 
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());
 
@@ -120,6 +128,7 @@ public:
     bool is_control();
 
     void execute_message(Device &myDevice);
+    void add_preaction(Action &newPreaction);
     void add_action(Action &newAction);
     const std::string str() const;
 };
@@ -150,8 +159,8 @@ public:
 
     const ActionType get_type() const;
 
-    virtual void make_action(Device &myDevice) = 0;
-    virtual const std::string str() = 0;
+    virtual bool make_action(Device &myDevice) = 0;
+    virtual const std::string str() const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -164,9 +173,9 @@ private:
 public:
     CardAttacher(uint32_t cardID);
     // CLCardAttacher(const ContactlessCard &newCard);
-    void make_action(Device &myDevice);
+    bool make_action(Device &myDevice);
     void set_card_to_attach(uint32_t cardID);
-    const std::string str();
+    const std::string str() const;
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -178,9 +187,9 @@ private:
 
 public:
     CardRemover(uint32_t cardID);
-    void make_action(Device &myDevice);
+    bool make_action(Device &myDevice);
     void set_card_to_remove(uint32_t cardID);
-    const std::string str();
+    const std::string str() const;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -195,34 +204,35 @@ public:
     Canceller(const std::string newCancelMessage);
     ~Canceller();
     void set_cancel_message(const std::string newCancelMessage);
-    void make_action(Device &myDevice);
+    bool make_action(Device &myDevice);
+    const std::string str() const;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
 
-class MessageExecuter : public Action
-{
-private:
-    std::vector<std::string> *messages;
+// class MessageExecuter : public Action
+// {
+// private:
+//     std::vector<std::string> *messages;
 
-public:
-    MessageExecuter();
-    MessageExecuter(std::vector<std::string> &newMessages);
+// public:
+//     MessageExecuter();
+//     MessageExecuter(std::vector<std::string> &newMessages);
 
-    void make_action(Device &myDevice);
-    void add_message(std::string newMessage);
-    const std::string str();
-};
+//     void make_action(Device &myDevice);
+//     void add_message(std::string newMessage);
+//     const std::string str();
+// };
 
-/////////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////////
 
-class Waiter : public Action
-{
-private:
-    uint32_t timeToWait_ms{};
+// class Waiter : public Action
+// {
+// private:
+//     uint32_t timeToWait_ms{};
 
-public:
-    Waiter(uint32_t timeToWait_ms);
-    void make_action(Device &myDevice);
-    const std::string str();
-};
+// public:
+//     Waiter(uint32_t timeToWait_ms);
+//     void make_action(Device &myDevice);
+//     const std::string str();
+// };

@@ -16,7 +16,7 @@ Script::Script(std::string new_title)
 
 Script::~Script()
 {
-    for (auto contactlessCard : this->contactlessCards)
+    for (auto &contactlessCard : this->contactlessCards)
         if (contactlessCard != nullptr)
             delete contactlessCard;
     for (auto &step : this->steps)
@@ -26,12 +26,12 @@ Script::~Script()
     this->steps.clear();
 }
 
-void Script::setTitle(std::string newTitle)
+void Script::set_title(std::string newTitle)
 {
     this->title = newTitle;
 }
 
-const std::string Script::getTitle()
+const std::string Script::get_title()
 {
     return this->title;
 }
@@ -72,14 +72,20 @@ void Script::parse_card(json cardJson)
 
     newCard->set_card_ID(newCardID);
 
-    if (cardJson.count("answerToSelect") != 0)
-        newCard->set_answer_to_select(cardJson.at("answerToSelect").get<std::string>());
-
     contactless::token_type::TokenType newTokenType;
     if (!contactless::token_type::TokenType_Parse(cardJson.at("tokenType").get<std::string>(), &newTokenType))
         throw std::invalid_argument("Failed to parse [tokenType] parameter correctly");
     newCard->set_token_type(newTokenType);
     newCard->set_token_ID(cardJson.at("tokenID").get<std::string>());
+
+    if (cardJson.count("answerToSelect") != 0)
+        newCard->set_answer_to_select(cardJson.at("answerToSelect").get<std::string>());
+
+    if (cardJson.count("atqa") != 0)
+        newCard->set_atqa(cardJson.at("atqa").get<std::string>());
+
+    if (cardJson.count("sak") != 0)
+        newCard->set_sak(cardJson.at("sak").get<std::string>());
 
     this->contactlessCards.push_back(newCard);
 }
@@ -105,13 +111,14 @@ void Script::parse_step(json stepJson)
     auto newStep = new Step();
     newStep->set_message(stepJson.at("message").get<std::string>());
 
+    if (stepJson.count("preactions") != 0)
+        for (auto &preactionJson : stepJson["preactions"])
+            newStep->parse_preaction(preactionJson);
+
     if (stepJson.count("actions") != 0)
-    {
         for (auto &actionJson : stepJson["actions"])
-        {
             newStep->parse_action(actionJson);
-        }
-    }
+
     this->steps.push_back(newStep);
 }
 
@@ -138,6 +145,7 @@ void Script::execute_script(Device &myDevice)
         std::cout << "Executing step #" << iStep << ":\n"
                   << step->str() << std::endl;
         step->execute_step(myDevice);
+        ++iStep;
     }
 
     std::cout << "Script [" << this->title << "] has been executed.\n\n";
@@ -168,6 +176,32 @@ const std::string Step::str() const
     return s;
 }
 
+void Step::parse_preaction(json preactionJson)
+{
+    Action *newPreaction;
+    if (preactionJson.count("attach_card") != 0)
+        newPreaction = new CardAttacher(preactionJson.at("attach_card").get<uint32_t>());
+    else if (preactionJson.count("remove_card") != 0)
+        newPreaction = new CardRemover(preactionJson.at("remove_card").get<uint32_t>());
+
+    this->messageIR->add_preaction(*newPreaction);
+}
+
+void Step::parse_action(json actionJson)
+{
+    Action *newAction = nullptr;
+    if (actionJson.count("attach_card") != 0)
+        newAction = new CardAttacher(actionJson.at("attach_card").get<uint32_t>());
+    else if (actionJson.count("remove_card") != 0)
+        newAction = new CardRemover(actionJson.at("remove_card").get<uint32_t>());
+    else if (actionJson.count("send_cancel_message") != 0)
+        newAction = new Canceller(actionJson.at("send_cancel_message").get<std::string>());
+    else
+        throw ex::JsonParsingException("Could not parse [action] correctly");
+
+    this->messageIR->add_action(*newAction);
+}
+
 void Step::set_message(const std::string newMsg)
 {
     this->origMsg = newMsg;
@@ -177,15 +211,4 @@ void Step::set_message(const std::string newMsg)
 void Step::execute_step(Device &myDevice)
 {
     this->messageIR->execute_message(myDevice);
-}
-
-void Step::parse_action(json actionJson)
-{
-    Action *newAction;
-    if (actionJson.count("attach_card") != 0)
-        newAction = new CardAttacher(actionJson.at("attach_card").get<uint32_t>());
-    else if (actionJson.count("remove_card") != 0)
-        newAction = new CardRemover(actionJson.at("attach_card").get<uint32_t>());
-
-    this->messageIR->add_action(*newAction);
 }

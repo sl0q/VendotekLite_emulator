@@ -30,8 +30,8 @@ public:
 
     const std::string str(); // return script data as a string to print
 
-    void setTitle(std::string newTitle);
-    const std::string getTitle();
+    void set_title(std::string newTitle);
+    const std::string get_title();
     const ContactlessCard *find_cl_card(uint32_t cardID);
 
     void parse_card(json cardJson);
@@ -56,6 +56,7 @@ public:
     Step(const std::string newMsg);
     ~Step();
     const std::string str() const;
+    void parse_preaction(json preactionJson);
     void parse_action(json actionJson);
 
     void set_message(const std::string newMsg);

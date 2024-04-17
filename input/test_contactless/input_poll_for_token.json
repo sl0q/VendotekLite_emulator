@@ -1,17 +1,159 @@
 {
-    "scripts": [
+    "scripts": 
+    [
+        {
+            "title": "test poll for token with timeout = 0",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIABwMDAQoCIANNcQ==",
+                    "preactions":
+                    [
+                        {"attach_card": 1}
+                    ]
+                },
+                {
+                    "message": "SVIABwIDAQoCCABKPA=="
+                }
+            ]
+        },
+        {
+            "title": "test poll for token with timeout = 0 and no info on prev token",
+            "steps":
+            [
+                {
+                    "message": "SVIABwIDAQoCCABKPA=="
+                }
+            ]
+        },
+        {
+            "title": "test poll for token cancelation",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "actions":
+                    [
+                        {"send_cancel_message": "SVIAAwAABvbu"}
+                    ]
+
+                }
+            ]
+        },
+        {
+            "title": "test poll for token with no timeout",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIABwMDAQoCIANNcQ==",
+                    "actions":
+                    [
+                        {"attach_card": 1}
+                    ]
+
+                }
+            ]
+        },
+        {
+            "title": "test poll for token with no timeout and no card",
+            "steps":
+            [
+                {
+                    "message": "SVIABwMDAQoCIANNcQ=="
+                }
+            ]
+        },
         {
             "title": "test poll for token 1000 ms",
-            "messages": [
-                "SVIACgEDAQoFCOgHIAJqhw=="
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
             ],
-            "card":
-            {
-                "contact": false,
-                "tokenType": "ISO_14443_4A",
-                "answerToSelect": "bytesbytes"
-            }
+            "steps":
+            [
+                {
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "actions":
+                    [
+                        {"attach_card": 1}
+                    ]
+
+                }
+            ]
+        },
+        {
+            "title": "test poll for token 1000 ms with no cards",
+            "steps":
+            [
+                {
+                    "message": "SVIACgEDAQoFCOgHIAJqhw=="
+                }
+            ]
+        },
+        {
+            "title": "test poll for token multiple cards",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                },
+                {
+                    "cardID": 2,
+                    "tokenType": "MIFARE_CLASSIC_1K",
+                    "tokenID": "4321uniqueID"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":
+                    [
+                        {"attach_card": 1},
+                        {"attach_card": 2}
+                    ],
+                    "actions":
+                    [
+                        {"remove_card": 2}
+                    ]
+
+                }
+            ]
         }
     ]
-
 }

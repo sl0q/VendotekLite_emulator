@@ -16,6 +16,10 @@ ContactlessCard::ContactlessCard(uint32_t cardID,
     this->answerToSelect = newAnswerToSelect;
 }
 
+ContactlessCard::~ContactlessCard()
+{
+}
+
 void ContactlessCard::set_card_ID(uint32_t newCardID)
 {
     this->id = newCardID;
@@ -36,9 +40,43 @@ void ContactlessCard::set_answer_to_select(std::string newAnswerToSelect)
     this->answerToSelect = newAnswerToSelect;
 }
 
+void ContactlessCard::set_atqa(std::string newATQA)
+{
+    this->atqa = newATQA;
+}
+
+void ContactlessCard::set_sak(std::string newSAK)
+{
+    this->sak = newSAK;
+}
+
 uint32_t ContactlessCard::get_id() const
 {
     return this->id;
+}
+
+contactless::token_type::TokenType ContactlessCard::get_token_type() const
+{
+    return this->tokenType;
+}
+std::string ContactlessCard::get_token_id() const
+{
+    return this->tokenID;
+}
+
+std::string ContactlessCard::get_answer_to_select() const
+{
+    return this->answerToSelect;
+}
+
+std::string ContactlessCard::get_atqa() const
+{
+    return this->atqa;
+}
+
+std::string ContactlessCard::get_sak() const
+{
+    return this->sak;
 }
 
 const std::string ContactlessCard::str() const

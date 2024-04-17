@@ -2,25 +2,13 @@
 
 Device::Device()
 {
-    this->serialNumber = "CL4P7R4P";
-    this->IntelliReaderVersion = "1.50";
-    this->operationMode = misc::reboot::Reboot_OperationMode::Reboot_OperationMode_NORMAL_MODE;
-    this->baudrate = misc::baudrate::BPS_115200;
-
-    this->timeToRestart = 0;
-    this->security = new misc::device::Security();
-    this->security->set_enabled(true);
-    this->security->set_pci_pts_functions_permitted(true);
-    this->security->set_restrictions_reason("");
-    this->security->set_anti_removal_protection(misc::device::AntiRemovalProtState::ACTIVATED);
-
-    misc::lan_settings::Dhcp dhcp;
-    this->lanSettings.set_allocated_dhcp(&dhcp);
+    load_default_state();
 }
 
 Device::Device(std::string configFilePath)
 {
-    loadConfig(configFilePath);
+    this->configFilePath = configFilePath;
+    load_configured_state();
 }
 
 Device::~Device()
@@ -52,8 +40,9 @@ bool Device::is_script_loaded()
     return !this->inputFilePath.empty();
 }
 
-void Device::loadConfig(std::string configFilePath)
+void Device::load_config(std::string configFilePath)
 {
+    this->configFilePath = "";
     // открыть JSON
     std::ifstream file(configFilePath);
     if (!file.is_open())
@@ -67,12 +56,6 @@ void Device::loadConfig(std::string configFilePath)
 
     // парсинг
     std::string tempStr;
-
-    //  parse input scripts
-    if (json_content.count("inputFile") != 0)
-        loadInputScriptFile(json_content.at("inputFile").get<std::string>());
-    else
-        std::cout << "WARNING: Input script file was not provided.";
 
     //  parse device properties
     if (json_content.count("device") == 0)
@@ -260,7 +243,7 @@ void Device::loadConfig(std::string configFilePath)
     this->configFilePath = configFilePath;
 }
 
-void Device::loadInputScriptFile(std::string inputScriptFilePath)
+void Device::load_input_script_file(std::string inputScriptFilePath)
 {
     this->inputFilePath = inputScriptFilePath;
 
@@ -424,10 +407,54 @@ void Device::execute_scripts()
     iScript = 0;
     for (auto &s : this->scripts)
     {
-        std::cout << "Script #" << iScript << ":\n";
+        std::cout << "Loading default device state from config..." << std::endl;
+        load_configured_state();
+        std::cout << "Script #" << iScript << ":\n"
+                  << s->get_title() << std::endl;
         s->execute_script(*this);
         ++iScript;
     }
+}
+
+void Device::load_default_state()
+{
+    this->serialNumber = "1483369";
+    this->IntelliReaderVersion = "1.50";
+    this->operationMode = misc::reboot::Reboot_OperationMode::Reboot_OperationMode_NORMAL_MODE;
+    this->baudrate = misc::baudrate::BPS_115200;
+
+    this->timeToRestart = 0;
+    this->security = new misc::device::Security();
+    this->security->set_enabled(true);
+    this->security->set_pci_pts_functions_permitted(true);
+    this->security->set_restrictions_reason("");
+    this->security->set_anti_removal_protection(misc::device::AntiRemovalProtState::ACTIVATED);
+
+    auto dhcp = new misc::lan_settings::Dhcp();
+    this->lanSettings.set_allocated_dhcp(dhcp);
+
+    this->leds.set_blue(false);
+    this->leds.set_yellow(false);
+    this->leds.set_green(false);
+    this->leds.set_red(false);
+    this->leds.set_lcd_backlight(false);
+
+    this->statistic.clear_ethernet();
+    this->statistic.clear_events();
+    this->statistic.clear_lwip();
+
+    this->pollForTokenResponce.clear();
+
+    this->cardsInField.clear();
+}
+
+void Device::load_configured_state()
+{
+    load_default_state();
+    if (this->configFilePath.empty())
+        std::cout << "Configuration file was not provided. Default device settings will be used." << std::endl;
+    else
+        load_config(this->configFilePath);
 }
 
 void Device::attach_contactless_card(uint32_t cardID)
@@ -448,6 +475,19 @@ void Device::remove_contactless_card(uint32_t cardID)
         }
         ++i;
     }
+}
+
+const ContactlessCard *Device::get_card_in_field()
+{
+    if (cardsInField.size() > 1)
+        return nullptr;
+    else
+        return cardsInField[0];
+}
+
+uint32_t Device::how_many_cards()
+{
+    return cardsInField.size();
 }
 
 void Device::wait(uint32_t timeToWait_ms)
@@ -498,4 +538,14 @@ misc::baudrate::Baudrate &Device::get_baudrate()
 misc::lan_settings::LanSettings &Device::get_lan_settings()
 {
     return this->lanSettings;
+}
+
+const Msg &Device::get_previous_poll_for_token()
+{
+    return this->pollForTokenResponce;
+}
+
+void Device::set_poll_for_token_responce(const Msg &responce)
+{
+    this->pollForTokenResponce = responce;
 }

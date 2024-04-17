@@ -34,6 +34,8 @@ private:
     uint32_t id;
     std::string tokenID;
     std::string answerToSelect;
+    std::string atqa;
+    std::string sak;
 
 public:
     ContactlessCard();
@@ -41,10 +43,20 @@ public:
                     const contactless::token_type::TokenType newTokenType,
                     const std::string newTokenID,
                     const std::string newAnswerToSelect);
+    ~ContactlessCard();
     void set_card_ID(uint32_t newCardID);
     void set_token_type(contactless::token_type::TokenType newTokenType);
     void set_token_ID(std::string newTokenID);
     void set_answer_to_select(std::string newAnswerToSelect);
+    void set_atqa(std::string newATQA);
+    void set_sak(std::string newSAK);
+
     uint32_t get_id() const;
+    contactless::token_type::TokenType get_token_type() const;
+    std::string get_token_id() const;
+    std::string get_answer_to_select() const;
+    std::string get_atqa() const;
+    std::string get_sak() const;
+
     const std::string str() const;
 };

@@ -45,7 +45,7 @@ MessageIR::MessageIR(std::string encodedStringMessage)
     case 1: // command
         if (!parse_payload())
         {
-            std::string errorMessage("Failed to parse message payload\nMSG_ID: " + this->msgID);
+            std::string errorMessage("Failed to parse message payload\nMSG_ID: " + std::to_string(this->msgID));
             Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::PAYLOAD_PARSING_ERROR, errorMessage));
             std::cout << "Generated responce:" << std::endl;
             generatedResponce.print_MSG();
@@ -66,6 +66,12 @@ MessageIR::~MessageIR()
     for (auto &action : this->actions)
         if (action)
             delete action;
+    this->actions.clear();
+
+    for (auto &preaction : this->preactions)
+        if (preaction)
+            delete preaction;
+    this->preactions.clear();
 
     if (this->msg)
         delete this->msg;
@@ -95,8 +101,8 @@ google::protobuf::Message *MessageIR::find_protobuf_module()
         // case 3:
         //     return new ContactLevel2();
 
-        // case 3:
-        //     return new ContactlessLeve1();
+    case 3:
+        return new ContactlessLevel1();
 
         // case 4:
         //     return new ContactlessLeve2();
@@ -212,6 +218,11 @@ void MessageIR::execute_message(Device &myDevice)
         generatedResponce.print_MSG();
         throw ex::FailedExecution(errorMessage.str());
     }
+}
+
+void MessageIR::add_preaction(Action &newPreaction)
+{
+    this->preactions.push_back(&newPreaction);
 }
 
 void MessageIR::add_action(Action &newAction)
@@ -629,33 +640,155 @@ void MessageIR::execute_contactless_1(Device &myDevice)
 
 void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice)
 {
-    /*
-        - проверить ледс
-        - отправить пендинг
-        - проверить таймаут
-    */
+    for (auto &preaction : this->preactions)
+    {
+        preaction->make_action(myDevice);
+        std::cout << "Action {" << preaction->str() << "} was made\n";
+    }
 
     std::cout << "Executing [poll_for_token]...\n\n";
+
+    auto pollForToken = miscMessage.poll_for_token();
+
+    if (pollForToken.has_light_up_led())
+    {
+        misc::leds::Leds newLeds;
+        newLeds.set_blue(true);
+        myDevice.set_leds_state(newLeds);
+        std::cout << "blue led is ON" << std::endl;
+    }
 
     std::cout << "Returning Pending message..." << std::endl;
     generate_responce(PENDING).print_MSG();
 
-    auto pollForToken = miscMessage.poll_for_token();
+    const Msg *generatedResponce = nullptr;
 
-    for (auto &action : this->actions)
+    if (pollForToken.has_timeout())
     {
-        action->make_action(myDevice);
+        // it there is timeout field
 
-        // как отреагирует система после этого действия
+        if (pollForToken.timeout() == 0)
+        {
+            // if timeout == 0 - return previous result
+            generatedResponce = new Msg(myDevice.get_previous_poll_for_token());
+            if (generatedResponce->is_empty())
+            {
+                std::cout << "There is no data about token from previous card. Responce with empty payload will be returned." << std::endl;
+                delete generatedResponce;
+                generatedResponce = &generate_responce(SUCCESS, generate_empty_poll_for_token_payload(myDevice));
+            }
+        }
+        else
+        {
+            if (myDevice.how_many_cards() > 1) // send notification
+            {
+                std::cout << "Returning Notification message..." << std::endl;
+                generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY)).print_MSG();
+            }
+
+            if (myDevice.how_many_cards() == 1) // get token, send success message
+            {
+                generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice));
+                myDevice.set_poll_for_token_responce(*generatedResponce);
+            }
+            else
+                for (auto &action : this->actions)
+                {
+                    bool actionSuccess = action->make_action(myDevice);
+                    std::cout << "Action {" << action->str() << "} was made\n";
+
+                    if (action->get_type() == SEND_CANCEL_MESSAGE && actionSuccess) // if cancelation was successful
+                    {
+                        std::cout << "[poll_for_token] was canceled by HOST" << std::endl;
+                        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+                        break;
+                    }
+                    else if (myDevice.how_many_cards() > 1) // send notification
+                    {
+                        std::cout << "Returning Notification message..." << std::endl;
+                        generatedResponce = &generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY));
+                    }
+                    else if (myDevice.how_many_cards() == 1)
+                    {
+                        // get token and break, send success message
+                        generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice));
+                        myDevice.set_poll_for_token_responce(*generatedResponce);
+                        break;
+                    }
+                }
+        }
+    }
+    else
+    {
+        // if there is no timeout - poll forever
+        if (myDevice.how_many_cards() > 1) // send notification
+        {
+            std::cout << "Returning Notification message..." << std::endl;
+            generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY)).print_MSG();
+        }
+
+        if (myDevice.how_many_cards() == 1)
+        {
+            generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice));
+            myDevice.set_poll_for_token_responce(*generatedResponce);
+        }
+        else if (this->actions.empty())
+        {
+            std::cout << "In the script command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST" << std::endl;
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+            // report what terminal has stuck in poll mode and command was canceled by HOST with cancel message. send failure(processing_stopped)
+        }
+        else
+        {
+            for (auto &action : this->actions)
+            {
+                bool actionSuccess = action->make_action(myDevice);
+                std::cout << "Action {" << action->str() << "} was made\n";
+
+                if (action->get_type() == SEND_CANCEL_MESSAGE && actionSuccess) // if cancelation was successful
+                {
+                    std::cout << "[poll_for_token] was canceled by HOST" << std::endl;
+                    generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+                    break;
+                }
+                else if (myDevice.how_many_cards() > 1) // send notification
+                {
+                    std::cout << "Returning Notification message..." << std::endl;
+                    generatedResponce = &generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY));
+                }
+                else if (myDevice.how_many_cards() == 1)
+                {
+                    generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice));
+                    myDevice.set_poll_for_token_responce(*generatedResponce);
+                    break;
+                    // get token and break, send success message
+                }
+            }
+
+            if (generatedResponce == nullptr)
+            {
+                std::cout << "In current script command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST" << std::endl;
+                generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+            }
+        }
     }
 
-    std::cout
-        << "Finised execution.\n\n";
+    if (generatedResponce == nullptr)
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::TIMEOUT_EXPIRED, "Timeout has expired"));
 
-    Msg generatedResponce = generate_responce(SUCCESS);
+    if (pollForToken.has_light_up_led())
+    {
+        misc::leds::Leds newLeds;
+        newLeds.set_blue(false);
+        myDevice.set_leds_state(newLeds);
+        std::cout << "blue led is OFF" << std::endl;
+    }
+
+    std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;
-    generatedResponce.print_MSG();
+    generatedResponce->print_MSG();
+    delete generatedResponce;
 }
 
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)
@@ -671,6 +804,36 @@ const Payload &MessageIR::generate_failure_payload(common::failure::Error errorT
     failureResponce->SerializeToArray(buf.data(), buf_size);
 
     Payload &generatedPayload = *(new Payload(failureResponce->DebugString(), buf));
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString)
+{
+    auto notifyResponce = new common::notification::LogMessage();
+    notifyResponce->set_level(importance);
+    if (!msgString.empty())
+        notifyResponce->set_msg(msgString);
+
+    std::vector<uint8_t> buf;
+    buf.resize(notifyResponce->ByteSizeLong());
+    int buf_size = buf.size();
+    notifyResponce->SerializeToArray(buf.data(), buf_size);
+
+    Payload &generatedPayload = *(new Payload(notifyResponce->DebugString(), buf));
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_user_notification_payload(common::notification::UserMessage_MessageId id)
+{
+    auto notifyResponce = new common::notification::UserMessage();
+    notifyResponce->set_message_id(id);
+
+    std::vector<uint8_t> buf;
+    buf.resize(notifyResponce->ByteSizeLong());
+    int buf_size = buf.size();
+    notifyResponce->SerializeToArray(buf.data(), buf_size);
+
+    Payload &generatedPayload = *(new Payload(notifyResponce->DebugString(), buf));
     return generatedPayload;
 }
 
@@ -796,6 +959,47 @@ const Payload &MessageIR::generate_lan_settings_payload(Device &myDevice)
 //     return generatedPayload;
 // }
 
+const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice)
+{
+    auto card = myDevice.get_card_in_field();
+    auto responcePFT = new contactless::token::Token();
+
+    responcePFT->set_type(card->get_token_type());
+    responcePFT->set_id(card->get_token_id());
+
+    std::string tempString = card->get_answer_to_select();
+    if (!tempString.empty())
+        responcePFT->set_answer_to_select(tempString);
+    tempString = card->get_atqa();
+    if (!tempString.empty())
+        responcePFT->set_atqa(tempString);
+    tempString = card->get_sak();
+    if (!tempString.empty())
+        responcePFT->set_sak(tempString);
+
+    std::vector<uint8_t> buf;
+    buf.resize(responcePFT->ByteSizeLong());
+    int buf_size = buf.size();
+    responcePFT->SerializeToArray(buf.data(), buf_size);
+
+    Payload &generatedPayload = *(new Payload(responcePFT->DebugString(), buf));
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_empty_poll_for_token_payload(Device &myDevice)
+{
+    auto emptyPFT = new contactless::token::Token();
+    emptyPFT->set_type(contactless::token_type::UNKNOWN);
+
+    std::vector<uint8_t> buf;
+    buf.resize(emptyPFT->ByteSizeLong());
+    int buf_size = buf.size();
+    emptyPFT->SerializeToArray(buf.data(), buf_size);
+
+    Payload &generatedPayload = *(new Payload(emptyPFT->DebugString(), buf));
+    return generatedPayload;
+}
+
 const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &generatedPayload /* = Payload()*/)
 {
     std::vector<uint8_t> buf;
@@ -885,12 +1089,14 @@ const ActionType Action::get_type() const
 
 CardAttacher::CardAttacher(uint32_t cardID)
 {
+    this->actionType = ATTACH_CARD;
     this->cardToAttachID = cardID;
 }
 
-void CardAttacher::make_action(Device &myDevice)
+bool CardAttacher::make_action(Device &myDevice)
 {
     myDevice.attach_contactless_card(cardToAttachID);
+    return true;
 }
 
 void CardAttacher::set_card_to_attach(uint32_t cardID)
@@ -898,19 +1104,21 @@ void CardAttacher::set_card_to_attach(uint32_t cardID)
     this->cardToAttachID = cardID;
 }
 
-const std::string CardAttacher::str()
+const std::string CardAttacher::str() const
 {
     return std::string("Attach card with id " + std::to_string(cardToAttachID) + " to card reader RF-field");
 }
 
 CardRemover::CardRemover(uint32_t cardID)
 {
+    this->actionType = REMOVE_CARD;
     this->cardToRemoveID = cardID;
 }
 
-void CardRemover::make_action(Device &myDevice)
+bool CardRemover::make_action(Device &myDevice)
 {
     myDevice.remove_contactless_card(cardToRemoveID);
+    return true;
 }
 
 void CardRemover::set_card_to_remove(uint32_t cardID)
@@ -918,17 +1126,20 @@ void CardRemover::set_card_to_remove(uint32_t cardID)
     this->cardToRemoveID = cardID;
 }
 
-const std::string CardRemover::str()
+const std::string CardRemover::str() const
 {
     return std::string("Remove card with id " + std::to_string(cardToRemoveID) + " from card reader RF-field");
 }
 
 Canceller::Canceller()
 {
+    this->actionType = SEND_CANCEL_MESSAGE;
+    this->cancelMessage = "SVIAAwAABvbu"; // encoded control IR message
 }
 
 Canceller::Canceller(const std::string newCancelMessage)
 {
+    this->actionType = SEND_CANCEL_MESSAGE;
     this->cancelMessage = newCancelMessage;
 }
 
@@ -941,54 +1152,91 @@ void Canceller::set_cancel_message(const std::string newCancelMessage)
     this->cancelMessage = newCancelMessage;
 }
 
-void Canceller::make_action(Device &myDevice)
+bool Canceller::make_action(Device &myDevice)
 {
-}
-
-MessageExecuter::MessageExecuter()
-{
-}
-
-MessageExecuter::MessageExecuter(std::vector<std::string> &newMessages)
-{
-    this->messages = &newMessages;
-}
-
-void MessageExecuter::make_action(Device &myDevice)
-{
-    for (std::string &strMessage : *this->messages)
+    //  if encoded message was provided in script check if it's valid
+    if (!this->cancelMessage.empty())
     {
-        MessageIR currentMessage(strMessage);
-        if (currentMessage.is_command())
-            currentMessage.execute_message(myDevice);
+        auto msgBytes = bs64::base64_decode(this->cancelMessage);
+
+        // check header
+        if (msgBytes[0] != 'I' || msgBytes[1] != 'R')
+        {
+            std::cout << "Provided control message has wrong IR header. The cancel command will be ignored." << std::endl;
+            return false;
+        }
+
+        // check message type
+        if (msgBytes[6] != 0x06)
+        {
+            std::cout << "Provided control message has wrong message type ID. Expected message type for control message is 0x06. The cancel command will be ignored." << std::endl;
+            return false;
+        }
+
+        // check checksum
+        uint16_t checksum = (*(msgBytes.end() - 2) << 8) | *(msgBytes.end() - 1);
+        std::vector<uint8_t> buf;
+        buf.insert(buf.begin(), msgBytes.begin(), msgBytes.end() - 2);
+        // вычисляем КС и сравниваем с полученной ранее
+        if (checksum != crc::calcCrc16(buf))
+        {
+            std::cout << "Provided control message has incorrect checksum. The cancel command will be ignored." << std::endl;
+            return false;
+        }
     }
+
+    return true;
 }
 
-void MessageExecuter::add_message(std::string newMessage)
+const std::string Canceller::str() const
 {
-    this->messages->push_back(newMessage);
+    return std::string("Cancel current operation");
 }
 
-const std::string MessageExecuter::str()
-{
-    std::string s("Encoded messages to execute:\n");
-    for (auto &m : *this->messages)
-        s += "\t" + m + "\n";
-    s.pop_back(); // delete last \n
-    return s;
-}
+// MessageExecuter::MessageExecuter()
+// {
+// }
 
-Waiter::Waiter(uint32_t timeToWait_ms)
-{
-    this->timeToWait_ms = timeToWait_ms;
-}
+// MessageExecuter::MessageExecuter(std::vector<std::string> &newMessages)
+// {
+//     this->messages = &newMessages;
+// }
 
-void Waiter::make_action(Device &myDevice)
-{
-    myDevice.wait(this->timeToWait_ms);
-}
+// void MessageExecuter::make_action(Device &myDevice)
+// {
+//     for (std::string &strMessage : *this->messages)
+//     {
+//         MessageIR currentMessage(strMessage);
+//         if (currentMessage.is_command())
+//             currentMessage.execute_message(myDevice);
+//     }
+// }
 
-const std::string Waiter::str()
-{
-    return std::string("Wait for " + std::to_string(this->timeToWait_ms) + " ms");
-}
+// void MessageExecuter::add_message(std::string newMessage)
+// {
+//     this->messages->push_back(newMessage);
+// }
+
+// const std::string MessageExecuter::str()
+// {
+//     std::string s("Encoded messages to execute:\n");
+//     for (auto &m : *this->messages)
+//         s += "\t" + m + "\n";
+//     s.pop_back(); // delete last \n
+//     return s;
+// }
+
+// Waiter::Waiter(uint32_t timeToWait_ms)
+// {
+//     this->timeToWait_ms = timeToWait_ms;
+// }
+
+// void Waiter::make_action(Device &myDevice)
+// {
+//     myDevice.wait(this->timeToWait_ms);
+// }
+
+// const std::string Waiter::str()
+// {
+//     return std::string("Wait for " + std::to_string(this->timeToWait_ms) + " ms");
+// }

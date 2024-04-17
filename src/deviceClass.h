@@ -25,6 +25,7 @@ class Script;
 #include "myExceptions.h"
 #include "scriptClass.h"
 #include "cards.h"
+#include "msg.h"
 
 struct DeviceInfoStruct
 {
@@ -64,7 +65,10 @@ private:
     misc::device::Security *security;
     misc::lan_settings::LanSettings lanSettings;
     misc::leds::Leds leds;
+
+    // Device collected data
     misc::stats::DeviceStatistic statistic;
+    Msg pollForTokenResponce; // saved responce on contactless::poll_for_token command
 
     std::vector<const ContactlessCard *> cardsInField; // contactless cards in RF field of the terminal
 
@@ -81,16 +85,19 @@ public:
     bool is_config_loaded();
     bool is_script_loaded();
 
-    void loadConfig(std::string configFilePath);
-    void loadInputScriptFile(std::string inputScriptFilePath);
+    void load_config(std::string configFilePath);
+    void load_input_script_file(std::string inputScriptFilePath);
     misc::lwip::ProtocolStats *parseProtocolStatsJson(json &protocolStatsJson, const std::string protocolStatsName);
     misc::ethernet::PortStats *parsePortStatsJson(json &portStatsJson, const std::string portName);
-    // void parse_card(json cardJson, ContactlessCard &newContactlessCard);
 
     void _print_scripts();
     void execute_scripts();
+    void load_default_state();
+    void load_configured_state();
     void attach_contactless_card(uint32_t cardID);
     void remove_contactless_card(uint32_t cardID);
+    const ContactlessCard *get_card_in_field();
+    uint32_t how_many_cards();
     void wait(uint32_t timeToWait_ms);
 
     // if needed make a buzzer implimentation
@@ -108,4 +115,7 @@ public:
     misc::stats::DeviceStatistic &get_device_statistic();
     misc::baudrate::Baudrate &get_baudrate();
     misc::lan_settings::LanSettings &get_lan_settings();
+
+    const Msg &get_previous_poll_for_token();
+    void set_poll_for_token_responce(const Msg &responce);
 };

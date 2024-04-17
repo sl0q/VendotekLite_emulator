@@ -20,6 +20,9 @@ public:
     Msg(const std::string &newDebugString, const std::vector<uint8_t> &newData);
     ~Msg();
 
+    bool is_empty() const;
+    void clear();
+
     const std::string &get_debug_string() const;
     const std::vector<uint8_t> &get_data() const;
     const std::string get_data_as_string() const;
