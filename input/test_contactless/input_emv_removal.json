@@ -1,0 +1,105 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test emv removal without timeout",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIABQIDARIAF7g=",
+                    "preactions":
+                    [
+                        {"attach_card": 1}
+                    ],
+                    "actions":
+                    [
+                        {"remove_card": 1}
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "test emv removal without timeout canceled",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIABQIDARIAF7g=",
+                    "preactions":
+                    [
+                        {"attach_card": 1}
+                    ],
+                    "actions":
+                    [
+                        {"send_cancel_message": ""}
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "test emv removal with timeout = 5000",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIACAEDARIDCIgnM9g=",
+                    "preactions":
+                    [
+                        {"attach_card": 1}
+                    ],
+                    "actions":
+                    [
+                        {"remove_card": 1}
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "test emv removal with timeout = 5000 expired",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIACAEDARIDCIgnM9g=",
+                    "preactions":
+                    [
+                        {"attach_card": 1}
+                    ]
+                }
+            ]
+        }
+    ]
+}

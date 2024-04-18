@@ -95,9 +95,12 @@ private:
     void execute_change_baudrate(Miscellaneous &miscMessage, Device &myDevice);
     void execute_change_lan_settings(Miscellaneous &miscMessage, Device &myDevice);
 
+    void execute_contact();
+
     //  ContactlessLevel1
     void execute_contactless_1(Device &myDevice);
-    void execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice);
+    void execute_poll_for_token(ContactlessLevel1 &contactlessMessage, Device &myDevice);
+    void execute_emv_removal(ContactlessLevel1 &contactlessMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
     const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");

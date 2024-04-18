@@ -189,6 +189,12 @@ bool MessageIR::parse_payload()
 
 void MessageIR::execute_message(Device &myDevice)
 {
+    for (auto &preaction : this->preactions)
+    {
+        preaction->make_action(myDevice);
+        std::cout << "Action {" << preaction->str() << "} was made\n";
+    }
+
     switch (this->moduleID)
     {
     case 1:
@@ -196,13 +202,7 @@ void MessageIR::execute_message(Device &myDevice)
         break;
     case 2:
     {
-        std::ostringstream errorMessage;
-        errorMessage << "Failed to execute command message. Module [Contact] is not supported."
-                     << "\nMSG_ID: " << std::to_string(this->msgID);
-        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage.str()));
-        std::cout << "Generated responce:" << std::endl;
-        generatedResponce.print_MSG();
-        throw ex::FailedExecution(errorMessage.str());
+        execute_contact();
     }
     case 3:
         execute_contactless_1(myDevice);
@@ -277,14 +277,11 @@ void MessageIR::execute_misc(Device &myDevice)
         break;
 
     default:
-        std::ostringstream errorMessage;
-        errorMessage << "Failed to execute [Miscellaneous] command message. Unrecognised [command]."
-                     << "\nMSG_ID: " << std::to_string(this->msgID)
-                     << "\nmisc_cmd_case: " << std::to_string(miscMessage.misc_cmd_case());
-        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage.str()));
+        std::string errorMessage("Unrecognised [command]. [Miscellaneous] module. MSG_ID: " + std::to_string(this->msgID) +
+                                 ". misc_cmd_case: " + std::to_string(miscMessage.misc_cmd_case()));
+        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage));
         std::cout << "Generated responce:" << std::endl;
         generatedResponce.print_MSG();
-        throw ex::FailedExecution(errorMessage.str());
     }
 }
 
@@ -474,6 +471,14 @@ void MessageIR::execute_change_lan_settings(Miscellaneous &miscMessage, Device &
     generatedResponce.print_MSG();
 }
 
+void MessageIR::execute_contact()
+{
+    std::string errorMessage("Module [Contact] is not supported. MSG_ID: " + std::to_string(this->msgID));
+    Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage));
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce.print_MSG();
+}
+
 // void MessageIR::execute_contact(Device &myDevice)
 // {
 //     ContactLevel1 contactLvl1Message = *(dynamic_cast<ContactLevel1 *>(this->msg));
@@ -620,11 +625,20 @@ void MessageIR::execute_contactless_1(Device &myDevice)
     case ContactlessLevel1::kPollForToken:
         execute_poll_for_token(contactlessLvl1Message, myDevice);
         break;
-    // case ContactlessLevel1::kEmvRemoval:
-    //     execute_power_off(contactLvl1Message, myDevice);
-    //     break;
+    case ContactlessLevel1::kEmvRemoval:
+        execute_emv_removal(contactlessLvl1Message, myDevice);
+        break;
     // case ContactlessLevel1::kTsvBitArray:
-    //     execute_transmit_apdu(contactLvl1Message, myDevice);
+    //     execute_tsv_bit_array(contactlessLvl1Message, myDevice);
+    //     break;
+    // case ContactlessLevel1::kIso144434Command:
+    //     execute_tsv_iso_command(contactlessLvl1Message, myDevice);
+    //     break;
+    // case ContactlessLevel1::kPowerOffField:
+    //     execute_power_off_rf(contactlessLvl1Message, myDevice);
+    //     break;
+    // case ContactlessLevel1::kRequestForAts:
+    //     execute_rats(contactlessLvl1Message, myDevice);
     //     break;
     default:
         std::ostringstream errorMessage;
@@ -640,12 +654,6 @@ void MessageIR::execute_contactless_1(Device &myDevice)
 
 void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice)
 {
-    for (auto &preaction : this->preactions)
-    {
-        preaction->make_action(myDevice);
-        std::cout << "Action {" << preaction->str() << "} was made\n";
-    }
-
     std::cout << "Executing [poll_for_token]...\n\n";
 
     auto pollForToken = miscMessage.poll_for_token();
@@ -783,6 +791,52 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
         myDevice.set_leds_state(newLeds);
         std::cout << "blue led is OFF" << std::endl;
     }
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+    delete generatedResponce;
+}
+
+void MessageIR::execute_emv_removal(ContactlessLevel1 &miscMessage, Device &myDevice)
+{
+    std::cout << "Executing [emv_removal]...\n\n";
+
+    auto emvRemoval = miscMessage.emv_removal();
+
+    std::cout << "Returning Pending message..." << std::endl;
+    generate_responce(PENDING).print_MSG();
+
+    const Msg *generatedResponce = nullptr;
+
+    for (auto &action : this->actions)
+    {
+        bool actionSuccess = action->make_action(myDevice);
+        std::cout << "Action {" << action->str() << "} was made\n";
+
+        if (action->get_type() == SEND_CANCEL_MESSAGE && actionSuccess) // if cancelation was successful
+        {
+            std::cout << "[emv_removal] was canceled by HOST" << std::endl;
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+            break;
+        }
+    }
+
+    if (generatedResponce == nullptr)
+    {
+        if (!emvRemoval.has_timeout())
+            generatedResponce = &generate_responce(SUCCESS);
+        else
+        {
+            if (myDevice.how_many_cards() > 0)
+                generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::TIMEOUT_EXPIRED));
+            else
+                generatedResponce = &generate_responce(SUCCESS);
+        }
+    }
+
+    std::cout << "RF-field is powered off." << std::endl;
 
     std::cout << "Finised execution.\n\n";
 
