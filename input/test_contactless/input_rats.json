@@ -1,0 +1,41 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test rats with dual card",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "SMART_MX_WITH_MIFARE_1K",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "preactions":
+                    [
+                        {"attach_card": 1}
+                    ],
+                    "message": "SVIACwEDAQoGEAEgAjAB6L4=",
+                    "comment": "poll for token SMART_MX_WITH_MIFARE_1K card"
+                },
+                {
+                    "message": "",
+                    "comment": "auth mifare classic which has to fail"
+                },
+
+                {
+                    "message": "SVIABQIDARIAF7g=",
+                    "comment": "after auth failed send RATS"
+                },
+                {
+                    "message": "SVIABwIDAQoCCABKPA==",
+                    "comment":  "poll for token, timeout = 0"
+                }
+            ]
+        }
+    ]
+}

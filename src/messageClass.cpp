@@ -93,19 +93,13 @@ google::protobuf::Message *MessageIR::find_protobuf_module()
     {
     case 1: // Miscellaneous
         return new Miscellaneous();
-
     case 2:
         // про ContactLevel2 в документации ничего нет
         return new ContactLevel1();
-
-        // case 3:
-        //     return new ContactLevel2();
-
     case 3:
         return new ContactlessLevel1();
-
-        // case 4:
-        //     return new ContactlessLeve2();
+    case 4:
+        return new ContactlessLevel2();
 
         // case 5:
         //     return new Mifare();
@@ -206,6 +200,9 @@ void MessageIR::execute_message(Device &myDevice)
     }
     case 3:
         execute_contactless_1(myDevice);
+        break;
+    case 4:
+        execute_contactless_2(myDevice);
         break;
     // more modules
     default:
@@ -634,9 +631,9 @@ void MessageIR::execute_contactless_1(Device &myDevice)
     // case ContactlessLevel1::kIso144434Command:
     //     execute_tsv_iso_command(contactlessLvl1Message, myDevice);
     //     break;
-    // case ContactlessLevel1::kPowerOffField:
-    //     execute_power_off_rf(contactlessLvl1Message, myDevice);
-    //     break;
+    case ContactlessLevel1::kPowerOffField:
+        execute_power_off_rf(contactlessLvl1Message, myDevice);
+        break;
     // case ContactlessLevel1::kRequestForAts:
     //     execute_rats(contactlessLvl1Message, myDevice);
     //     break;
@@ -845,6 +842,78 @@ void MessageIR::execute_emv_removal(ContactlessLevel1 &miscMessage, Device &myDe
     delete generatedResponce;
 }
 
+void MessageIR::execute_tsv_bit_array(ContactlessLevel1 &contactlessMessage, Device &myDevice)
+{
+}
+
+void MessageIR::execute_power_off_rf(ContactlessLevel1 &contactlessMessage, Device &myDevice)
+{
+    std::cout << "Executing [emv_removal]...\n\n";
+
+    std::cout << "RF-field is powered off." << std::endl;
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    Msg generatedResponce = generate_responce(SUCCESS);
+    generatedResponce.print_MSG();
+}
+
+void MessageIR::execute_contactless_2(Device &myDevice)
+{
+    ContactlessLevel2 contactlessLvl2Message = *(dynamic_cast<ContactlessLevel2 *>(this->msg));
+    switch (contactlessLvl2Message.contactless_level2_cmd_case())
+    {
+    case ContactlessLevel2::kPerformTransaction:
+        execute_perform_transaction(contactlessLvl2Message, myDevice);
+        break;
+    default:
+        std::ostringstream errorMessage;
+        errorMessage << "Failed to execute [ContactlessLevel2] command message. Unrecognised [command]."
+                     << "\nMSG_ID: " << std::to_string(this->msgID)
+                     << "\ncontactless_level2_cmd_case: " << std::to_string(contactlessLvl2Message.contactless_level2_cmd_case());
+        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage.str()));
+        std::cout << "Generated responce:" << std::endl;
+        generatedResponce.print_MSG();
+        throw ex::FailedExecution(errorMessage.str());
+    }
+}
+
+void MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessage, Device &myDevice)
+{
+    std::cout << "Executing [perform_transaction]...\n\n";
+
+    std::cout << "Returning Pending message..." << std::endl;
+    generate_responce(PENDING).print_MSG();
+
+    const Msg *generatedResponce = nullptr;
+    for (auto &action : this->actions)
+    {
+        bool actionSuccess = action->make_action(myDevice);
+        std::cout << "Action {" << action->str() << "} was made\n";
+
+        if (action->get_type() == SEND_CANCEL_MESSAGE && actionSuccess) // if cancelation was successful
+        {
+            std::cout << "[perform_transaction] was canceled by HOST" << std::endl;
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+            break;
+        }
+    }
+    if (generatedResponce == nullptr)
+    {
+        generatedResponce = &generate_responce(SUCCESS, generate_perform_transaction_payload(myDevice));
+    }
+
+    // retry case is not implemented
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    delete generatedResponce;
+}
+
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)
 {
     auto failureResponce = new common::failure::FailureResponse();
@@ -858,6 +927,9 @@ const Payload &MessageIR::generate_failure_payload(common::failure::Error errorT
     failureResponce->SerializeToArray(buf.data(), buf_size);
 
     Payload &generatedPayload = *(new Payload(failureResponce->DebugString(), buf));
+
+    delete failureResponce;
+
     return generatedPayload;
 }
 
@@ -874,6 +946,9 @@ const Payload &MessageIR::generate_log_notification_payload(common::notification
     notifyResponce->SerializeToArray(buf.data(), buf_size);
 
     Payload &generatedPayload = *(new Payload(notifyResponce->DebugString(), buf));
+
+    delete notifyResponce;
+
     return generatedPayload;
 }
 
@@ -888,6 +963,9 @@ const Payload &MessageIR::generate_user_notification_payload(common::notificatio
     notifyResponce->SerializeToArray(buf.data(), buf_size);
 
     Payload &generatedPayload = *(new Payload(notifyResponce->DebugString(), buf));
+
+    delete notifyResponce;
+
     return generatedPayload;
 }
 
@@ -905,6 +983,9 @@ const Payload &MessageIR::generate_device_info_payload(Device &myDevice)
     deviceInfo->SerializeToArray(buf.data(), buf_size);
 
     Payload &generatedPayload = *(new Payload(deviceInfo->DebugString(), buf));
+
+    delete deviceInfo;
+
     return generatedPayload;
 }
 
@@ -925,22 +1006,25 @@ const Payload &MessageIR::generate_device_status_payload(Device &myDevice)
     deviceStatus->SerializeToArray(buf.data(), buf_size);
 
     Payload &generatedPayload = *(new Payload(deviceStatus->DebugString(), buf));
+
+    delete deviceStatus;
+
     return generatedPayload;
 }
 
 const Payload &MessageIR::generate_device_statistic_payload(Device &myDevice)
 {
-    misc::stats::DeviceStatistic *deviceStatistic = &myDevice.get_device_statistic();
+    auto deviceStatistic = myDevice.get_device_statistic();
 
     std::cout << "Device statistic:" << std::endl
-              << deviceStatistic->DebugString() << std::endl;
+              << deviceStatistic.DebugString() << std::endl;
 
     std::vector<uint8_t> buf;
-    buf.resize(deviceStatistic->ByteSizeLong());
+    buf.resize(deviceStatistic.ByteSizeLong());
     int buf_size = buf.size();
-    deviceStatistic->SerializeToArray(buf.data(), buf_size);
+    deviceStatistic.SerializeToArray(buf.data(), buf_size);
 
-    Payload &generatedPayload = *(new Payload(deviceStatistic->DebugString(), buf));
+    Payload &generatedPayload = *(new Payload(deviceStatistic.DebugString(), buf));
     return generatedPayload;
 }
 
@@ -1037,6 +1121,9 @@ const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice)
     responcePFT->SerializeToArray(buf.data(), buf_size);
 
     Payload &generatedPayload = *(new Payload(responcePFT->DebugString(), buf));
+
+    delete responcePFT;
+
     return generatedPayload;
 }
 
@@ -1051,6 +1138,46 @@ const Payload &MessageIR::generate_empty_poll_for_token_payload(Device &myDevice
     emptyPFT->SerializeToArray(buf.data(), buf_size);
 
     Payload &generatedPayload = *(new Payload(emptyPFT->DebugString(), buf));
+
+    delete emptyPFT;
+
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_perform_transaction_payload(Device &myDevice)
+{
+    auto transactionResult = new contactless::transaction::TransactionResult();
+
+    transactionResult->set_status(contactless::transaction::ONLINE_AUTHORIZATION_REQUIRED); // don't know to choose status
+
+    auto newToken = myDevice.get_card_in_field()->get_card_as_token();
+    transactionResult->set_allocated_token(newToken);
+
+    // some emv tags
+    auto newEmvTag = transactionResult->add_emv_tags();
+    newEmvTag->set_number(0x9F35);
+
+    if (false)
+        transactionResult->set_last_cmd("last cmd sent to the cart");
+    if (false)
+        transactionResult->set_last_sw_bytes("sw bytes");
+    if (transactionResult->status() == contactless::transaction::NON_EMV_CARD)
+        transactionResult->set_error_reason("error reason: non emv card");
+    if (transactionResult->status() == contactless::transaction::UNABLE_PERFORM_TRANSACTION)
+        transactionResult->set_error_reason("error reason: unable to perform transaction");
+    if (false)
+        transactionResult->set_encrypted_sensitive_data("some sensitive data");
+
+    std::vector<uint8_t> buf;
+    buf.resize(transactionResult->ByteSizeLong());
+    int buf_size = buf.size();
+    transactionResult->SerializeToArray(buf.data(), buf_size);
+
+    Payload &generatedPayload = *(new Payload(transactionResult->DebugString(), buf));
+
+    // delete newToken;
+    delete transactionResult;
+
     return generatedPayload;
 }
 

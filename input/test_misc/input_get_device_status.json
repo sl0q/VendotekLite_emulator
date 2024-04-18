@@ -2,8 +2,11 @@
     "scripts": [
         {
             "title": "test get device status",
-            "messages": [
-                "SVIABQoBASIA/Wg="
+            "steps":
+            [
+                {
+                    "message": "SVIABQoBASIA/Wg="
+                }
             ]
         }
     ]

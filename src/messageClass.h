@@ -101,6 +101,19 @@ private:
     void execute_contactless_1(Device &myDevice);
     void execute_poll_for_token(ContactlessLevel1 &contactlessMessage, Device &myDevice);
     void execute_emv_removal(ContactlessLevel1 &contactlessMessage, Device &myDevice);
+    void execute_tsv_bit_array(ContactlessLevel1 &contactlessMessage, Device &myDevice);   //  not implemented
+    void execute_tsv_iso_command(ContactlessLevel1 &contactlessMessage, Device &myDevice); // not implemented
+    void execute_power_off_rf(ContactlessLevel1 &contactlessMessage, Device &myDevice);
+    void execute_rats(ContactlessLevel1 &contactlessMessage, Device &myDevice); // not implemented
+
+    //  ContactlessLevel2
+    void execute_contactless_2(Device &myDevice);
+    void execute_perform_transaction(ContactlessLevel2 &contactlessMessage, Device &myDevice);
+
+    //  Mifare
+
+    //  Classic
+    // void execute_mfr_auth_(ContactlessLevel1 &contactlessMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
     const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");
@@ -119,6 +132,9 @@ private:
     //  Contactless 1 util
     const Payload &generate_poll_for_token_payload(Device &myDevice);
     const Payload &generate_empty_poll_for_token_payload(Device &myDevice);
+
+    //  Contactless 2 util
+    const Payload &generate_perform_transaction_payload(Device &myDevice);
 
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());
 

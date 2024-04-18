@@ -2,8 +2,11 @@
     "scripts": [
         {
             "title": "test set leds state corrupted",
-            "messages": [
-                "SVIADwEBAQDwEEQARgBIAEoAYbX"
+            "steps":
+            [
+                {
+                    "message": "SVIADwEBAQDwEEQARgBIAEoAYbX"
+                }
             ]
         }
     ]

@@ -1,0 +1,28 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test transaction",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "SMART_MX_WITH_MIFARE_1K",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "preactions":
+                    [
+                        {"attach_card": 1}
+                    ],
+                    "message": "SVIAiwEEAQqFAQoHCOgHIAIwARDoBxoMXHgxM1x4MDZceDEzIgRceDAwKghceDA2XHg0MzIMXHgxMlx4MDBceDAwOghceDA2XHg0M0D0A4IBIkJlbGV0aG9yJ3MgR2VuZXJhbCBHb29kcywgV2hpdGVydW6KAQhceDUzXHg5OZIBCmJ5dGVzYnl0ZXOYAQBqeQ==",
+                    "comment": "transaction"
+                }
+            ]
+        }
+    ]
+}

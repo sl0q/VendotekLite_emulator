@@ -112,7 +112,7 @@ public:
     DeviceStatusStruct get_device_status();
     misc::leds::Leds &get_leds_state();
     misc::reboot::Reboot_OperationMode &get_operation_mode();
-    misc::stats::DeviceStatistic &get_device_statistic();
+    const misc::stats::DeviceStatistic &get_device_statistic();
     misc::baudrate::Baudrate &get_baudrate();
     misc::lan_settings::LanSettings &get_lan_settings();
 

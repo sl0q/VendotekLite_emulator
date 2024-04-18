@@ -5,6 +5,7 @@
 #include <../proto_src/intellireader/contact/card_slot.pb.h>
 
 #include "../proto_src/intellireader/contactless/token_type.pb.h"
+#include "../proto_src/intellireader/contactless/token.pb.h"
 
 #include "myExceptions.h"
 
@@ -57,6 +58,7 @@ public:
     std::string get_answer_to_select() const;
     std::string get_atqa() const;
     std::string get_sak() const;
+    contactless::token::Token *get_card_as_token() const;
 
     const std::string str() const;
 };

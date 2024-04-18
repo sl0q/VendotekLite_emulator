@@ -2,8 +2,11 @@
     "scripts": [
         {
             "title": "test read device info",
-            "messages": [
-                "SVIABQYBARIAc9Y="
+            "steps":
+            [
+                {
+                    "message": "SVIABQYBARIAc9Y="
+                }
             ]
         }
     ]

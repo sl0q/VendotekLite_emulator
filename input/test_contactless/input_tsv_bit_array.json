@@ -1,0 +1,30 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test [poll for token] then [tsv bit array]",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "ISO_14443_4A",
+                    "tokenID": "1234uniqueID",
+                    "answerToSelect": "bytesbytes"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIABwMDAQoCIANNcQ==",
+                    "preactions":
+                    [
+                        {"attach_card": 1}
+                    ]
+                },
+                {
+                    "message": "SVIAagUDARplClkKVFx4MDJceDAwXHhhNFx4MDRceDAwXHgwZVx4MzJceDUwXHg0MVx4NTlceDJlXHg1M1x4NTlceDUzXHgyZVx4NDRceDQ0XHg0Nlx4MzBceDMxXHgwMBCoARDQhgMYASABKAG2aw=="
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test [power off rf]",
+            "steps":
+            [
+                {
+                    "message": "SVIABQcDASoAuNM="
+                }
+            ]
+        }
+    ]
+}

@@ -79,6 +79,22 @@ std::string ContactlessCard::get_sak() const
     return this->sak;
 }
 
+contactless::token::Token *ContactlessCard::get_card_as_token() const
+{
+    auto newToken = new contactless::token::Token();
+
+    newToken->set_type(this->tokenType);
+    newToken->set_id(this->tokenID);
+    if (!this->answerToSelect.empty())
+        newToken->set_answer_to_select(this->answerToSelect);
+    if (!this->atqa.empty())
+        newToken->set_atqa(this->atqa);
+    if (!this->sak.empty())
+        newToken->set_sak(this->sak);
+
+    return newToken;
+}
+
 const std::string ContactlessCard::str() const
 {
     return std::string("TokenType: " + contactless::token_type::TokenType_Name(this->tokenType) + "\n" +

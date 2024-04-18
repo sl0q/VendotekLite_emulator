@@ -2,8 +2,11 @@
     "scripts": [
         {
             "title": "test make sound (Bip-Bop from doc example)",
-            "messages": [
-                "SVIAFgcBATIRCggI3AsQZBiWAQoFCOgHEGTa5Q=="
+            "steps":
+            [
+                {
+                    "message": "SVIAFgcBATIRCggI3AsQZBiWAQoFCOgHEGTa5Q=="
+                }
             ]
         }
     ]

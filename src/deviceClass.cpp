@@ -525,7 +525,7 @@ misc::reboot::Reboot_OperationMode &Device::get_operation_mode()
     return this->operationMode;
 }
 
-misc::stats::DeviceStatistic &Device::get_device_statistic()
+const misc::stats::DeviceStatistic &Device::get_device_statistic()
 {
     return this->statistic;
 }

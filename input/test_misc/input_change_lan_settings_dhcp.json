@@ -2,8 +2,11 @@
     "scripts": [
         {
             "title": "test change lan settings dhcp",
-            "messages": [
-                "SVIACQ0BAVIECgIKAOdO"
+            "steps":
+            [
+                {
+                    "message": "SVIACQ0BAVIECgIKAOdO"
+                }
             ]
         }
     ]

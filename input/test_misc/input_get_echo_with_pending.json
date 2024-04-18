@@ -2,8 +2,11 @@
     "scripts": [
         {
             "title": "test get echo with pending",
-            "messages": [
-                "SVIAFwkBAUISCAEQEBoMUGVuZGluZyBlY2hvbxo="
+            "steps":
+            [
+                {
+                    "message": "SVIAFwkBAUISCAEQEBoMUGVuZGluZyBlY2hvbxo="
+                }
             ]
         }
     ]

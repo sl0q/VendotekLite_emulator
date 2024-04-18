@@ -2,8 +2,11 @@
     "scripts": [
         {
             "title": "test change lan settings manual",
-            "messages": [
-                "SVIAMgwBAVItCisSKQoLMTkyLjE2OC4wLjISDTI1NS4yNTUuMjU1LjAaCzE5Mi4xNjguMC4xfvA="
+            "steps":
+            [
+                {
+                    "message": "SVIAMgwBAVItCisSKQoLMTkyLjE2OC4wLjISDTI1NS4yNTUuMjU1LjAaCzE5Mi4xNjguMC4xfvA="
+                }
             ]
         }
     ]
