@@ -1,0 +1,95 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test double card",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "SMART_MX_WITH_MIFARE_1K",
+                    "tokenID": "1234uniqueID",
+                    "iso":
+                    {
+                        "tokenID":"IsoSideTokenID",
+                        "answerToSelect": "answertoselectbytes"
+
+                    },
+                    "mifare":
+                    {
+                        "tokenType": "MIFARE_CLASSIC_1K",
+                        "tokenID":"mifareSideTokenID",
+                        "keyType": "TYPE_A",
+                        "clearKey": "\\xff\\xff\\xff\\xff\\xff\\xff"
+                    }
+                }
+            ],
+            "steps":
+            [
+                {
+                    "comment": "poll for token (timeout 1s)",
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":[{"attach_card": 1}]
+                },
+                {
+                    "comment": "auth on clear key command with correct key",
+                    "message": "SVIAIwEFAQoeCAAQABoYXHhmZlx4ZmZceGZmXHhmZlx4ZmZceGZmHig="
+                }
+            ]
+        },
+        {
+            "title": "test mifare classic auth on clearkey first try",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "MIFARE_CLASSIC_1K",
+                    "tokenID": "1234uniqueID",
+                    "keyType": "TYPE_A",
+                    "clearKey": "\\xff\\xff\\xff\\xff\\xff\\xff"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "comment": "poll for token (timeout 1s)",
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":[{"attach_card": 1}]
+                },
+                {
+                    "comment": "auth on clear key command with correct key",
+                    "message": "SVIAIwEFAQoeCAAQABoYXHhmZlx4ZmZceGZmXHhmZlx4ZmZceGZmHig="
+                }
+            ]
+        },
+        {
+            "title": "test mifare classic auth on clearkey with retry",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "MIFARE_CLASSIC_1K",
+                    "tokenID": "1234uniqueID",
+                    "keyType": "TYPE_A",
+                    "clearKey": "\\xff\\xff\\xff\\xff\\xff\\xff"
+                }
+            ],
+            "steps":
+            [
+                {
+                    "comment": "poll for token (timeout 1s)",
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":[{"attach_card": 1}]
+                },
+                {
+                    "comment": "auth on clear key command with wrong key (\\x0\\x0\\x0...), then try right key (\\xff\\xff...) then goes wrong key again which will be ignored",
+                    "messages": [
+                        "SVIAIwEFAQoeCAAQABoYXHgwMFx4MDBceDAwXHgwMFx4MDBceDAwE5E=",
+                        "SVIAIwEFAQoeCAAQABoYXHhmZlx4ZmZceGZmXHhmZlx4ZmZceGZmHig=",
+                        "SVIAIwEFAQoeCAAQABoYXHgwMFx4MDBceDAwXHgwMFx4MDBceDAwE5E="
+                    ]
+                }
+            ]
+        }
+    ]
+}

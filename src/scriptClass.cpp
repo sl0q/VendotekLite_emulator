@@ -68,18 +68,93 @@ void Script::parse_card(json cardJson)
     if (cardJson.count("tokenID") == 0)
         throw ex::JsonParsingException("Could not find required [tokenID] field");
 
-    auto newCard = new ContactlessCard();
-
-    newCard->set_card_ID(newCardID);
-
     contactless::token_type::TokenType newTokenType;
     if (!contactless::token_type::TokenType_Parse(cardJson.at("tokenType").get<std::string>(), &newTokenType))
         throw std::invalid_argument("Failed to parse [tokenType] parameter correctly");
-    newCard->set_token_type(newTokenType);
-    newCard->set_token_ID(cardJson.at("tokenID").get<std::string>());
 
-    if (cardJson.count("answerToSelect") != 0)
-        newCard->set_answer_to_select(cardJson.at("answerToSelect").get<std::string>());
+    ContactlessCard *newCard = nullptr;
+    switch (newTokenType)
+    {
+    case contactless::token_type::ISO_14443_4A:
+    {
+        newCard = new Iso_4A();
+        parse_iso_4a_card(cardJson, dynamic_cast<Iso_4A &>(*newCard));
+        break;
+    }
+    case contactless::token_type::ISO_14443_4B:
+    {
+        newCard = new Iso_B();
+        break;
+    }
+    case contactless::token_type::MIFARE_CLASSIC_1K:
+    {
+        newCard = new MifareClassicCard(MifareClassicCard::m_1K);
+        parse_mifare_classic_card(cardJson, dynamic_cast<MifareClassicCard &>(*newCard));
+        break;
+    }
+    case contactless::token_type::MIFARE_CLASSIC_2K:
+    {
+        newCard = new MifareClassicCard(MifareClassicCard::m_2K);
+        parse_mifare_classic_card(cardJson, dynamic_cast<MifareClassicCard &>(*newCard));
+        break;
+    }
+    case contactless::token_type::MIFARE_CLASSIC_4K:
+    {
+        newCard = new MifareClassicCard(MifareClassicCard::m_4K);
+        parse_mifare_classic_card(cardJson, dynamic_cast<MifareClassicCard &>(*newCard));
+        break;
+    }
+    case contactless::token_type::MIFARE_CLASSIC_MINI:
+    {
+        newCard = new MifareClassicCard(MifareClassicCard::m_MINI);
+        parse_mifare_classic_card(cardJson, dynamic_cast<MifareClassicCard &>(*newCard));
+        break;
+    }
+    case contactless::token_type::SMART_MX_WITH_MIFARE_1K:
+    {
+        if (cardJson.count("iso_4a") == 0)
+            throw ex::JsonParsingException("Could not find required [iso_4a] field for card with [SMART_MX_WITH_MIFARE_1K] token type");
+        if (cardJson.count("mifare") == 0)
+            throw ex::JsonParsingException("Could not find required [mifare] field for card with [SMART_MX_WITH_MIFARE_1K] token type");
+
+        auto newIsoCard = new Iso_4A();
+        parse_iso_4a_card(cardJson["iso_4a"], *newIsoCard);
+
+        auto newMifareCard = new MifareClassicCard(MifareClassicCard::m_1K);
+        parse_mifare_classic_card(cardJson["mifare"], *newMifareCard);
+
+        newCard = new SmartWithMifareCard();
+        dynamic_cast<SmartWithMifareCard *>(newCard)->set_allocated_iso(newIsoCard);
+        dynamic_cast<SmartWithMifareCard *>(newCard)->set_allocated_mifare(newMifareCard);
+        break;
+    }
+    case contactless::token_type::SMART_MX_WITH_MIFARE_4K:
+    {
+        if (cardJson.count("iso_4a") == 0)
+            throw ex::JsonParsingException("Could not find required [iso_4a] field for card with [SMART_MX_WITH_MIFARE_4K] token type");
+        if (cardJson.count("mifare") == 0)
+            throw ex::JsonParsingException("Could not find required [mifare] field for card with [SMART_MX_WITH_MIFARE_4K] token type");
+
+        auto newIsoCard = new Iso_4A();
+        parse_iso_4a_card(cardJson["iso_4a"], *newIsoCard);
+
+        auto newMifareCard = new MifareClassicCard(MifareClassicCard::m_4K);
+        parse_mifare_classic_card(cardJson["mifare"], *newMifareCard);
+
+        newCard = new SmartWithMifareCard();
+        dynamic_cast<SmartWithMifareCard *>(newCard)->set_allocated_iso(newIsoCard);
+        dynamic_cast<SmartWithMifareCard *>(newCard)->set_allocated_mifare(newMifareCard);
+        break;
+    }
+    default:
+    {
+        newCard = new ContactlessCard(newTokenType);
+        break;
+    }
+    }
+
+    newCard->set_card_ID(newCardID);
+    newCard->set_token_ID(cardJson.at("tokenID").get<std::string>());
 
     if (cardJson.count("atqa") != 0)
         newCard->set_atqa(cardJson.at("atqa").get<std::string>());
@@ -90,21 +165,30 @@ void Script::parse_card(json cardJson)
     this->contactlessCards.push_back(newCard);
 }
 
+void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
+{
+    if (cardJson.count("keyType") == 0)
+        throw ex::JsonParsingException("Could not find required [keyType] field for card with [MIFARE_CLASSIC] token type");
+    if (cardJson.count("clearKey") == 0)
+        throw ex::JsonParsingException("Could not find required [clearKey] field for card with [MIFARE_CLASSIC] token type");
+
+    mifare::classic::auth::KeyType newKeyType;
+    if (!mifare::classic::auth::KeyType_Parse(cardJson.at("keyType").get<std::string>(), &newKeyType))
+        throw std::invalid_argument("Failed to parse [keyType] parameter correctly");
+
+    card.set_key_type(newKeyType);
+    card.set_clear_key(cardJson.at("clearKey").get<std::string>());
+}
+
+void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)
+{
+    if (cardJson.count("answerToSelect") == 0)
+        throw ex::JsonParsingException("Could not find required [answerToSelect] field for card with [ISO_14443_4A] token type");
+    card.set_answer_to_select(cardJson.at("answerToSelect").get<std::string>());
+}
+
 void Script::parse_step(json stepJson)
 {
-    /*
- {
-                     "message": "SVIACgEDAQoFCOgHIAJqhw==",
-                     "actions":
-                     [
-                         {"attach_contactless_card": 1},
-                         {"attach_contactless_card": 2},
-                         {"wait": ""},
-                         {"remove_card": 2}
-                     ]
-
-                 }
- */
     if (stepJson.count("message") == 0)
         throw ex::JsonParsingException("Could not find required [message] field");
 

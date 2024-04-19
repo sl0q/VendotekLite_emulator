@@ -11,7 +11,8 @@
 #include "../proto_src/common/failure.pb.h"
 #include "../proto_src/common/notification.pb.h"
 
-#include "../proto_src/intellireader/commands4.pb.h"
+// #include "../proto_src/intellireader/commands4.pb.h"
+#include "../proto_src/intellireader/commands7.pb.h"
 
 // #include "../proto_src/intellireader/misc/leds.pb.h"
 // #include "../proto_src/intellireader/misc/device.pb.h"
@@ -130,7 +131,7 @@ private:
     // const Payload &generate_transmit_apdu_payload(const ContactCard &card);
 
     //  Contactless 1 util
-    const Payload &generate_poll_for_token_payload(Device &myDevice);
+    const Payload &generate_poll_for_token_payload(Device &myDevice, bool preferMifare);
     const Payload &generate_empty_poll_for_token_payload(Device &myDevice);
 
     //  Contactless 2 util

@@ -35,6 +35,8 @@ public:
     const ContactlessCard *find_cl_card(uint32_t cardID);
 
     void parse_card(json cardJson);
+    void parse_mifare_classic_card(json cardJson, MifareClassicCard &card);
+    void parse_iso_4a_card(json cardJson, Iso_4A &card);
     void parse_step(json stepJson);
     void add_contactless_card(ContactlessCard &newContactlessCard);
     void add_step(Step &newStep);

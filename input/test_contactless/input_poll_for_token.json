@@ -2,6 +2,41 @@
     "scripts": 
     [
         {
+            "title": "test poll for token double card with no timeout",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "SMART_MX_WITH_MIFARE_1K",
+                    "tokenID": "1234uniqueID",
+                    "iso_4a":
+                    {
+                        "tokenID":"IsoSideTokenID",
+                        "answerToSelect": "answertoselectbytes"
+
+                    },
+                    "mifare":
+                    {
+                        "tokenType": "MIFARE_CLASSIC_1K",
+                        "tokenID":"mifareSideTokenID",
+                        "keyType": "TYPE_A",
+                        "clearKey": "\\xff\\xff\\xff\\xff\\xff\\xff"
+                    }
+                }
+            ],
+            "steps":
+            [
+                {
+                    "message": "SVIABwMDAQoCIANNcQ==",
+                    "actions":
+                    [
+                        {"attach_card": 1}
+                    ]
+
+                }
+            ]
+        },
+        {
             "title": "test poll for token with timeout = 0",
             "cards":
             [
@@ -135,7 +170,9 @@
                 {
                     "cardID": 2,
                     "tokenType": "MIFARE_CLASSIC_1K",
-                    "tokenID": "4321uniqueID"
+                    "tokenID": "4321uniqueID",
+                    "keyType":"TYPE_A",
+                    "clearKey":"\\xff\\xff\\xff\\xff\\xff\\xff"
                 }
             ],
             "steps":
@@ -149,7 +186,7 @@
                     ],
                     "actions":
                     [
-                        {"remove_card": 2}
+                        {"remove_card": 1}
                     ]
 
                 }

@@ -668,6 +668,8 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
 
     const Msg *generatedResponce = nullptr;
 
+    bool preferMifare = pollForToken.prefer_mifare();
+
     if (pollForToken.has_timeout())
     {
         // it there is timeout field
@@ -693,7 +695,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
 
             if (myDevice.how_many_cards() == 1) // get token, send success message
             {
-                generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice));
+                generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
                 myDevice.set_poll_for_token_responce(*generatedResponce);
             }
             else
@@ -716,7 +718,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                     else if (myDevice.how_many_cards() == 1)
                     {
                         // get token and break, send success message
-                        generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice));
+                        generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
                         myDevice.set_poll_for_token_responce(*generatedResponce);
                         break;
                     }
@@ -734,7 +736,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
 
         if (myDevice.how_many_cards() == 1)
         {
-            generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice));
+            generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
             myDevice.set_poll_for_token_responce(*generatedResponce);
         }
         else if (this->actions.empty())
@@ -763,7 +765,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                 }
                 else if (myDevice.how_many_cards() == 1)
                 {
-                    generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice));
+                    generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
                     myDevice.set_poll_for_token_responce(*generatedResponce);
                     break;
                     // get token and break, send success message
@@ -1097,23 +1099,18 @@ const Payload &MessageIR::generate_lan_settings_payload(Device &myDevice)
 //     return generatedPayload;
 // }
 
-const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice)
+const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice, bool prefereMifare)
 {
-    auto card = myDevice.get_card_in_field();
-    auto responcePFT = new contactless::token::Token();
+    auto responcePFT = myDevice.get_card_in_field()->get_card_token();
 
-    responcePFT->set_type(card->get_token_type());
-    responcePFT->set_id(card->get_token_id());
-
-    std::string tempString = card->get_answer_to_select();
-    if (!tempString.empty())
-        responcePFT->set_answer_to_select(tempString);
-    tempString = card->get_atqa();
-    if (!tempString.empty())
-        responcePFT->set_atqa(tempString);
-    tempString = card->get_sak();
-    if (!tempString.empty())
-        responcePFT->set_sak(tempString);
+    if (responcePFT->type() == contactless::token_type::SMART_MX_WITH_MIFARE_1K ||
+        responcePFT->type() == contactless::token_type::SMART_MX_WITH_MIFARE_4K)
+    {
+        if (prefereMifare)
+            responcePFT = (dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_mifare_token().get_card_token();
+        else
+            responcePFT = (dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_iso_token().get_card_token();
+    }
 
     std::vector<uint8_t> buf;
     buf.resize(responcePFT->ByteSizeLong());
@@ -1121,8 +1118,6 @@ const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice)
     responcePFT->SerializeToArray(buf.data(), buf_size);
 
     Payload &generatedPayload = *(new Payload(responcePFT->DebugString(), buf));
-
-    delete responcePFT;
 
     return generatedPayload;
 }
@@ -1150,7 +1145,7 @@ const Payload &MessageIR::generate_perform_transaction_payload(Device &myDevice)
 
     transactionResult->set_status(contactless::transaction::ONLINE_AUTHORIZATION_REQUIRED); // don't know to choose status
 
-    auto newToken = myDevice.get_card_in_field()->get_card_as_token();
+    auto newToken = new contactless::token::Token(*myDevice.get_card_in_field()->get_card_token());
     transactionResult->set_allocated_token(newToken);
 
     // some emv tags
