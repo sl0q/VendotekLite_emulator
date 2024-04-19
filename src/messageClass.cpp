@@ -903,7 +903,8 @@ void MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessag
     }
     if (generatedResponce == nullptr)
     {
-        generatedResponce = &generate_responce(SUCCESS, generate_perform_transaction_payload(myDevice));
+        bool preferMifare = contactlessMessage.perform_transaction().poll_for_token().prefer_mifare();
+        generatedResponce = &generate_responce(SUCCESS, generate_perform_transaction_payload(myDevice, preferMifare));
     }
 
     // retry case is not implemented
@@ -1099,14 +1100,14 @@ const Payload &MessageIR::generate_lan_settings_payload(Device &myDevice)
 //     return generatedPayload;
 // }
 
-const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice, bool prefereMifare)
+const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice, bool preferMifare)
 {
     auto responcePFT = myDevice.get_card_in_field()->get_card_token();
 
     if (responcePFT->type() == contactless::token_type::SMART_MX_WITH_MIFARE_1K ||
         responcePFT->type() == contactless::token_type::SMART_MX_WITH_MIFARE_4K)
     {
-        if (prefereMifare)
+        if (preferMifare)
             responcePFT = (dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_mifare_token().get_card_token();
         else
             responcePFT = (dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_iso_token().get_card_token();
@@ -1139,18 +1140,29 @@ const Payload &MessageIR::generate_empty_poll_for_token_payload(Device &myDevice
     return generatedPayload;
 }
 
-const Payload &MessageIR::generate_perform_transaction_payload(Device &myDevice)
+const Payload &MessageIR::generate_perform_transaction_payload(Device &myDevice, bool preferMifare)
 {
     auto transactionResult = new contactless::transaction::TransactionResult();
 
-    transactionResult->set_status(contactless::transaction::ONLINE_AUTHORIZATION_REQUIRED); // don't know to choose status
+    transactionResult->set_status(contactless::transaction::ONLINE_AUTHORIZATION_REQUIRED); // don't know what status to choose
 
     auto newToken = new contactless::token::Token(*myDevice.get_card_in_field()->get_card_token());
+    if (newToken->type() == contactless::token_type::SMART_MX_WITH_MIFARE_1K ||
+        newToken->type() == contactless::token_type::SMART_MX_WITH_MIFARE_4K)
+    {
+        delete newToken;
+        if (preferMifare)
+            newToken = new contactless::token::Token(*(dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_mifare_token().get_card_token());
+        else
+            newToken = new contactless::token::Token(*(dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_iso_token().get_card_token());
+    }
     transactionResult->set_allocated_token(newToken);
 
     // some emv tags
-    auto newEmvTag = transactionResult->add_emv_tags();
-    newEmvTag->set_number(0x9F35);
+    auto newEmvTag1 = transactionResult->add_emv_tags();
+    newEmvTag1->set_number(0x9F35);
+    auto newEmvTag2 = transactionResult->add_emv_tags();
+    newEmvTag2->set_number(0x9F21);
 
     if (false)
         transactionResult->set_last_cmd("last cmd sent to the cart");

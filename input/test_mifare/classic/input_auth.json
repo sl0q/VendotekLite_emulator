@@ -9,7 +9,7 @@
                     "cardID": 1,
                     "tokenType": "SMART_MX_WITH_MIFARE_1K",
                     "tokenID": "1234uniqueID",
-                    "iso":
+                    "iso_4a":
                     {
                         "tokenID":"IsoSideTokenID",
                         "answerToSelect": "answertoselectbytes"

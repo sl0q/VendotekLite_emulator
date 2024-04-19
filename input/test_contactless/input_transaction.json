@@ -2,14 +2,26 @@
     "scripts": 
     [
         {
-            "title": "test transaction",
+            "title": "test transaction with double card",
             "cards":
             [
                 {
                     "cardID": 1,
                     "tokenType": "SMART_MX_WITH_MIFARE_1K",
                     "tokenID": "1234uniqueID",
-                    "answerToSelect": "bytesbytes"
+                    "iso_4a":
+                    {
+                        "tokenID":"IsoSideTokenID",
+                        "answerToSelect": "answertoselectbytes"
+
+                    },
+                    "mifare":
+                    {
+                        "tokenType": "MIFARE_CLASSIC_1K",
+                        "tokenID":"mifareSideTokenID",
+                        "keyType": "TYPE_A",
+                        "clearKey": "\\xff\\xff\\xff\\xff\\xff\\xff"
+                    }
                 }
             ],
             "steps":

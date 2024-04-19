@@ -135,7 +135,7 @@ private:
     const Payload &generate_empty_poll_for_token_payload(Device &myDevice);
 
     //  Contactless 2 util
-    const Payload &generate_perform_transaction_payload(Device &myDevice);
+    const Payload &generate_perform_transaction_payload(Device &myDevice, bool preferMifare);
 
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());
 
