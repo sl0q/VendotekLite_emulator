@@ -100,9 +100,8 @@ google::protobuf::Message *MessageIR::find_protobuf_module()
         return new ContactlessLevel1();
     case 4:
         return new ContactlessLevel2();
-
-        // case 5:
-        //     return new Mifare();
+    case 5:
+        return new Mifare();
 
         // case 6:
         //     return new PinPad();
@@ -204,7 +203,9 @@ void MessageIR::execute_message(Device &myDevice)
     case 4:
         execute_contactless_2(myDevice);
         break;
-    // more modules
+    case 5:
+        execute_mifare(myDevice);
+        break;
     default:
         std::ostringstream errorMessage;
         errorMessage << "Failed to execute command message. Unrecognised [moduleID]."
@@ -911,6 +912,27 @@ void MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessag
     delete generatedResponce;
 }
 
+void MessageIR::execute_mifare(Device &myDevice)
+{
+    Mifare mifareMessage = *(dynamic_cast<Mifare *>(this->msg));
+    switch (mifareMessage.mifare_cmd_case())
+    {
+    case Mifare::kMfrClassicAuthOnClearKey:
+        execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice);
+        break;
+
+    default:
+        std::ostringstream errorMessage;
+        errorMessage << "Failed to execute [Mifare] command message. Unrecognised [command]."
+                     << "\nMSG_ID: " << std::to_string(this->msgID)
+                     << "\nmifare_cmd_case: " << std::to_string(mifareMessage.mifare_cmd_case());
+        Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage.str()));
+        std::cout << "Generated responce:" << std::endl;
+        generatedResponce.print_MSG();
+        throw ex::FailedExecution(errorMessage.str());
+    }
+}
+
 void MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_auth_on_clear_key]...\n\n";
@@ -918,7 +940,6 @@ void MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
     auto mfrAuth = mifareMessage.mfr_classic_auth_on_clear_key();
 
     auto storedToken = &myDevice.get_stored_token();
-    auto card = myDevice.get_card_in_field();
 
     const Msg *generatedResponce = nullptr;
 
@@ -929,8 +950,28 @@ void MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
     {
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong token type"));
     }
-    // else if(dynamic_cast<const MifareClassicCard*>(card)->get_clear_key() != )
+    else
+    {
+        auto card = myDevice.get_card_in_field();
 
+        switch (mfrAuth.key_type())
+        {
+        case mifare::classic::auth::TYPE_A:
+            if (dynamic_cast<const MifareClassicCard *>(card)->get_clear_key_A().clear_key() != mfrAuth.clear_key())
+                generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Mismatch of clear key type_a"));
+            else
+                generatedResponce = &generate_responce(SUCCESS);
+            break;
+        case mifare::classic::auth::TYPE_B:
+            if (dynamic_cast<const MifareClassicCard *>(card)->get_clear_key_B().clear_key() != mfrAuth.clear_key())
+                generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Mismatch of clear key type_b"));
+            else
+                generatedResponce = &generate_responce(SUCCESS);
+            break;
+        default:
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Unknown key type"));
+        }
+    }
     std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;

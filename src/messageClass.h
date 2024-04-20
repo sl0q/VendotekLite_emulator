@@ -112,6 +112,7 @@ private:
     void execute_perform_transaction(ContactlessLevel2 &contactlessMessage, Device &myDevice);
 
     //  Mifare
+    void execute_mifare(Device &myDevice);
 
     //  Classic
     void execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice);

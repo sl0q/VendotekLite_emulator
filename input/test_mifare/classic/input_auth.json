@@ -70,8 +70,8 @@
                     "cardID": 1,
                     "tokenType": "MIFARE_CLASSIC_1K",
                     "tokenID": "1234uniqueID",
-                    "clearKey_A": "\\xdd\\xdd\\xdd\\xdd\\xdd\\xdd",
-                    "clearKey_B": "\\xff\\xff\\xff\\xff\\xff\\xff"
+                    "clearKey_A": "\\xff\\xff\\xff\\xff\\xff\\xff",
+                    "clearKey_B": "\\xdd\\xdd\\xdd\\xdd\\xdd\\xdd"
                 }
             ],
             "steps":
