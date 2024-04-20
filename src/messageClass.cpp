@@ -917,9 +917,19 @@ void MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
 
     auto mfrAuth = mifareMessage.mfr_classic_auth_on_clear_key();
 
-    myDevice.get_stored_token();
+    auto storedToken = &myDevice.get_stored_token();
+    auto card = myDevice.get_card_in_field();
 
     const Msg *generatedResponce = nullptr;
+
+    if (storedToken->type() != contactless::token_type::MIFARE_CLASSIC_1K &&
+        storedToken->type() != contactless::token_type::MIFARE_CLASSIC_2K &&
+        storedToken->type() != contactless::token_type::MIFARE_CLASSIC_4K &&
+        storedToken->type() != contactless::token_type::MIFARE_CLASSIC_MINI)
+    {
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong token type"));
+    }
+    // else if(dynamic_cast<const MifareClassicCard*>(card)->get_clear_key() != )
 
     std::cout << "Finised execution.\n\n";
 

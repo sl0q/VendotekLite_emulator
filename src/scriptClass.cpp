@@ -167,17 +167,13 @@ void Script::parse_card(json cardJson)
 
 void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
 {
-    if (cardJson.count("keyType") == 0)
-        throw ex::JsonParsingException("Could not find required [keyType] field for card with [MIFARE_CLASSIC] token type");
-    if (cardJson.count("clearKey") == 0)
-        throw ex::JsonParsingException("Could not find required [clearKey] field for card with [MIFARE_CLASSIC] token type");
+    if (cardJson.count("clearKey_A") == 0)
+        throw ex::JsonParsingException("Could not find required [clearKey_A] field for card with [MIFARE_CLASSIC] token type");
+    if (cardJson.count("clearKey_B") == 0)
+        throw ex::JsonParsingException("Could not find required [clearKey_B] field for card with [MIFARE_CLASSIC] token type");
 
-    mifare::classic::auth::KeyType newKeyType;
-    if (!mifare::classic::auth::KeyType_Parse(cardJson.at("keyType").get<std::string>(), &newKeyType))
-        throw std::invalid_argument("Failed to parse [keyType] parameter correctly");
-
-    card.set_key_type(newKeyType);
-    card.set_clear_key(cardJson.at("clearKey").get<std::string>());
+    card.set_clear_key_A(cardJson.at("clearKey_A").get<std::string>());
+    card.set_clear_key_B(cardJson.at("clearKey_B").get<std::string>());
 }
 
 void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)

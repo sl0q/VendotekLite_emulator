@@ -83,20 +83,24 @@ public:
     };
 
 private:
-    mifare::classic::auth::KeyType keyType;
-    mifare::classic::auth::ClearKey clearKey;
+    // mifare::classic::auth::KeyType keyType;
+    mifare::classic::auth::ClearKey clearKey_A;
+    mifare::classic::auth::ClearKey clearKey_B;
 
 public:
     MifareClassicCard();
     MifareClassicCard(MifareClassicCard::m_classic_K k);
     ~MifareClassicCard();
 
-    void set_key_type(mifare::classic::auth::KeyType newKeyType);
-    void set_clear_key(mifare::classic::auth::ClearKey &newClearKey);
-    void set_clear_key(const std::string &newClearKey);
+    // void set_key_type(mifare::classic::auth::KeyType newKeyType);
+    void set_clear_key_A(mifare::classic::auth::ClearKey &newClearKey);
+    void set_clear_key_B(mifare::classic::auth::ClearKey &newClearKey);
+    void set_clear_key_A(const std::string &newClearKey);
+    void set_clear_key_B(const std::string &newClearKey);
 
-    const mifare::classic::auth::KeyType &get_key_type() const;
-    const mifare::classic::auth::ClearKey &get_clear_key() const;
+    // const mifare::classic::auth::KeyType &get_key_type() const;
+    const mifare::classic::auth::ClearKey &get_clear_key_A() const;
+    const mifare::classic::auth::ClearKey &get_clear_key_B() const;
 
     const std::string str() const;
 };

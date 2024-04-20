@@ -135,29 +135,44 @@ MifareClassicCard::~MifareClassicCard()
 {
 }
 
-void MifareClassicCard::set_key_type(mifare::classic::auth::KeyType newKeyType)
+// void MifareClassicCard::set_key_type(mifare::classic::auth::KeyType newKeyType)
+// {
+//     this->keyType = newKeyType;
+// }
+
+void MifareClassicCard::set_clear_key_A(mifare::classic::auth::ClearKey &newClearKey)
 {
-    this->keyType = newKeyType;
+    this->clearKey_A = newClearKey;
 }
 
-void MifareClassicCard::set_clear_key(mifare::classic::auth::ClearKey &newClearKey)
+void MifareClassicCard::set_clear_key_B(mifare::classic::auth::ClearKey &newClearKey)
 {
-    this->clearKey = newClearKey;
+    this->clearKey_B = newClearKey;
 }
 
-void MifareClassicCard::set_clear_key(const std::string &newClearKey)
+void MifareClassicCard::set_clear_key_A(const std::string &newClearKey)
 {
-    this->clearKey.set_clear_key(newClearKey);
+    this->clearKey_A.set_clear_key(newClearKey);
 }
 
-const mifare::classic::auth::KeyType &MifareClassicCard::get_key_type() const
+void MifareClassicCard::set_clear_key_B(const std::string &newClearKey)
 {
-    return this->keyType;
+    this->clearKey_B.set_clear_key(newClearKey);
 }
 
-const mifare::classic::auth::ClearKey &MifareClassicCard::get_clear_key() const
+// const mifare::classic::auth::KeyType &MifareClassicCard::get_key_type() const
+// {
+//     return this->keyType;
+// }
+
+const mifare::classic::auth::ClearKey &MifareClassicCard::get_clear_key_A() const
 {
-    return this->clearKey;
+    return this->clearKey_A;
+}
+
+const mifare::classic::auth::ClearKey &MifareClassicCard::get_clear_key_B() const
+{
+    return this->clearKey_B;
 }
 
 const std::string MifareClassicCard::str() const
@@ -166,8 +181,8 @@ const std::string MifareClassicCard::str() const
                        "TokenID: " + this->token->id() + "\n" +
                        "ATQA: " + this->token->atqa() + "\n" +
                        "SAK: " + this->token->sak() + "\n" +
-                       "KeyType: " + mifare::classic::auth::KeyType_Name(this->keyType) + "\n" +
-                       "ClearKey: " + this->clearKey.clear_key() + "\n");
+                       "ClearKey_A: " + this->clearKey_A.clear_key() + "\n" +
+                       "ClearKey_B: " + this->clearKey_B.clear_key() + "\n");
 }
 
 SmartWithMifareCard::SmartWithMifareCard()

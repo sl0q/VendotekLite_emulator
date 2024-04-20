@@ -9,7 +9,19 @@
                     "cardID": 1,
                     "tokenType": "SMART_MX_WITH_MIFARE_1K",
                     "tokenID": "1234uniqueID",
-                    "answerToSelect": "bytesbytes"
+                    "iso_4a":
+                    {
+                        "tokenID":"IsoSideTokenID",
+                        "answerToSelect": "answertoselectbytes"
+
+                    },
+                    "mifare":
+                    {
+                        "tokenType": "MIFARE_CLASSIC_1K",
+                        "tokenID":"mifareSideTokenID",
+                        "clearKey_A": "\\xdd\\xdd\\xdd\\xdd\\xdd\\xdd",
+                        "clearKey_B": "\\xff\\xff\\xff\\xff\\xff\\xff"
+                    }
                 }
             ],
             "steps":

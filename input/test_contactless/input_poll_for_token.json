@@ -19,8 +19,8 @@
                     {
                         "tokenType": "MIFARE_CLASSIC_1K",
                         "tokenID":"mifareSideTokenID",
-                        "keyType": "TYPE_A",
-                        "clearKey": "\\xff\\xff\\xff\\xff\\xff\\xff"
+                        "clearKey_A": "\\xdd\\xdd\\xdd\\xdd\\xdd\\xdd",
+                        "clearKey_B": "\\xff\\xff\\xff\\xff\\xff\\xff"
                     }
                 }
             ],
@@ -171,8 +171,8 @@
                     "cardID": 2,
                     "tokenType": "MIFARE_CLASSIC_1K",
                     "tokenID": "4321uniqueID",
-                    "keyType":"TYPE_A",
-                    "clearKey":"\\xff\\xff\\xff\\xff\\xff\\xff"
+                    "clearKey_A": "\\xdd\\xdd\\xdd\\xdd\\xdd\\xdd",
+                    "clearKey_B": "\\xff\\xff\\xff\\xff\\xff\\xff"
                 }
             ],
             "steps":
