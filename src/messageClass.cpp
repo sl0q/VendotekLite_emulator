@@ -987,6 +987,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrClassicAuthOnClearKey:
         res = execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice);
         break;
+    case Mifare::kMfrClassicAuthOnSamKey:
+        res = execute_mfr_classic_auth_on_sam_key(mifareMessage, myDevice);
+        break;
 
     default:
         res = false;
@@ -1064,6 +1067,16 @@ bool MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
     delete generatedResponce;
 
     return res;
+}
+
+bool MessageIR::execute_mfr_classic_auth_on_sam_key(Mifare &mifareMessage, Device &myDevice)
+{
+    std::string errorMessage("Command [mfr_classic_auth_on_sam_key] of module [Mifare] is not supported. MSG_ID: " + std::to_string(this->msgID));
+    Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage));
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce.print_MSG();
+
+    return false;
 }
 
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)
