@@ -174,6 +174,32 @@ void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
 
     card.set_clear_key_A(cardJson.at("clearKey_A").get<std::string>());
     card.set_clear_key_B(cardJson.at("clearKey_B").get<std::string>());
+
+    if (cardJson.count("memorySectors") != 0)
+    {
+        uint32_t iSector = 0;
+        for (auto &sectorJson : cardJson["memorySectors"])
+        {
+            if (sectorJson.count("blocks") != 0)
+            {
+                uint32_t iBlock = 0;
+                for (auto &blockJson : sectorJson["blocks"])
+                {
+                    try
+                    {
+                        card.write_block(blockJson, iSector, iBlock);
+                    }
+                    catch (std::out_of_range &ex)
+                    {
+                        std::cout << "WARNING: " << ex.what() << std::endl;
+                        break;
+                    }
+                    ++iBlock;
+                }
+            }
+            ++iSector;
+        }
+    }
 }
 
 void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)

@@ -107,6 +107,9 @@ MifareClassicCard::MifareClassicCard()
 {
     this->token = new contactless::token::Token();
     this->token->set_type(contactless::token_type::MIFARE_CLASSIC_1K);
+    this->memorySectors.resize(16);
+    for (auto &sector : this->memorySectors)
+        sector.resize(4);
 }
 
 MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
@@ -115,19 +118,41 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
     switch (k)
     {
     case m_1K:
+        //  16 sectors * 4 blocks * 16 bytes = 1 kB
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_1K);
+        this->memorySectors.resize(16);
+        for (auto &sector : this->memorySectors)
+            sector.resize(4);
         break;
     case m_2K:
+        //  32 sectors * 4 blocks * 16 bytes = 2 kB
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_2K);
+        this->memorySectors.resize(32);
+        for (auto &sector : this->memorySectors)
+            sector.resize(4);
         break;
     case m_4K:
+        //  32 sectors * 4 blocks * 16 bytes + 8 sectors * 16 blocks * 16 bytes = 4 kB
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_4K);
+        this->memorySectors.resize(40);
+        for (int i = 0; i < 32; ++i)
+            memorySectors[i].resize(4);
+        for (int i = 32; i < 40; ++i)
+            memorySectors[i].resize(16);
         break;
     case m_MINI:
+        //  5 sectors * 4 blocks * 16 bytes = 320 bytes
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_MINI);
+        this->memorySectors.resize(5);
+        for (auto &sector : this->memorySectors)
+            sector.resize(4);
         break;
     default:
+        //  16 sectors * 4 blocks * 16 bytes = 1 kB
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_1K);
+        this->memorySectors.resize(16);
+        for (auto &sector : this->memorySectors)
+            sector.resize(4);
     }
 }
 
@@ -160,10 +185,40 @@ void MifareClassicCard::set_clear_key_B(const std::string &newClearKey)
     this->clearKey_B.set_clear_key(newClearKey);
 }
 
-// const mifare::classic::auth::KeyType &MifareClassicCard::get_key_type() const
-// {
-//     return this->keyType;
-// }
+void MifareClassicCard::fill_memory(const std::vector<std::vector<std::string>> &newData)
+{
+    auto iThisSector = this->memorySectors.begin();
+    for (auto &sector : newData)
+    {
+        auto iThisBlock = iThisSector->begin();
+        for (auto &block : sector)
+        {
+            *iThisBlock = block;
+            ++iThisBlock;
+            if (iThisBlock == iThisSector->end())
+                break;
+        }
+        ++iThisSector;
+        if (iThisSector == this->memorySectors.end())
+            break;
+    }
+}
+
+void MifareClassicCard::write_sector(const std::vector<std::string> &newSector, uint32_t iSector)
+{
+    if (iSector > this->memorySectors.size())
+        throw std::out_of_range("Provided memory sector index is out of range of mifare card memory map.");
+    this->memorySectors[iSector] = newSector;
+}
+
+void MifareClassicCard::write_block(const std::string &newBlock, uint32_t iSector, uint32_t iBlock)
+{
+    if (iSector > this->memorySectors.size())
+        throw std::out_of_range("Provided memory sector index is out of range of mifare card memory map.");
+    if (iBlock > this->memorySectors[iSector].size())
+        throw std::out_of_range("Provided memory block index is out of range of mifare card memory map.");
+    this->memorySectors[iSector][iBlock] = newBlock;
+}
 
 const mifare::classic::auth::ClearKey &MifareClassicCard::get_clear_key_A() const
 {
@@ -173,6 +228,11 @@ const mifare::classic::auth::ClearKey &MifareClassicCard::get_clear_key_A() cons
 const mifare::classic::auth::ClearKey &MifareClassicCard::get_clear_key_B() const
 {
     return this->clearKey_B;
+}
+
+const std::string &MifareClassicCard::get_data_block(uint32_t iSector, uint32_t iBlock)
+{
+    return this->memorySectors[iSector][iBlock];
 }
 
 const std::string MifareClassicCard::str() const

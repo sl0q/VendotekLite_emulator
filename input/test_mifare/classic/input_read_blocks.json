@@ -1,0 +1,64 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test read blocks",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "MIFARE_CLASSIC_1K",
+                    "tokenID": "1234uniqueID",
+                    "clearKey_A": "\\xdd\\xdd\\xdd\\xdd\\xdd\\xdd",
+                    "clearKey_B": "\\xff\\xff\\xff\\xff\\xff\\xff",
+                    "memorySectors":
+                    [
+                        {
+                            "blocks":
+                            [
+                                "block.00",
+                                "block.01",
+                                "block.02",
+                                "block.03"
+                            ]
+                        },
+                        {
+                            "blocks":
+                            [
+                                "block.10",
+                                "block.11",
+                                "block.12",
+                                "block.13"
+                            ]
+                        },
+                        {
+                            "blocks":
+                            [
+                                "block.20",
+                                "block.21",
+                                "block.22",
+                                "block.23"
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "steps":
+            [
+                {
+                    "comment": "poll for token (timeout 1s)",
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":[{"attach_card": 1}]
+                },
+                {
+                    "comment": "auth on clear key command with correct key",
+                    "message": "SVIAIwEFAQoeCAAQABoYXHhmZlx4ZmZceGZmXHhmZlx4ZmZceGZmHig="
+                },
+                {
+                    "comment": "read first 3 blocks",
+                    "message": "SVIACQMFARoECAAQA6PV"
+                }
+            ]
+        }
+    ]
+}

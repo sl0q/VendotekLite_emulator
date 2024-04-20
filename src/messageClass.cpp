@@ -990,6 +990,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrClassicAuthOnSamKey:
         res = execute_mfr_classic_auth_on_sam_key(mifareMessage, myDevice);
         break;
+    case Mifare::kMfrClassicReadBlocks:
+        res = execute_mfr_classic_read_blocks(mifareMessage, myDevice);
+        break;
 
     default:
         res = false;
@@ -1077,6 +1080,24 @@ bool MessageIR::execute_mfr_classic_auth_on_sam_key(Mifare &mifareMessage, Devic
     generatedResponce.print_MSG();
 
     return false;
+}
+
+bool MessageIR::execute_mfr_classic_read_blocks(Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_classic_read_blocks]...\n\n";
+
+    bool res;
+
+    // read blocks
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    // generatedResponce->print_MSG();
+
+    // delete generatedResponce;
+
+    return res;
 }
 
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)

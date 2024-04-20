@@ -86,6 +86,7 @@ private:
     // mifare::classic::auth::KeyType keyType;
     mifare::classic::auth::ClearKey clearKey_A;
     mifare::classic::auth::ClearKey clearKey_B;
+    std::vector<std::vector<std::string>> memorySectors;
 
 public:
     MifareClassicCard();
@@ -97,10 +98,14 @@ public:
     void set_clear_key_B(mifare::classic::auth::ClearKey &newClearKey);
     void set_clear_key_A(const std::string &newClearKey);
     void set_clear_key_B(const std::string &newClearKey);
+    void fill_memory(const std::vector<std::vector<std::string>> &newData);
+    void write_sector(const std::vector<std::string> &newSector, uint32_t iSector);
+    void write_block(const std::string &newBlock, uint32_t iSector, uint32_t iBlock);
 
     // const mifare::classic::auth::KeyType &get_key_type() const;
     const mifare::classic::auth::ClearKey &get_clear_key_A() const;
     const mifare::classic::auth::ClearKey &get_clear_key_B() const;
+    const std::string &get_data_block(uint32_t iSector, uint32_t iBlock);
 
     const std::string str() const;
 };
