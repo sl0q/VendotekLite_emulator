@@ -68,7 +68,7 @@ private:
 
     // Device collected data
     misc::stats::DeviceStatistic statistic;
-    Msg pollForTokenResponce; // saved responce on contactless::poll_for_token command
+    contactless::token::Token storedToken; // saved responce on contactless::poll_for_token command
 
     std::vector<const ContactlessCard *> cardsInField; // contactless cards in RF field of the terminal
 
@@ -116,6 +116,6 @@ public:
     misc::baudrate::Baudrate &get_baudrate();
     misc::lan_settings::LanSettings &get_lan_settings();
 
-    const Msg &get_previous_poll_for_token();
-    void set_poll_for_token_responce(const Msg &responce);
+    const contactless::token::Token &get_stored_token();
+    void store_token(const contactless::token::Token &responce);
 };

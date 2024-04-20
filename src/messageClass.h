@@ -114,7 +114,7 @@ private:
     //  Mifare
 
     //  Classic
-    // void execute_mfr_auth_(ContactlessLevel1 &contactlessMessage, Device &myDevice);
+    void execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
     const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");
@@ -132,7 +132,7 @@ private:
 
     //  Contactless 1 util
     const Payload &generate_poll_for_token_payload(Device &myDevice, bool preferMifare);
-    const Payload &generate_empty_poll_for_token_payload(Device &myDevice);
+    const Payload &generate_stored_poll_for_token_payload(Device &myDevice);
 
     //  Contactless 2 util
     const Payload &generate_perform_transaction_payload(Device &myDevice, bool preferMifare);

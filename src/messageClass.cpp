@@ -677,13 +677,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
         if (pollForToken.timeout() == 0)
         {
             // if timeout == 0 - return previous result
-            generatedResponce = new Msg(myDevice.get_previous_poll_for_token());
-            if (generatedResponce->is_empty())
-            {
-                std::cout << "There is no data about token from previous card. Responce with empty payload will be returned." << std::endl;
-                delete generatedResponce;
-                generatedResponce = &generate_responce(SUCCESS, generate_empty_poll_for_token_payload(myDevice));
-            }
+            generatedResponce = &generate_responce(SUCCESS, generate_stored_poll_for_token_payload(myDevice));
         }
         else
         {
@@ -696,7 +690,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
             if (myDevice.how_many_cards() == 1) // get token, send success message
             {
                 generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
-                myDevice.set_poll_for_token_responce(*generatedResponce);
+                // myDevice.store_token(*generatedResponce);
             }
             else
                 for (auto &action : this->actions)
@@ -719,7 +713,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                     {
                         // get token and break, send success message
                         generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
-                        myDevice.set_poll_for_token_responce(*generatedResponce);
+                        // myDevice.store_token(*generatedResponce);
                         break;
                     }
                 }
@@ -737,7 +731,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
         if (myDevice.how_many_cards() == 1)
         {
             generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
-            myDevice.set_poll_for_token_responce(*generatedResponce);
+            // myDevice.store_token(*generatedResponce);
         }
         else if (this->actions.empty())
         {
@@ -766,7 +760,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                 else if (myDevice.how_many_cards() == 1)
                 {
                     generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
-                    myDevice.set_poll_for_token_responce(*generatedResponce);
+                    // myDevice.store_token(*generatedResponce);
                     break;
                     // get token and break, send success message
                 }
@@ -908,6 +902,24 @@ void MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessag
     }
 
     // retry case is not implemented
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    delete generatedResponce;
+}
+
+void MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_classic_auth_on_clear_key]...\n\n";
+
+    auto mfrAuth = mifareMessage.mfr_classic_auth_on_clear_key();
+
+    myDevice.get_stored_token();
+
+    const Msg *generatedResponce = nullptr;
 
     std::cout << "Finised execution.\n\n";
 
@@ -1113,6 +1125,8 @@ const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice, bool
             responcePFT = (dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_iso_token().get_card_token();
     }
 
+    myDevice.store_token(*responcePFT);
+
     std::vector<uint8_t> buf;
     buf.resize(responcePFT->ByteSizeLong());
     int buf_size = buf.size();
@@ -1123,19 +1137,16 @@ const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice, bool
     return generatedPayload;
 }
 
-const Payload &MessageIR::generate_empty_poll_for_token_payload(Device &myDevice)
+const Payload &MessageIR::generate_stored_poll_for_token_payload(Device &myDevice)
 {
-    auto emptyPFT = new contactless::token::Token();
-    emptyPFT->set_type(contactless::token_type::UNKNOWN);
+    auto storedToken = &myDevice.get_stored_token();
 
     std::vector<uint8_t> buf;
-    buf.resize(emptyPFT->ByteSizeLong());
+    buf.resize(storedToken->ByteSizeLong());
     int buf_size = buf.size();
-    emptyPFT->SerializeToArray(buf.data(), buf_size);
+    storedToken->SerializeToArray(buf.data(), buf_size);
 
-    Payload &generatedPayload = *(new Payload(emptyPFT->DebugString(), buf));
-
-    delete emptyPFT;
+    Payload &generatedPayload = *(new Payload(storedToken->DebugString(), buf));
 
     return generatedPayload;
 }

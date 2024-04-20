@@ -443,7 +443,9 @@ void Device::load_default_state()
     this->statistic.clear_events();
     this->statistic.clear_lwip();
 
-    this->pollForTokenResponce.clear();
+    this->storedToken.Clear();
+    this->storedToken.set_type(contactless::token_type::UNKNOWN);
+    this->storedToken.set_id("0xff\\0xff\\0xff\\0xff\\0xff\\0xff");
 
     this->cardsInField.clear();
 }
@@ -540,12 +542,12 @@ misc::lan_settings::LanSettings &Device::get_lan_settings()
     return this->lanSettings;
 }
 
-const Msg &Device::get_previous_poll_for_token()
+const contactless::token::Token &Device::get_stored_token()
 {
-    return this->pollForTokenResponce;
+    return this->storedToken;
 }
 
-void Device::set_poll_for_token_responce(const Msg &responce)
+void Device::store_token(const contactless::token::Token &responce)
 {
-    this->pollForTokenResponce = responce;
+    this->storedToken = responce;
 }
