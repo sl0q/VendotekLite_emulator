@@ -82,7 +82,7 @@
                     "preactions":[{"attach_card": 1}]
                 },
                 {
-                    "comment": "auth on clear key command with wrong key (\\x0\\x0\\x0...), then try right key (\\xff\\xff...) then goes wrong key again which will be ignored",
+                    "comment": "auth on clear key command with wrong key (\\x0\\x0\\x0...), then try right key (\\xff\\xff...). The third message will be ignored",
                     "messages": [
                         "SVIAIwEFAQoeCAAQABoYXHgwMFx4MDBceDAwXHgwMFx4MDBceDAwE5E=",
                         "SVIAIwEFAQoeCAAQABoYXHhmZlx4ZmZceGZmXHhmZlx4ZmZceGZmHig=",

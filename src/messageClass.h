@@ -62,7 +62,7 @@ public:
     };
 
 private:
-    std::vector<Action *> preactions; // actions to do befor executing a message
+    std::vector<Action *> preactions; // actions to do before executing a message
     std::vector<Action *> actions;    // actions to do until timeout of IR message runs out if there is any
 
     std::vector<uint8_t> origMsg;
@@ -85,37 +85,37 @@ private:
     void append_big_endian(std::vector<uint8_t> &buf, uint16_t n);
 
     //  Miscelaneous
-    void execute_misc(Device &myDevice);
-    void execute_leds(Miscellaneous &miscMessage, Device &myDevice);
-    void execute_read_device_info(Miscellaneous &miscMessage, Device &myDevice);
-    void execute_reboot_device(Miscellaneous &miscMessage, Device &myDevice);
-    void execute_get_device_status(Miscellaneous &miscMessage, Device &myDevice);
-    void execute_make_sound(Miscellaneous &miscMessage, Device &myDevice);
-    void execute_get_device_statistic(Miscellaneous &miscMessage, Device &myDevice);
-    void execute_get_echo(Miscellaneous &miscMessage, Device &myDevice);
-    void execute_change_baudrate(Miscellaneous &miscMessage, Device &myDevice);
-    void execute_change_lan_settings(Miscellaneous &miscMessage, Device &myDevice);
+    bool execute_misc(Device &myDevice);
+    bool execute_leds(Miscellaneous &miscMessage, Device &myDevice);
+    bool execute_read_device_info(Miscellaneous &miscMessage, Device &myDevice);
+    bool execute_reboot_device(Miscellaneous &miscMessage, Device &myDevice);
+    bool execute_get_device_status(Miscellaneous &miscMessage, Device &myDevice);
+    bool execute_make_sound(Miscellaneous &miscMessage, Device &myDevice);
+    bool execute_get_device_statistic(Miscellaneous &miscMessage, Device &myDevice);
+    bool execute_get_echo(Miscellaneous &miscMessage, Device &myDevice);
+    bool execute_change_baudrate(Miscellaneous &miscMessage, Device &myDevice);
+    bool execute_change_lan_settings(Miscellaneous &miscMessage, Device &myDevice);
 
-    void execute_contact();
+    bool execute_contact();
 
     //  ContactlessLevel1
-    void execute_contactless_1(Device &myDevice);
-    void execute_poll_for_token(ContactlessLevel1 &contactlessMessage, Device &myDevice);
-    void execute_emv_removal(ContactlessLevel1 &contactlessMessage, Device &myDevice);
-    void execute_tsv_bit_array(ContactlessLevel1 &contactlessMessage, Device &myDevice);   //  not implemented
-    void execute_tsv_iso_command(ContactlessLevel1 &contactlessMessage, Device &myDevice); // not implemented
-    void execute_power_off_rf(ContactlessLevel1 &contactlessMessage, Device &myDevice);
-    void execute_rats(ContactlessLevel1 &contactlessMessage, Device &myDevice); // not implemented
+    bool execute_contactless_1(Device &myDevice);
+    bool execute_poll_for_token(ContactlessLevel1 &contactlessMessage, Device &myDevice);
+    bool execute_emv_removal(ContactlessLevel1 &contactlessMessage, Device &myDevice);
+    bool execute_tsv_bit_array(ContactlessLevel1 &contactlessMessage, Device &myDevice);   //  not implemented
+    bool execute_tsv_iso_command(ContactlessLevel1 &contactlessMessage, Device &myDevice); // not implemented
+    bool execute_power_off_rf(ContactlessLevel1 &contactlessMessage, Device &myDevice);
+    bool execute_rats(ContactlessLevel1 &contactlessMessage, Device &myDevice); // not implemented
 
     //  ContactlessLevel2
-    void execute_contactless_2(Device &myDevice);
-    void execute_perform_transaction(ContactlessLevel2 &contactlessMessage, Device &myDevice);
+    bool execute_contactless_2(Device &myDevice);
+    bool execute_perform_transaction(ContactlessLevel2 &contactlessMessage, Device &myDevice);
 
     //  Mifare
-    void execute_mifare(Device &myDevice);
+    bool execute_mifare(Device &myDevice);
 
     //  Classic
-    void execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice);
+    bool execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
     const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");
@@ -148,7 +148,7 @@ public:
     bool is_command();
     bool is_control();
 
-    void execute_message(Device &myDevice);
+    bool execute_message(Device &myDevice);
     void add_preaction(Action &newPreaction);
     void add_action(Action &newAction);
     const std::string str() const;

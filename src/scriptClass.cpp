@@ -185,11 +185,15 @@ void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)
 
 void Script::parse_step(json stepJson)
 {
-    if (stepJson.count("message") == 0)
-        throw ex::JsonParsingException("Could not find required [message] field");
-
     auto newStep = new Step();
-    newStep->set_message(stepJson.at("message").get<std::string>());
+
+    if (stepJson.count("message") != 0)
+        newStep->set_message(stepJson.at("message").get<std::string>());
+    else if (stepJson.count("messages") != 0)
+        for (auto &messageJson : stepJson["messages"])
+            newStep->add_message(messageJson);
+    else
+        throw ex::JsonParsingException("Could not find required [message] or [messages] field");
 
     if (stepJson.count("preactions") != 0)
         for (auto &preactionJson : stepJson["preactions"])
@@ -244,6 +248,12 @@ Step::Step(const std::string newMsg)
 
 Step::~Step()
 {
+    for (auto &m : this->messagesIR)
+        delete m;
+    this->messagesIR.clear();
+
+    if (messageIR != nullptr)
+        delete messageIR;
 }
 
 const std::string Step::str() const
@@ -288,7 +298,21 @@ void Step::set_message(const std::string newMsg)
     this->messageIR = new MessageIR(newMsg);
 }
 
+void Step::add_message(const std::string newMsg)
+{
+    this->messagesIR.push_back(new MessageIR(newMsg));
+}
+
 void Step::execute_step(Device &myDevice)
 {
-    this->messageIR->execute_message(myDevice);
+    if (this->messageIR != nullptr)
+        this->messageIR->execute_message(myDevice);
+    else
+    {
+        auto message = messagesIR.begin();
+
+        // execute messages until one of them is successful (returns TRUE)
+        while (!(*message)->execute_message(myDevice) && message != messagesIR.end())
+            ++message;
+    }
 }

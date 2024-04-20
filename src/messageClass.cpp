@@ -180,8 +180,9 @@ bool MessageIR::parse_payload()
     return true;
 }
 
-void MessageIR::execute_message(Device &myDevice)
+bool MessageIR::execute_message(Device &myDevice)
 {
+    bool res;
     for (auto &preaction : this->preactions)
     {
         preaction->make_action(myDevice);
@@ -191,22 +192,23 @@ void MessageIR::execute_message(Device &myDevice)
     switch (this->moduleID)
     {
     case 1:
-        execute_misc(myDevice);
+        res = execute_misc(myDevice);
         break;
     case 2:
     {
-        execute_contact();
+        res = execute_contact();
     }
     case 3:
-        execute_contactless_1(myDevice);
+        res = execute_contactless_1(myDevice);
         break;
     case 4:
-        execute_contactless_2(myDevice);
+        res = execute_contactless_2(myDevice);
         break;
     case 5:
-        execute_mifare(myDevice);
+        res = execute_mifare(myDevice);
         break;
     default:
+        res = false;
         std::ostringstream errorMessage;
         errorMessage << "Failed to execute command message. Unrecognised [moduleID]."
                      << "\nModuleID: " << std::to_string(this->moduleID)
@@ -216,6 +218,7 @@ void MessageIR::execute_message(Device &myDevice)
         generatedResponce.print_MSG();
         throw ex::FailedExecution(errorMessage.str());
     }
+    return res;
 }
 
 void MessageIR::add_preaction(Action &newPreaction)
@@ -233,57 +236,60 @@ const std::string MessageIR::str() const
     return "executed message information here";
 }
 
-void MessageIR::execute_misc(Device &myDevice)
+bool MessageIR::execute_misc(Device &myDevice)
 {
+    bool res;
     Miscellaneous miscMessage = *(dynamic_cast<Miscellaneous *>(this->msg));
     switch (miscMessage.misc_cmd_case())
     {
     case Miscellaneous::kSetLedsState:
-        execute_leds(miscMessage, myDevice);
+        res = execute_leds(miscMessage, myDevice);
         break;
     case Miscellaneous::kReadDeviceInfo:
-        execute_read_device_info(miscMessage, myDevice);
+        res = execute_read_device_info(miscMessage, myDevice);
         break;
 
     case Miscellaneous::kRebootDevice:
-        execute_reboot_device(miscMessage, myDevice);
+        res = execute_reboot_device(miscMessage, myDevice);
         break;
 
     case Miscellaneous::kGetDeviceStatus:
         // no info in docs, go see device.proto
-        execute_get_device_status(miscMessage, myDevice);
+        res = execute_get_device_status(miscMessage, myDevice);
         break;
 
     case Miscellaneous::kMakeSound:
-        execute_make_sound(miscMessage, myDevice);
+        res = execute_make_sound(miscMessage, myDevice);
         break;
 
     case Miscellaneous::kGetDeviceStatistic:
-        execute_get_device_statistic(miscMessage, myDevice);
+        res = execute_get_device_statistic(miscMessage, myDevice);
         break;
 
     case Miscellaneous::kGetEcho:
-        execute_get_echo(miscMessage, myDevice);
+        res = execute_get_echo(miscMessage, myDevice);
         break;
 
     case Miscellaneous::kChangeBaudrate:
-        execute_change_baudrate(miscMessage, myDevice);
+        res = execute_change_baudrate(miscMessage, myDevice);
         break;
 
     case Miscellaneous::kChangeLanSettings:
-        execute_change_lan_settings(miscMessage, myDevice);
+        res = execute_change_lan_settings(miscMessage, myDevice);
         break;
 
     default:
+        res = false;
         std::string errorMessage("Unrecognised [command]. [Miscellaneous] module. MSG_ID: " + std::to_string(this->msgID) +
                                  ". misc_cmd_case: " + std::to_string(miscMessage.misc_cmd_case()));
         Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage));
         std::cout << "Generated responce:" << std::endl;
         generatedResponce.print_MSG();
     }
+    return res;
 }
 
-void MessageIR::execute_leds(Miscellaneous &miscMessage, Device &myDevice)
+bool MessageIR::execute_leds(Miscellaneous &miscMessage, Device &myDevice)
 {
     misc::leds::Leds &ledsState = myDevice.get_leds_state();
     std::cout << "Executing [set_leds_state]...\n\n"
@@ -311,9 +317,11 @@ void MessageIR::execute_leds(Miscellaneous &miscMessage, Device &myDevice)
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_read_device_info(Miscellaneous &miscMessage, Device &myDevice)
+bool MessageIR::execute_read_device_info(Miscellaneous &miscMessage, Device &myDevice)
 {
     std::cout << "Executing [read_device_info]...\n\n";
     std::cout << "Finised execution.\n\n";
@@ -322,9 +330,11 @@ void MessageIR::execute_read_device_info(Miscellaneous &miscMessage, Device &myD
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_reboot_device(Miscellaneous &miscMessage, Device &myDevice)
+bool MessageIR::execute_reboot_device(Miscellaneous &miscMessage, Device &myDevice)
 {
     std::cout << "Executing [reboot_device]...\n\n";
     misc::reboot::Reboot *reboot = new misc::reboot::Reboot();
@@ -342,7 +352,7 @@ void MessageIR::execute_reboot_device(Miscellaneous &miscMessage, Device &myDevi
         std::cout << "FACTORY" << std::endl;
         break;
     default:
-        throw new std::invalid_argument(std::string("ERROR: Invalid operation mode ID: " + myDevice.get_operation_mode()));
+        throw new std::invalid_argument(std::string("ERROR: Unknown operation mode ID: " + myDevice.get_operation_mode()));
     }
 
     myDevice.reboot(miscMessage.reboot_device().mode());
@@ -360,7 +370,7 @@ void MessageIR::execute_reboot_device(Miscellaneous &miscMessage, Device &myDevi
         std::cout << "FACTORY" << std::endl;
         break;
     default:
-        throw new std::invalid_argument(std::string("ERROR: Invalid operation mode ID: " + myDevice.get_operation_mode()));
+        throw new std::invalid_argument(std::string("ERROR: Unknown operation mode ID: " + myDevice.get_operation_mode()));
     }
 
     std::cout << "Finised execution.\n\n";
@@ -369,9 +379,11 @@ void MessageIR::execute_reboot_device(Miscellaneous &miscMessage, Device &myDevi
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_get_device_status(Miscellaneous &miscMessage, Device &myDevice)
+bool MessageIR::execute_get_device_status(Miscellaneous &miscMessage, Device &myDevice)
 {
     std::cout << "Executing [get_device_status]...\n\n";
     std::cout << "Finised execution.\n\n";
@@ -380,9 +392,11 @@ void MessageIR::execute_get_device_status(Miscellaneous &miscMessage, Device &my
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_make_sound(Miscellaneous &miscMessage, Device &myDevice)
+bool MessageIR::execute_make_sound(Miscellaneous &miscMessage, Device &myDevice)
 {
     std::cout << "Executing [make_sound]...\n\n";
 
@@ -405,9 +419,11 @@ void MessageIR::execute_make_sound(Miscellaneous &miscMessage, Device &myDevice)
     Msg generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_get_device_statistic(Miscellaneous &miscMessage, Device &myDevice)
+bool MessageIR::execute_get_device_statistic(Miscellaneous &miscMessage, Device &myDevice)
 {
     std::cout << "Executing [get_device_statistic]...\n\n";
     std::cout << "Finised execution.\n\n";
@@ -416,9 +432,11 @@ void MessageIR::execute_get_device_statistic(Miscellaneous &miscMessage, Device 
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_get_echo(Miscellaneous &miscMessage, Device &myDevice)
+bool MessageIR::execute_get_echo(Miscellaneous &miscMessage, Device &myDevice)
 {
     std::cout << "Executing [get_echo]...\n\n";
     misc::echo::GetEcho getEcho = miscMessage.get_echo();
@@ -435,9 +453,11 @@ void MessageIR::execute_get_echo(Miscellaneous &miscMessage, Device &myDevice)
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_change_baudrate(Miscellaneous &miscMessage, Device &myDevice)
+bool MessageIR::execute_change_baudrate(Miscellaneous &miscMessage, Device &myDevice)
 {
     const misc::baudrate::ChangeBaudrate &changeBaudrate = miscMessage.change_baudrate();
     std::cout << "Executing [change_baudrate]...\n\n"
@@ -451,9 +471,11 @@ void MessageIR::execute_change_baudrate(Miscellaneous &miscMessage, Device &myDe
     Msg generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_change_lan_settings(Miscellaneous &miscMessage, Device &myDevice)
+bool MessageIR::execute_change_lan_settings(Miscellaneous &miscMessage, Device &myDevice)
 {
     std::cout << "Executing [change_lan_settings]...\n\n"
 
@@ -467,14 +489,18 @@ void MessageIR::execute_change_lan_settings(Miscellaneous &miscMessage, Device &
     Msg generatedResponce = generate_responce(SUCCESS, generate_lan_settings_payload(myDevice));
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_contact()
+bool MessageIR::execute_contact()
 {
     std::string errorMessage("Module [Contact] is not supported. MSG_ID: " + std::to_string(this->msgID));
     Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage));
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return false;
 }
 
 // void MessageIR::execute_contact(Device &myDevice)
@@ -615,30 +641,32 @@ void MessageIR::execute_contact()
 //     generatedResponce.print_MSG();
 // }
 
-void MessageIR::execute_contactless_1(Device &myDevice)
+bool MessageIR::execute_contactless_1(Device &myDevice)
 {
+    bool res;
     ContactlessLevel1 contactlessLvl1Message = *(dynamic_cast<ContactlessLevel1 *>(this->msg));
     switch (contactlessLvl1Message.contactless_level1_cmd_case())
     {
     case ContactlessLevel1::kPollForToken:
-        execute_poll_for_token(contactlessLvl1Message, myDevice);
+        res = execute_poll_for_token(contactlessLvl1Message, myDevice);
         break;
     case ContactlessLevel1::kEmvRemoval:
-        execute_emv_removal(contactlessLvl1Message, myDevice);
+        res = execute_emv_removal(contactlessLvl1Message, myDevice);
         break;
     // case ContactlessLevel1::kTsvBitArray:
-    //     execute_tsv_bit_array(contactlessLvl1Message, myDevice);
+    //     res = execute_tsv_bit_array(contactlessLvl1Message, myDevice);
     //     break;
     // case ContactlessLevel1::kIso144434Command:
-    //     execute_tsv_iso_command(contactlessLvl1Message, myDevice);
+    //     res = execute_tsv_iso_command(contactlessLvl1Message, myDevice);
     //     break;
     case ContactlessLevel1::kPowerOffField:
-        execute_power_off_rf(contactlessLvl1Message, myDevice);
+        res = execute_power_off_rf(contactlessLvl1Message, myDevice);
         break;
     // case ContactlessLevel1::kRequestForAts:
-    //     execute_rats(contactlessLvl1Message, myDevice);
+    //     res = execute_rats(contactlessLvl1Message, myDevice);
     //     break;
     default:
+        res = false;
         std::ostringstream errorMessage;
         errorMessage << "Failed to execute [ContactlessLevel1] command message. Unrecognised [command]."
                      << "\nMSG_ID: " << std::to_string(this->msgID)
@@ -648,12 +676,15 @@ void MessageIR::execute_contactless_1(Device &myDevice)
         generatedResponce.print_MSG();
         throw ex::FailedExecution(errorMessage.str());
     }
+
+    return res;
 }
 
-void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice)
+bool MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice)
 {
     std::cout << "Executing [poll_for_token]...\n\n";
 
+    bool res;
     auto pollForToken = miscMessage.poll_for_token();
 
     if (pollForToken.has_light_up_led())
@@ -679,6 +710,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
         {
             // if timeout == 0 - return previous result
             generatedResponce = &generate_responce(SUCCESS, generate_stored_poll_for_token_payload(myDevice));
+            res = true;
         }
         else
         {
@@ -691,7 +723,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
             if (myDevice.how_many_cards() == 1) // get token, send success message
             {
                 generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
-                // myDevice.store_token(*generatedResponce);
+                res = true;
             }
             else
                 for (auto &action : this->actions)
@@ -703,6 +735,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                     {
                         std::cout << "[poll_for_token] was canceled by HOST" << std::endl;
                         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+                        res = false;
                         break;
                     }
                     else if (myDevice.how_many_cards() > 1) // send notification
@@ -714,7 +747,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                     {
                         // get token and break, send success message
                         generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
-                        // myDevice.store_token(*generatedResponce);
+                        res = true;
                         break;
                     }
                 }
@@ -732,12 +765,13 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
         if (myDevice.how_many_cards() == 1)
         {
             generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
-            // myDevice.store_token(*generatedResponce);
+            res = true;
         }
         else if (this->actions.empty())
         {
             std::cout << "In the script command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST" << std::endl;
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+            res = false;
             // report what terminal has stuck in poll mode and command was canceled by HOST with cancel message. send failure(processing_stopped)
         }
         else
@@ -751,6 +785,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                 {
                     std::cout << "[poll_for_token] was canceled by HOST" << std::endl;
                     generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+                    res = false;
                     break;
                 }
                 else if (myDevice.how_many_cards() > 1) // send notification
@@ -761,7 +796,7 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                 else if (myDevice.how_many_cards() == 1)
                 {
                     generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
-                    // myDevice.store_token(*generatedResponce);
+                    res = true;
                     break;
                     // get token and break, send success message
                 }
@@ -771,12 +806,16 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
             {
                 std::cout << "In current script command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST" << std::endl;
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+                res = false;
             }
         }
     }
 
     if (generatedResponce == nullptr)
+    {
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::TIMEOUT_EXPIRED, "Timeout has expired"));
+        res = false;
+    }
 
     if (pollForToken.has_light_up_led())
     {
@@ -791,12 +830,15 @@ void MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
     delete generatedResponce;
+
+    return res;
 }
 
-void MessageIR::execute_emv_removal(ContactlessLevel1 &miscMessage, Device &myDevice)
+bool MessageIR::execute_emv_removal(ContactlessLevel1 &miscMessage, Device &myDevice)
 {
     std::cout << "Executing [emv_removal]...\n\n";
 
+    bool res;
     auto emvRemoval = miscMessage.emv_removal();
 
     std::cout << "Returning Pending message..." << std::endl;
@@ -813,6 +855,7 @@ void MessageIR::execute_emv_removal(ContactlessLevel1 &miscMessage, Device &myDe
         {
             std::cout << "[emv_removal] was canceled by HOST" << std::endl;
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+            res = false;
             break;
         }
     }
@@ -820,13 +863,22 @@ void MessageIR::execute_emv_removal(ContactlessLevel1 &miscMessage, Device &myDe
     if (generatedResponce == nullptr)
     {
         if (!emvRemoval.has_timeout())
+        {
             generatedResponce = &generate_responce(SUCCESS);
+            res = true;
+        }
         else
         {
             if (myDevice.how_many_cards() > 0)
+            {
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::TIMEOUT_EXPIRED));
+                res = false;
+            }
             else
+            {
                 generatedResponce = &generate_responce(SUCCESS);
+                res = true;
+            }
         }
     }
 
@@ -837,13 +889,16 @@ void MessageIR::execute_emv_removal(ContactlessLevel1 &miscMessage, Device &myDe
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
     delete generatedResponce;
+
+    return res;
 }
 
-void MessageIR::execute_tsv_bit_array(ContactlessLevel1 &contactlessMessage, Device &myDevice)
+bool MessageIR::execute_tsv_bit_array(ContactlessLevel1 &contactlessMessage, Device &myDevice)
 {
+    return false;
 }
 
-void MessageIR::execute_power_off_rf(ContactlessLevel1 &contactlessMessage, Device &myDevice)
+bool MessageIR::execute_power_off_rf(ContactlessLevel1 &contactlessMessage, Device &myDevice)
 {
     std::cout << "Executing [emv_removal]...\n\n";
 
@@ -854,17 +909,21 @@ void MessageIR::execute_power_off_rf(ContactlessLevel1 &contactlessMessage, Devi
     std::cout << "Generated responce:" << std::endl;
     Msg generatedResponce = generate_responce(SUCCESS);
     generatedResponce.print_MSG();
+
+    return true;
 }
 
-void MessageIR::execute_contactless_2(Device &myDevice)
+bool MessageIR::execute_contactless_2(Device &myDevice)
 {
+    bool res;
     ContactlessLevel2 contactlessLvl2Message = *(dynamic_cast<ContactlessLevel2 *>(this->msg));
     switch (contactlessLvl2Message.contactless_level2_cmd_case())
     {
     case ContactlessLevel2::kPerformTransaction:
-        execute_perform_transaction(contactlessLvl2Message, myDevice);
+        res = execute_perform_transaction(contactlessLvl2Message, myDevice);
         break;
     default:
+        res = false;
         std::ostringstream errorMessage;
         errorMessage << "Failed to execute [ContactlessLevel2] command message. Unrecognised [command]."
                      << "\nMSG_ID: " << std::to_string(this->msgID)
@@ -874,12 +933,15 @@ void MessageIR::execute_contactless_2(Device &myDevice)
         generatedResponce.print_MSG();
         throw ex::FailedExecution(errorMessage.str());
     }
+
+    return res;
 }
 
-void MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessage, Device &myDevice)
+bool MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessage, Device &myDevice)
 {
     std::cout << "Executing [perform_transaction]...\n\n";
 
+    bool res;
     std::cout << "Returning Pending message..." << std::endl;
     generate_responce(PENDING).print_MSG();
 
@@ -893,6 +955,7 @@ void MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessag
         {
             std::cout << "[perform_transaction] was canceled by HOST" << std::endl;
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
+            res = false;
             break;
         }
     }
@@ -900,6 +963,7 @@ void MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessag
     {
         bool preferMifare = contactlessMessage.perform_transaction().poll_for_token().prefer_mifare();
         generatedResponce = &generate_responce(SUCCESS, generate_perform_transaction_payload(myDevice, preferMifare));
+        res = true;
     }
 
     // retry case is not implemented
@@ -910,18 +974,22 @@ void MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessag
     generatedResponce->print_MSG();
 
     delete generatedResponce;
+
+    return res;
 }
 
-void MessageIR::execute_mifare(Device &myDevice)
+bool MessageIR::execute_mifare(Device &myDevice)
 {
+    bool res;
     Mifare mifareMessage = *(dynamic_cast<Mifare *>(this->msg));
     switch (mifareMessage.mifare_cmd_case())
     {
     case Mifare::kMfrClassicAuthOnClearKey:
-        execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice);
+        res = execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice);
         break;
 
     default:
+        res = false;
         std::ostringstream errorMessage;
         errorMessage << "Failed to execute [Mifare] command message. Unrecognised [command]."
                      << "\nMSG_ID: " << std::to_string(this->msgID)
@@ -931,14 +999,16 @@ void MessageIR::execute_mifare(Device &myDevice)
         generatedResponce.print_MSG();
         throw ex::FailedExecution(errorMessage.str());
     }
+
+    return res;
 }
 
-void MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice)
+bool MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_auth_on_clear_key]...\n\n";
 
+    bool res;
     auto mfrAuth = mifareMessage.mfr_classic_auth_on_clear_key();
-
     auto storedToken = &myDevice.get_stored_token();
 
     const Msg *generatedResponce = nullptr;
@@ -949,6 +1019,7 @@ void MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
         storedToken->type() != contactless::token_type::MIFARE_CLASSIC_MINI)
     {
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong token type"));
+        res = false;
     }
     else
     {
@@ -958,18 +1029,31 @@ void MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
         {
         case mifare::classic::auth::TYPE_A:
             if (dynamic_cast<const MifareClassicCard *>(card)->get_clear_key_A().clear_key() != mfrAuth.clear_key())
+            {
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Mismatch of clear key type_a"));
+                res = false;
+            }
             else
+            {
                 generatedResponce = &generate_responce(SUCCESS);
+                res = true;
+            }
             break;
         case mifare::classic::auth::TYPE_B:
             if (dynamic_cast<const MifareClassicCard *>(card)->get_clear_key_B().clear_key() != mfrAuth.clear_key())
+            {
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Mismatch of clear key type_b"));
+                res = false;
+            }
             else
+            {
                 generatedResponce = &generate_responce(SUCCESS);
+                res = true;
+            }
             break;
         default:
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Unknown key type"));
+            res = false;
         }
     }
     std::cout << "Finised execution.\n\n";
@@ -978,6 +1062,8 @@ void MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
     generatedResponce->print_MSG();
 
     delete generatedResponce;
+
+    return res;
 }
 
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)

@@ -50,7 +50,8 @@ class Step
     using json = nlohmann::json;
 
 private:
-    MessageIR *messageIR;
+    MessageIR *messageIR = nullptr;
+    std::vector<MessageIR *> messagesIR;
     std::string origMsg;
 
 public:
@@ -62,6 +63,7 @@ public:
     void parse_action(json actionJson);
 
     void set_message(const std::string newMsg);
+    void add_message(const std::string newMsg);
 
     void execute_step(Device &myDevice);
 };
