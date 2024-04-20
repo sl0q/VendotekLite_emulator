@@ -291,7 +291,7 @@ bool MessageIR::execute_misc(Device &myDevice)
 
 bool MessageIR::execute_leds(Miscellaneous &miscMessage, Device &myDevice)
 {
-    misc::leds::Leds &ledsState = myDevice.get_leds_state();
+    const misc::leds::Leds &ledsState = myDevice.get_leds_state();
     std::cout << "Executing [set_leds_state]...\n\n"
               << "Original leds state:\n"
               << "blue: " << ledsState.has_blue() << std::endl

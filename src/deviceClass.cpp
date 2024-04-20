@@ -20,12 +20,12 @@ Device::~Device()
     }
 }
 
-DeviceInfoStruct Device::get_device_info()
+const DeviceInfoStruct Device::get_device_info()
 {
     return {this->serialNumber, this->IntelliReaderVersion};
 }
 
-DeviceStatusStruct Device::get_device_status()
+const DeviceStatusStruct Device::get_device_status()
 {
     return {this->timeToRestart, *this->security};
 }
@@ -517,12 +517,12 @@ void Device::set_lan_settings(const misc::lan_settings::LanSettings &newLanSetti
     this->lanSettings = newLanSettings;
 }
 
-misc::leds::Leds &Device::get_leds_state()
+const misc::leds::Leds &Device::get_leds_state()
 {
     return this->leds;
 }
 
-misc::reboot::Reboot_OperationMode &Device::get_operation_mode()
+const misc::reboot::Reboot_OperationMode &Device::get_operation_mode()
 {
     return this->operationMode;
 }
@@ -532,12 +532,12 @@ const misc::stats::DeviceStatistic &Device::get_device_statistic()
     return this->statistic;
 }
 
-misc::baudrate::Baudrate &Device::get_baudrate()
+const misc::baudrate::Baudrate &Device::get_baudrate()
 {
     return this->baudrate;
 }
 
-misc::lan_settings::LanSettings &Device::get_lan_settings()
+const misc::lan_settings::LanSettings &Device::get_lan_settings()
 {
     return this->lanSettings;
 }

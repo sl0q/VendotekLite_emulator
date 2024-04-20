@@ -108,13 +108,13 @@ public:
     void set_lan_settings(const misc::lan_settings::LanSettings &newLanSettings);
 
     // make const return values
-    DeviceInfoStruct get_device_info();
-    DeviceStatusStruct get_device_status();
-    misc::leds::Leds &get_leds_state();
-    misc::reboot::Reboot_OperationMode &get_operation_mode();
+    const DeviceInfoStruct get_device_info();
+    const DeviceStatusStruct get_device_status();
+    const misc::leds::Leds &get_leds_state();
+    const misc::reboot::Reboot_OperationMode &get_operation_mode();
     const misc::stats::DeviceStatistic &get_device_statistic();
-    misc::baudrate::Baudrate &get_baudrate();
-    misc::lan_settings::LanSettings &get_lan_settings();
+    const misc::baudrate::Baudrate &get_baudrate();
+    const misc::lan_settings::LanSettings &get_lan_settings();
 
     const contactless::token::Token &get_stored_token();
     void store_token(const contactless::token::Token &responce);
