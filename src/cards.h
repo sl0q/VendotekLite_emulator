@@ -8,6 +8,8 @@
 
 #include "myExceptions.h"
 
+#define BLOCK_SIZE 16
+
 // class ContactCard
 // {
 // private:
@@ -106,7 +108,7 @@ public:
     // const mifare::classic::auth::KeyType &get_key_type() const;
     const std::string get_clear_key_A(uint32_t iSector) const;
     const std::string get_clear_key_B(uint32_t iSector) const;
-    const std::string &get_data_block(uint32_t iSector, uint32_t iBlock);
+    const std::string &get_data_block(uint32_t iBlock);
 
     void authorize_sector(uint32_t iSector);
     void reset_sector();

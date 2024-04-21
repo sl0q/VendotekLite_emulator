@@ -140,6 +140,9 @@ private:
     //  Contactless 2 util
     const Payload &generate_perform_transaction_payload(Device &myDevice, bool preferMifare);
 
+    // Mifare classic util
+    const Payload &generate_mfr_classic_read_blocks_payload(std::string &data);
+
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());
 
 public:

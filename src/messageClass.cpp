@@ -1092,14 +1092,22 @@ bool MessageIR::execute_mfr_classic_read_blocks(Mifare &mifareMessage, Device &m
 
     bool res;
 
-    // read blocks
+    auto mfrReadBlocks = mifareMessage.mfr_classic_read_blocks();
+    auto card = myDevice.get_card_in_field();
+
+    std::string readData = "";
+
+    for (int i = 0; i < mfrReadBlocks.block_count(); ++i)
+    {
+        readData += dynamic_cast<MifareClassicCard *>(card)->get_data_block(mfrReadBlocks.start_block() + i);
+        std::cout << "readData: " << readData << std::endl;
+    }
 
     std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;
-    // generatedResponce->print_MSG();
-
-    // delete generatedResponce;
+    Msg generatedResponce = generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
+    generatedResponce.print_MSG();
 
     return res;
 }
@@ -1370,6 +1378,25 @@ const Payload &MessageIR::generate_perform_transaction_payload(Device &myDevice,
 
     // delete newToken;
     delete transactionResult;
+
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_mfr_classic_read_blocks_payload(std::string &data)
+{
+    auto blocks = new mifare::classic::read::Blocks;
+
+    blocks->set_data(data);
+
+    std::vector<uint8_t> buf;
+    buf.resize(blocks->ByteSizeLong());
+    int buf_size = buf.size();
+    blocks->SerializeToArray(buf.data(), buf_size);
+
+    Payload &generatedPayload = *(new Payload(blocks->DebugString(), buf));
+
+    // delete newToken;
+    delete blocks;
 
     return generatedPayload;
 }

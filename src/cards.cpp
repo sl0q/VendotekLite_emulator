@@ -125,7 +125,7 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             sector.resize(4);
             for (auto &block : sector)
-                block.resize(16);
+                block.resize(16, '*');
         }
         break;
     case m_2K:
@@ -136,7 +136,7 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             sector.resize(4);
             for (auto &block : sector)
-                block.resize(16);
+                block.resize(16, '*');
         }
         break;
     case m_4K:
@@ -147,13 +147,13 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             memorySectors[i].resize(4);
             for (auto &block : memorySectors[i])
-                block.resize(16);
+                block.resize(16, '*');
         }
         for (int i = 32; i < 40; ++i)
         {
             memorySectors[i].resize(16);
             for (auto &block : memorySectors[i])
-                block.resize(16);
+                block.resize(16, '*');
         }
 
         break;
@@ -165,7 +165,7 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             sector.resize(4);
             for (auto &block : sector)
-                block.resize(16);
+                block.resize(16, '*');
         }
         break;
     default:
@@ -176,7 +176,7 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             sector.resize(4);
             for (auto &block : sector)
-                block.resize(16);
+                block.resize(16, '*');
         }
     }
 }
@@ -220,7 +220,7 @@ void MifareClassicCard::fill_memory(const std::vector<std::vector<std::string>> 
         {
             *iThisBlock = block;
             // if(iThisBlock->length() != 16)
-            iThisBlock->resize(16);
+            iThisBlock->resize(16, '*');
             ++iThisBlock;
             if (iThisBlock == iThisSector->end())
                 break;
@@ -244,7 +244,10 @@ void MifareClassicCard::write_block(const std::string &newBlock, uint32_t iSecto
         throw std::out_of_range("Provided memory sector index is out of range of mifare card memory map.");
     if (iBlock > this->memorySectors[iSector].size())
         throw std::out_of_range("Provided memory block index is out of range of mifare card memory map.");
+
     this->memorySectors[iSector][iBlock] = newBlock;
+    if (this->memorySectors[iSector][iBlock].size() != BLOCK_SIZE)
+        this->memorySectors[iSector][iBlock].resize(16, '*');
 }
 
 const std::string MifareClassicCard::get_clear_key_A(uint32_t iSector) const
@@ -257,9 +260,14 @@ const std::string MifareClassicCard::get_clear_key_B(uint32_t iSector) const
     return (this->memorySectors[iSector].end() - 1)->substr(10, 6);
 }
 
-const std::string &MifareClassicCard::get_data_block(uint32_t iSector, uint32_t iBlock)
+const std::string &MifareClassicCard::get_data_block(uint32_t iBlock)
 {
-    return this->memorySectors[iSector][iBlock];
+    if (this->iSector > this->memorySectors.size())
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is out of range of mifare card memory map.");
+    if (iBlock > this->memorySectors[this->iSector].size())
+        throw std::out_of_range("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " is out of range of mifare card memory map.");
+
+    return this->memorySectors[this->iSector][iBlock];
 }
 
 void MifareClassicCard::authorize_sector(uint32_t iSector)
