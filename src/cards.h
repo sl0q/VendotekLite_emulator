@@ -84,8 +84,9 @@ public:
 
 private:
     // mifare::classic::auth::KeyType keyType;
-    mifare::classic::auth::ClearKey clearKey_A;
-    mifare::classic::auth::ClearKey clearKey_B;
+    // mifare::classic::auth::ClearKey clearKey_A; //  key a of current sector
+    // mifare::classic::auth::ClearKey clearKey_B; //  key b of current sector
+    uint32_t iSector = UINT32_MAX; // index of authenticated sector
     std::vector<std::vector<std::string>> memorySectors;
 
 public:
@@ -94,18 +95,21 @@ public:
     ~MifareClassicCard();
 
     // void set_key_type(mifare::classic::auth::KeyType newKeyType);
-    void set_clear_key_A(mifare::classic::auth::ClearKey &newClearKey);
-    void set_clear_key_B(mifare::classic::auth::ClearKey &newClearKey);
-    void set_clear_key_A(const std::string &newClearKey);
-    void set_clear_key_B(const std::string &newClearKey);
+    // void set_clear_key_A(mifare::classic::auth::ClearKey &newClearKey);
+    // void set_clear_key_B(mifare::classic::auth::ClearKey &newClearKey);
+    // void set_clear_key_A(const std::string &newClearKey);
+    // void set_clear_key_B(const std::string &newClearKey);
     void fill_memory(const std::vector<std::vector<std::string>> &newData);
     void write_sector(const std::vector<std::string> &newSector, uint32_t iSector);
     void write_block(const std::string &newBlock, uint32_t iSector, uint32_t iBlock);
 
     // const mifare::classic::auth::KeyType &get_key_type() const;
-    const mifare::classic::auth::ClearKey &get_clear_key_A() const;
-    const mifare::classic::auth::ClearKey &get_clear_key_B() const;
+    const std::string get_clear_key_A(uint32_t iSector) const;
+    const std::string get_clear_key_B(uint32_t iSector) const;
     const std::string &get_data_block(uint32_t iSector, uint32_t iBlock);
+
+    void authorize_sector(uint32_t iSector);
+    void reset_sector();
 
     const std::string str() const;
 };

@@ -9,8 +9,6 @@
                     "cardID": 1,
                     "tokenType": "MIFARE_CLASSIC_1K",
                     "tokenID": "1234uniqueID",
-                    "clearKey_A": "\\x00\\x00\\x00\\x00\\x00\\x00",
-                    "clearKey_B": "\\xff\\xff\\xff\\xff\\xff\\xff",
                     "memorySectors":
                     [
                         {
@@ -19,7 +17,7 @@
                                 "block.00",
                                 "block.01",
                                 "block.02",
-                                "block.03"
+                                "aaaaaax01xbbbbbb"
                             ]
                         },
                         {
@@ -28,7 +26,7 @@
                                 "block.10",
                                 "block.11",
                                 "block.12",
-                                "block.13"
+                                "aaaaaax02xbbbbbb"
                             ]
                         },
                         {
@@ -37,7 +35,7 @@
                                 "block.20",
                                 "block.21",
                                 "block.22",
-                                "block.23"
+                                "aaaaaax03xbbbbbb"
                             ]
                         }
                     ]
@@ -51,8 +49,8 @@
                     "preactions":[{"attach_card": 1}]
                 },
                 {
-                    "comment": "auth on clear key command sector=0, type_a, key=\\0x00\\0x00...",
-                    "message": "SVIAIwEFAQoeCAAQABoYXHgwMFx4MDBceDAwXHgwMFx4MDBceDAwE5E="
+                    "comment": "auth on clear key command sector=0, type_a, key=aaaaaa",
+                    "message": "SVIAEQEFAQoMCAAQABoGYWFhYWFh15E="
                 }
             ]
         }

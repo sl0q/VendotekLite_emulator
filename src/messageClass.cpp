@@ -1034,7 +1034,7 @@ bool MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
         switch (mfrAuth.key_type())
         {
         case mifare::classic::auth::TYPE_A:
-            if (dynamic_cast<const MifareClassicCard *>(card)->get_clear_key_A().clear_key() != mfrAuth.clear_key())
+            if (dynamic_cast<MifareClassicCard *>(card)->get_clear_key_A(mfrAuth.sector_number()) != mfrAuth.clear_key())
             {
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Mismatch of clear key type_a"));
                 res = false;
@@ -1042,11 +1042,13 @@ bool MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
             else
             {
                 generatedResponce = &generate_responce(SUCCESS);
+                dynamic_cast<MifareClassicCard *>(card)->authorize_sector(mfrAuth.sector_number());
+                std::cout << "Authenticated sector " << mfrAuth.sector_number() << std::endl;
                 res = true;
             }
             break;
         case mifare::classic::auth::TYPE_B:
-            if (dynamic_cast<const MifareClassicCard *>(card)->get_clear_key_B().clear_key() != mfrAuth.clear_key())
+            if (dynamic_cast<const MifareClassicCard *>(card)->get_clear_key_B(mfrAuth.sector_number()) != mfrAuth.clear_key())
             {
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Mismatch of clear key type_b"));
                 res = false;
@@ -1054,6 +1056,8 @@ bool MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Dev
             else
             {
                 generatedResponce = &generate_responce(SUCCESS);
+                dynamic_cast<MifareClassicCard *>(card)->authorize_sector(mfrAuth.sector_number());
+                std::cout << "Authenticated sector " << mfrAuth.sector_number() << std::endl;
                 res = true;
             }
             break;

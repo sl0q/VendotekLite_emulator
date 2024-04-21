@@ -9,8 +9,6 @@
                     "cardID": 1,
                     "tokenType": "MIFARE_CLASSIC_1K",
                     "tokenID": "1234uniqueID",
-                    "clearKey_A": "\\xdd\\xdd\\xdd\\xdd\\xdd\\xdd",
-                    "clearKey_B": "\\xff\\xff\\xff\\xff\\xff\\xff",
                     "memorySectors":
                     [
                         {
@@ -19,7 +17,7 @@
                                 "block.00",
                                 "block.01",
                                 "block.02",
-                                "block.03"
+                                "aaaaaax01xbbbbbb"
                             ]
                         },
                         {
@@ -28,7 +26,7 @@
                                 "block.10",
                                 "block.11",
                                 "block.12",
-                                "block.13"
+                                "aaaaaax02xbbbbbb"
                             ]
                         },
                         {
@@ -37,7 +35,7 @@
                                 "block.20",
                                 "block.21",
                                 "block.22",
-                                "block.23"
+                                "aaaaaax03xbbbbbb"
                             ]
                         }
                     ]
@@ -51,11 +49,11 @@
                     "preactions":[{"attach_card": 1}]
                 },
                 {
-                    "comment": "auth on clear key command with correct key",
-                    "message": "SVIAIwEFAQoeCAAQABoYXHhmZlx4ZmZceGZmXHhmZlx4ZmZceGZmHig="
+                    "comment": "auth on clear key command sector=0, type_a, key=aaaaaa",
+                    "message": "SVIAEQEFAQoMCAAQABoGYWFhYWFh15E="
                 },
                 {
-                    "comment": "read first 3 blocks",
+                    "comment": "read first 3 blocks of sector 0",
                     "message": "SVIACQMFARoECAAQA6PV"
                 }
             ]

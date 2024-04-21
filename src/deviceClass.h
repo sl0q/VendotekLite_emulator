@@ -70,7 +70,7 @@ private:
     misc::stats::DeviceStatistic statistic;
     contactless::token::Token storedToken; // saved responce on contactless::poll_for_token command
 
-    std::vector<const ContactlessCard *> cardsInField; // contactless cards in RF field of the terminal
+    std::vector<ContactlessCard *> cardsInField; // contactless cards in RF field of the terminal
 
     std::vector<Script *> scripts;
     uint32_t iScript,
@@ -96,7 +96,7 @@ public:
     void load_configured_state();
     void attach_contactless_card(uint32_t cardID);
     void remove_contactless_card(uint32_t cardID);
-    const ContactlessCard *get_card_in_field();
+    ContactlessCard *get_card_in_field();
     uint32_t how_many_cards();
     void wait(uint32_t timeToWait_ms);
 

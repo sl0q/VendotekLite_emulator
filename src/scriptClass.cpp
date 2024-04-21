@@ -46,7 +46,7 @@ void Script::add_step(Step &newStep)
     this->steps.push_back(&newStep);
 }
 
-const ContactlessCard *Script::find_cl_card(uint32_t cardID)
+ContactlessCard *Script::find_cl_card(uint32_t cardID)
 {
     for (auto &clCard : this->contactlessCards)
         if (cardID == clCard->get_id())
@@ -167,13 +167,13 @@ void Script::parse_card(json cardJson)
 
 void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
 {
-    if (cardJson.count("clearKey_A") == 0)
-        throw ex::JsonParsingException("Could not find required [clearKey_A] field for card with [MIFARE_CLASSIC] token type");
-    if (cardJson.count("clearKey_B") == 0)
-        throw ex::JsonParsingException("Could not find required [clearKey_B] field for card with [MIFARE_CLASSIC] token type");
+    // if (cardJson.count("clearKey_A") == 0)
+    //     throw ex::JsonParsingException("Could not find required [clearKey_A] field for card with [MIFARE_CLASSIC] token type");
+    // if (cardJson.count("clearKey_B") == 0)
+    //     throw ex::JsonParsingException("Could not find required [clearKey_B] field for card with [MIFARE_CLASSIC] token type");
 
-    card.set_clear_key_A(cardJson.at("clearKey_A").get<std::string>());
-    card.set_clear_key_B(cardJson.at("clearKey_B").get<std::string>());
+    // card.set_clear_key_A(cardJson.at("clearKey_A").get<std::string>());
+    // card.set_clear_key_B(cardJson.at("clearKey_B").get<std::string>());
 
     if (cardJson.count("memorySectors") != 0)
     {

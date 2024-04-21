@@ -32,7 +32,7 @@ public:
 
     void set_title(std::string newTitle);
     const std::string get_title();
-    const ContactlessCard *find_cl_card(uint32_t cardID);
+    ContactlessCard *find_cl_card(uint32_t cardID);
 
     void parse_card(json cardJson);
     void parse_mifare_classic_card(json cardJson, MifareClassicCard &card);

@@ -122,37 +122,62 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_1K);
         this->memorySectors.resize(16);
         for (auto &sector : this->memorySectors)
+        {
             sector.resize(4);
+            for (auto &block : sector)
+                block.resize(16);
+        }
         break;
     case m_2K:
         //  32 sectors * 4 blocks * 16 bytes = 2 kB
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_2K);
         this->memorySectors.resize(32);
         for (auto &sector : this->memorySectors)
+        {
             sector.resize(4);
+            for (auto &block : sector)
+                block.resize(16);
+        }
         break;
     case m_4K:
         //  32 sectors * 4 blocks * 16 bytes + 8 sectors * 16 blocks * 16 bytes = 4 kB
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_4K);
         this->memorySectors.resize(40);
         for (int i = 0; i < 32; ++i)
+        {
             memorySectors[i].resize(4);
+            for (auto &block : memorySectors[i])
+                block.resize(16);
+        }
         for (int i = 32; i < 40; ++i)
+        {
             memorySectors[i].resize(16);
+            for (auto &block : memorySectors[i])
+                block.resize(16);
+        }
+
         break;
     case m_MINI:
         //  5 sectors * 4 blocks * 16 bytes = 320 bytes
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_MINI);
         this->memorySectors.resize(5);
         for (auto &sector : this->memorySectors)
+        {
             sector.resize(4);
+            for (auto &block : sector)
+                block.resize(16);
+        }
         break;
     default:
         //  16 sectors * 4 blocks * 16 bytes = 1 kB
         this->token->set_type(contactless::token_type::MIFARE_CLASSIC_1K);
         this->memorySectors.resize(16);
         for (auto &sector : this->memorySectors)
+        {
             sector.resize(4);
+            for (auto &block : sector)
+                block.resize(16);
+        }
     }
 }
 
@@ -165,25 +190,25 @@ MifareClassicCard::~MifareClassicCard()
 //     this->keyType = newKeyType;
 // }
 
-void MifareClassicCard::set_clear_key_A(mifare::classic::auth::ClearKey &newClearKey)
-{
-    this->clearKey_A = newClearKey;
-}
+// void MifareClassicCard::set_clear_key_A(mifare::classic::auth::ClearKey &newClearKey)
+// {
+//     this->clearKey_A = newClearKey;
+// }
 
-void MifareClassicCard::set_clear_key_B(mifare::classic::auth::ClearKey &newClearKey)
-{
-    this->clearKey_B = newClearKey;
-}
+// void MifareClassicCard::set_clear_key_B(mifare::classic::auth::ClearKey &newClearKey)
+// {
+//     this->clearKey_B = newClearKey;
+// }
 
-void MifareClassicCard::set_clear_key_A(const std::string &newClearKey)
-{
-    this->clearKey_A.set_clear_key(newClearKey);
-}
+// // void MifareClassicCard::set_clear_key_A(const std::string &newClearKey)
+// // {
+// //     this->clearKey_A.set_clear_key(newClearKey);
+// // }
 
-void MifareClassicCard::set_clear_key_B(const std::string &newClearKey)
-{
-    this->clearKey_B.set_clear_key(newClearKey);
-}
+// // void MifareClassicCard::set_clear_key_B(const std::string &newClearKey)
+// // {
+// //     this->clearKey_B.set_clear_key(newClearKey);
+// // }
 
 void MifareClassicCard::fill_memory(const std::vector<std::vector<std::string>> &newData)
 {
@@ -194,6 +219,8 @@ void MifareClassicCard::fill_memory(const std::vector<std::vector<std::string>> 
         for (auto &block : sector)
         {
             *iThisBlock = block;
+            // if(iThisBlock->length() != 16)
+            iThisBlock->resize(16);
             ++iThisBlock;
             if (iThisBlock == iThisSector->end())
                 break;
@@ -220,14 +247,14 @@ void MifareClassicCard::write_block(const std::string &newBlock, uint32_t iSecto
     this->memorySectors[iSector][iBlock] = newBlock;
 }
 
-const mifare::classic::auth::ClearKey &MifareClassicCard::get_clear_key_A() const
+const std::string MifareClassicCard::get_clear_key_A(uint32_t iSector) const
 {
-    return this->clearKey_A;
+    return (this->memorySectors[iSector].end() - 1)->substr(0, 6);
 }
 
-const mifare::classic::auth::ClearKey &MifareClassicCard::get_clear_key_B() const
+const std::string MifareClassicCard::get_clear_key_B(uint32_t iSector) const
 {
-    return this->clearKey_B;
+    return (this->memorySectors[iSector].end() - 1)->substr(10, 6);
 }
 
 const std::string &MifareClassicCard::get_data_block(uint32_t iSector, uint32_t iBlock)
@@ -235,14 +262,22 @@ const std::string &MifareClassicCard::get_data_block(uint32_t iSector, uint32_t 
     return this->memorySectors[iSector][iBlock];
 }
 
+void MifareClassicCard::authorize_sector(uint32_t iSector)
+{
+    this->iSector = iSector;
+}
+
+void MifareClassicCard::reset_sector()
+{
+    this->iSector = UINT32_MAX;
+}
+
 const std::string MifareClassicCard::str() const
 {
     return std::string("TokenType: " + contactless::token_type::TokenType_Name(this->token->type()) + "\n" +
                        "TokenID: " + this->token->id() + "\n" +
                        "ATQA: " + this->token->atqa() + "\n" +
-                       "SAK: " + this->token->sak() + "\n" +
-                       "ClearKey_A: " + this->clearKey_A.clear_key() + "\n" +
-                       "ClearKey_B: " + this->clearKey_B.clear_key() + "\n");
+                       "SAK: " + this->token->sak() + "\n");
 }
 
 SmartWithMifareCard::SmartWithMifareCard()
