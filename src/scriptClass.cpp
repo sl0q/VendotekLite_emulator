@@ -183,18 +183,18 @@ void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
             if (sectorJson.count("blocks") != 0)
             {
                 uint32_t iBlock = 0;
+                std::vector<std::string> newSector;
                 for (auto &blockJson : sectorJson["blocks"])
+                    newSector.push_back(blockJson);
+
+                try
                 {
-                    try
-                    {
-                        card.write_block(blockJson, iSector, iBlock);
-                    }
-                    catch (std::out_of_range &ex)
-                    {
-                        std::cout << "WARNING: " << ex.what() << std::endl;
-                        break;
-                    }
-                    ++iBlock;
+                    card.write_sector(newSector, iSector);
+                }
+                catch (std::out_of_range &ex)
+                {
+                    std::cout << "WARNING: " << ex.what() << std::endl;
+                    continue;
                 }
             }
             ++iSector;

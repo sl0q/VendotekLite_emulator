@@ -234,14 +234,21 @@ void MifareClassicCard::fill_memory(const std::vector<std::vector<std::string>> 
 void MifareClassicCard::write_sector(const std::vector<std::string> &newSector, uint32_t iSector)
 {
     if (iSector > this->memorySectors.size())
-        throw std::out_of_range("Provided memory sector index is out of range of mifare card memory map.");
-    this->memorySectors[iSector] = newSector;
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map.");
+
+    uint32_t iNewBlock = 0;
+    for (auto &thisBlock : this->memorySectors[iSector])
+    {
+        thisBlock = newSector[iNewBlock];
+        thisBlock.resize(16, '*');
+        ++iNewBlock;
+    }
 }
 
-void MifareClassicCard::write_block(const std::string &newBlock, uint32_t iSector, uint32_t iBlock)
+void MifareClassicCard::write_block(const std::string &newBlock, uint32_t iBlock)
 {
     if (iSector > this->memorySectors.size())
-        throw std::out_of_range("Provided memory sector index is out of range of mifare card memory map.");
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map.");
     if (iBlock > this->memorySectors[iSector].size())
         throw std::out_of_range("Provided memory block index is out of range of mifare card memory map.");
 
@@ -252,18 +259,22 @@ void MifareClassicCard::write_block(const std::string &newBlock, uint32_t iSecto
 
 const std::string MifareClassicCard::get_clear_key_A(uint32_t iSector) const
 {
+    if (iSector > this->memorySectors.size())
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is outside of range of mifare card memory map.");
     return (this->memorySectors[iSector].end() - 1)->substr(0, 6);
 }
 
 const std::string MifareClassicCard::get_clear_key_B(uint32_t iSector) const
 {
+    if (iSector > this->memorySectors.size())
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is outside of range of mifare card memory map.");
     return (this->memorySectors[iSector].end() - 1)->substr(10, 6);
 }
 
 const std::string &MifareClassicCard::get_data_block(uint32_t iBlock)
 {
     if (this->iSector > this->memorySectors.size())
-        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is out of range of mifare card memory map.");
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map.");
     if (iBlock > this->memorySectors[this->iSector].size())
         throw std::out_of_range("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " is out of range of mifare card memory map.");
 

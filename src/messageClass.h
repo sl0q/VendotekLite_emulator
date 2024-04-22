@@ -118,6 +118,7 @@ private:
     bool execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice);
     bool execute_mfr_classic_auth_on_sam_key(Mifare &mifareMessage, Device &myDevice);
     bool execute_mfr_classic_read_blocks(Mifare &mifareMessage, Device &myDevice);
+    bool execute_mfr_classic_write_blocks(Mifare &mifareMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
     const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");

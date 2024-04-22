@@ -103,7 +103,7 @@ public:
     // void set_clear_key_B(const std::string &newClearKey);
     void fill_memory(const std::vector<std::vector<std::string>> &newData);
     void write_sector(const std::vector<std::string> &newSector, uint32_t iSector);
-    void write_block(const std::string &newBlock, uint32_t iSector, uint32_t iBlock);
+    void write_block(const std::string &newBlock, uint32_t iBlock);
 
     // const mifare::classic::auth::KeyType &get_key_type() const;
     const std::string get_clear_key_A(uint32_t iSector) const;

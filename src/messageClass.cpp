@@ -993,6 +993,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrClassicReadBlocks:
         res = execute_mfr_classic_read_blocks(mifareMessage, myDevice);
         break;
+    case Mifare::kMfrClassicWriteBlocks:
+        res = execute_mfr_classic_write_blocks(mifareMessage, myDevice);
+        break;
 
     default:
         res = false;
@@ -1105,8 +1108,39 @@ bool MessageIR::execute_mfr_classic_read_blocks(Mifare &mifareMessage, Device &m
 
     std::cout << "Finised execution.\n\n";
 
+    res = true;
     std::cout << "Generated responce:" << std::endl;
     Msg generatedResponce = generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
+    generatedResponce.print_MSG();
+
+    return res;
+}
+
+bool MessageIR::execute_mfr_classic_write_blocks(Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_classic_write_blocks]...\n\n";
+
+    bool res;
+
+    auto mfrWriteBlocks = mifareMessage.mfr_classic_write_blocks();
+    auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
+
+    uint32_t numBlocks = (mfrWriteBlocks.data().length() + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    for (uint32_t i = 0; i < numBlocks; ++i)
+    {
+        std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_data_block(mfrWriteBlocks.start_block() + i) << std::endl;
+        size_t startIndex = i * BLOCK_SIZE;
+        size_t endIndex = std::min(startIndex + BLOCK_SIZE, mfrWriteBlocks.data().length());
+        card->write_block(mfrWriteBlocks.data().substr(startIndex, endIndex - startIndex), mfrWriteBlocks.start_block() + i);
+        std::cout << "Rewrited\n";
+        std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_data_block(mfrWriteBlocks.start_block() + i) << std::endl;
+    }
+
+    std::cout << "Finised execution.\n\n";
+
+    res = true;
+    std::cout << "Generated responce:" << std::endl;
+    Msg generatedResponce = generate_responce(SUCCESS);
     generatedResponce.print_MSG();
 
     return res;

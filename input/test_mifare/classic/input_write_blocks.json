@@ -1,0 +1,62 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test read blocks",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "MIFARE_CLASSIC_1K",
+                    "tokenID": "1234uniqueID",
+                    "memorySectors":
+                    [
+                        {
+                            "blocks":
+                            [
+                                "block.00",
+                                "bl",
+                                "",
+                                "aaaaaax01xbbbbbb"
+                            ]
+                        },
+                        {
+                            "blocks":
+                            [
+                                "block.10",
+                                "block.11",
+                                "block.12",
+                                "aaaaaax02xbbbbbb"
+                            ]
+                        },
+                        {
+                            "blocks":
+                            [
+                                "block.20",
+                                "block.21",
+                                "block.22",
+                                "aaaaaax03xbbbbbb"
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "steps":
+            [
+                {
+                    "comment": "poll for token (timeout 1s)",
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":[{"attach_card": 1}]
+                },
+                {
+                    "comment": "auth on clear key command sector=0, type_a, key=aaaaaa",
+                    "message": "SVIAEQEFAQoMCAAQABoGYWFhYWFh15E="
+                },
+                {
+                    "comment": "write data starting from block 1 of sector 0",
+                    "message": "SVIAKQQFASIkCAESIDAxMjM0NTY3ODlhYmNkZWZhbmRzb21lbW9yZWJ5dGVzzP0="
+                }
+            ]
+        }
+    ]
+}
