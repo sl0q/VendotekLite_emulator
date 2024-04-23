@@ -319,10 +319,10 @@ const std::string &MifareClassicCard::get_block_data(uint32_t iBlock)
         throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map");
     if (iBlock > this->memorySectors[this->iSector].size())
         throw std::out_of_range("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " is out of range of mifare card memory map");
-    if ((*(memorySectors[iSector].end() - 1))->is_value())
+    if (memorySectors[iSector][iBlock]->is_value())
         throw ex::BadType("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " stores a numeric value");
 
-    return dynamic_cast<ByteBlock *>(*(memorySectors[iSector].end() - 1))->get_data();
+    return dynamic_cast<ByteBlock *>(memorySectors[iSector][iBlock])->get_data();
 }
 
 int32_t MifareClassicCard::get_block_value(uint32_t iBlock)
@@ -331,10 +331,10 @@ int32_t MifareClassicCard::get_block_value(uint32_t iBlock)
         throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map");
     if (iBlock > this->memorySectors[this->iSector].size())
         throw std::out_of_range("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " is out of range of mifare card memory map");
-    if (!(*(memorySectors[iSector].end() - 1))->is_value())
+    if (!memorySectors[iSector][iBlock]->is_value())
         throw ex::BadType("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " stores byte data");
 
-    return dynamic_cast<ValueBlock *>(*(memorySectors[iSector].end() - 1))->get_value();
+    return dynamic_cast<ValueBlock *>(memorySectors[iSector][iBlock])->get_value();
 }
 
 void MifareClassicCard::authorize_sector(uint32_t iSector)

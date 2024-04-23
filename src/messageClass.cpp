@@ -996,6 +996,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrClassicWriteBlocks:
         res = execute_mfr_classic_write_blocks(mifareMessage, myDevice);
         break;
+    case Mifare::kMfrClassicGetCounter:
+        res = execute_mfr_classic_get_counter(mifareMessage, myDevice);
+        break;
 
     default:
         res = false;
@@ -1142,6 +1145,40 @@ bool MessageIR::execute_mfr_classic_write_blocks(Mifare &mifareMessage, Device &
     std::cout << "Generated responce:" << std::endl;
     Msg generatedResponce = generate_responce(SUCCESS);
     generatedResponce.print_MSG();
+
+    return res;
+}
+
+bool MessageIR::execute_mfr_classic_get_counter(Mifare &mifareMessage, Device &myDevice)
+{
+    // CONFIGURATION ERROR
+    std::cout << "Executing [mfr_classic_get_counter]...\n\n";
+
+    bool res;
+
+    auto mfrGetCounter = mifareMessage.mfr_classic_get_counter();
+    auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
+    int counter;
+
+    const Msg *generatedResponce = nullptr;
+    try
+    {
+        counter = card->get_block_value(mfrGetCounter.src_block());
+    }
+    catch (const ex::BadType &ex)
+    {
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
+    }
+
+    if (generatedResponce == nullptr)
+    {
+        generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_get_counter_payload(counter));
+        res = true;
+    }
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
 
     return res;
 }
@@ -1410,7 +1447,6 @@ const Payload &MessageIR::generate_perform_transaction_payload(Device &myDevice,
 
     Payload &generatedPayload = *(new Payload(transactionResult->DebugString(), buf));
 
-    // delete newToken;
     delete transactionResult;
 
     return generatedPayload;
@@ -1429,8 +1465,24 @@ const Payload &MessageIR::generate_mfr_classic_read_blocks_payload(std::string &
 
     Payload &generatedPayload = *(new Payload(blocks->DebugString(), buf));
 
-    // delete newToken;
     delete blocks;
+
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_mfr_classic_get_counter_payload(int32_t counterValue)
+{
+    auto getCounter = new mifare::classic::counter::get::Counter();
+    getCounter->set_value(counterValue);
+
+    std::vector<uint8_t> buf;
+    buf.resize(getCounter->ByteSizeLong());
+    int buf_size = buf.size();
+    getCounter->SerializeToArray(buf.data(), buf_size);
+
+    Payload &generatedPayload = *(new Payload(getCounter->DebugString(), buf));
+
+    delete getCounter;
 
     return generatedPayload;
 }
