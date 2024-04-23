@@ -1002,6 +1002,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrClassicSetCounter:
         res = execute_mfr_classic_set_counter(mifareMessage, myDevice);
         break;
+    case Mifare::kMfrClassicModifyCounter:
+        res = execute_mfr_classic_modify_counter(mifareMessage, myDevice);
+        break;
 
     default:
         res = false;
@@ -1195,6 +1198,39 @@ bool MessageIR::execute_mfr_classic_set_counter(Mifare &mifareMessage, Device &m
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
 
     card->write_value_block(mfrSetCounter.value(), mfrSetCounter.dst_block());
+    res = true;
+
+    std::cout << "Finised execution.\n\n";
+
+    Msg generatedResponce = generate_responce(SUCCESS);
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce.print_MSG();
+
+    return res;
+}
+
+bool MessageIR::execute_mfr_classic_modify_counter(Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_classic_modify_counter]...\n\n";
+
+    bool res;
+
+    auto mfrModCounter = mifareMessage.mfr_classic_modify_counter();
+    auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
+
+    int32_t counterValue = card->get_block_value(mfrModCounter.src_block());
+
+    if (mfrModCounter.operand() < 0)
+        --counterValue;
+    else
+        ++counterValue;
+
+    if (mfrModCounter.has_dst_block())
+        card->write_value_block(counterValue, mfrModCounter.dst_block());
+    else
+        card->set_internal_register(counterValue);
+
+    res = true;
 
     std::cout << "Finised execution.\n\n";
 

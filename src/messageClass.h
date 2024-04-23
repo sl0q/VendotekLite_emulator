@@ -121,6 +121,7 @@ private:
     bool execute_mfr_classic_write_blocks(Mifare &mifareMessage, Device &myDevice);
     bool execute_mfr_classic_get_counter(Mifare &mifareMessage, Device &myDevice);
     bool execute_mfr_classic_set_counter(Mifare &mifareMessage, Device &myDevice);
+    bool execute_mfr_classic_modify_counter(Mifare &mifareMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
     const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");

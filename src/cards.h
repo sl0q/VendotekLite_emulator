@@ -102,12 +102,14 @@ public:
     void write_sector(const std::vector<Block *> &newSector, uint32_t iSector);
     void write_data_block(const std::string &newData, uint32_t iBlock);
     void write_value_block(int32_t newValue, uint32_t iBlock);
+    void set_internal_register(int32_t value);
 
     // const mifare::classic::auth::KeyType &get_key_type() const;
     const std::string get_clear_key_A(uint32_t iSector) const;
     const std::string get_clear_key_B(uint32_t iSector) const;
-    const std::string &get_block_data(uint32_t iBlock);
-    int32_t get_block_value(uint32_t iBlock);
+    const std::string &get_block_data(uint32_t iBlock) const;
+    int32_t get_block_value(uint32_t iBlock) const;
+    int32_t get_internal_register() const;
 
     void authorize_sector(uint32_t iSector);
     void reset_sector();
