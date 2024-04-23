@@ -40,24 +40,6 @@ set(SRCS App.cpp MainFrame.cpp deviceClass.cpp scriptClass.cpp messageClass.cpp 
     ${GUI_SRC}
     )
 
-# set(SRCS App.cpp MainFrame.cpp deviceClass.cpp scriptClass.cpp 
-#     ../proto_src/commands2.pb.cc
-#     ../proto_src/misc/baudrate.pb.cc
-#     ../proto_src/misc/buzzer.pb.cc
-#     ../proto_src/misc/device.pb.cc
-#     ../proto_src/misc/echo.pb.cc
-#     ../proto_src/misc/ethernet.pb.cc
-#     ../proto_src/misc/event.pb.cc
-#     ../proto_src/misc/lan_settings.pb.cc
-#     ../proto_src/misc/leds.pb.cc
-#     ../proto_src/misc/lwip.pb.cc
-#     ../proto_src/misc/reboot.pb.cc
-#     ../proto_src/misc/stats.pb.cc
-    
-#     )
-
-# set(SRCS MainFrame.cpp)
-
 include(${wxWidgets_USE_FILE})
 
 

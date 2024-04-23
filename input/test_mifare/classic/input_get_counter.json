@@ -49,12 +49,12 @@
                     "preactions":[{"attach_card": 1}]
                 },
                 {
-                    "comment": "auth on clear key command sector=0, type_a, key=aaaaaa",
-                    "message": "SVIAEQEFAQoMCAAQABoGYWFhYWFh15E="
+                    "comment": "auth on clear key command sector=1, type_a, key=aaaaaa",
+                    "message": "SVIAEQEFAQoMCAEQABoGYWFhYWFhD9g="
                 },
                 {
-                    "comment": "write data starting from block 1 of sector 0",
-                    "message": "SVIAKQQFASIkCAESIDAxMjM0NTY3ODlhYmNkZWZhbmRzb21lbW9yZWJ5dGVzzP0="
+                    "comment": "get counter value from block 1",
+                    "message": "SVIABwUFATICCAFnkg=="
                 }
             ]
         }

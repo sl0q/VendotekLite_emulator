@@ -109,7 +109,11 @@ MifareClassicCard::MifareClassicCard()
     this->token->set_type(contactless::token_type::MIFARE_CLASSIC_1K);
     this->memorySectors.resize(16);
     for (auto &sector : this->memorySectors)
+    {
         sector.resize(4);
+        for (auto &block : sector)
+            block = new ByteBlock(true);
+    }
 }
 
 MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
@@ -125,7 +129,7 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             sector.resize(4);
             for (auto &block : sector)
-                block.resize(16, '*');
+                block = new ByteBlock(true);
         }
         break;
     case m_2K:
@@ -136,7 +140,7 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             sector.resize(4);
             for (auto &block : sector)
-                block.resize(16, '*');
+                block = new ByteBlock(true);
         }
         break;
     case m_4K:
@@ -147,15 +151,14 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             memorySectors[i].resize(4);
             for (auto &block : memorySectors[i])
-                block.resize(16, '*');
+                block = new ByteBlock(true);
         }
         for (int i = 32; i < 40; ++i)
         {
             memorySectors[i].resize(16);
             for (auto &block : memorySectors[i])
-                block.resize(16, '*');
+                block = new ByteBlock(true);
         }
-
         break;
     case m_MINI:
         //  5 sectors * 4 blocks * 16 bytes = 320 bytes
@@ -165,7 +168,7 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             sector.resize(4);
             for (auto &block : sector)
-                block.resize(16, '*');
+                block = new ByteBlock(true);
         }
         break;
     default:
@@ -176,109 +179,162 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
         {
             sector.resize(4);
             for (auto &block : sector)
-                block.resize(16, '*');
+                block = new ByteBlock(true);
         }
     }
 }
 
 MifareClassicCard::~MifareClassicCard()
 {
+    for (auto &sector : memorySectors)
+        for (auto &block : sector)
+            delete block;
 }
 
-// void MifareClassicCard::set_key_type(mifare::classic::auth::KeyType newKeyType)
-// {
-//     this->keyType = newKeyType;
-// }
-
-// void MifareClassicCard::set_clear_key_A(mifare::classic::auth::ClearKey &newClearKey)
-// {
-//     this->clearKey_A = newClearKey;
-// }
-
-// void MifareClassicCard::set_clear_key_B(mifare::classic::auth::ClearKey &newClearKey)
-// {
-//     this->clearKey_B = newClearKey;
-// }
-
-// // void MifareClassicCard::set_clear_key_A(const std::string &newClearKey)
-// // {
-// //     this->clearKey_A.set_clear_key(newClearKey);
-// // }
-
-// // void MifareClassicCard::set_clear_key_B(const std::string &newClearKey)
-// // {
-// //     this->clearKey_B.set_clear_key(newClearKey);
-// // }
-
-void MifareClassicCard::fill_memory(const std::vector<std::vector<std::string>> &newData)
+void MifareClassicCard::fill_memory(const std::vector<std::vector<Block *>> &newData)
 {
     auto iThisSector = this->memorySectors.begin();
-    for (auto &sector : newData)
+
+    for (auto &newSector : newData)
     {
         auto iThisBlock = iThisSector->begin();
-        for (auto &block : sector)
+
+        for (auto &newBlock : newSector)
         {
-            *iThisBlock = block;
-            // if(iThisBlock->length() != 16)
-            iThisBlock->resize(16, '*');
+            // copy pointers
+            *iThisBlock = newBlock;
             ++iThisBlock;
-            if (iThisBlock == iThisSector->end())
-                break;
         }
+
+        if (newSector.size() < iThisSector->size())
+        {
+            //  fill with default data
+            while (iThisBlock != iThisSector->end())
+            {
+                *iThisBlock = new ByteBlock(true);
+                ++iThisBlock;
+            }
+        }
+
         ++iThisSector;
-        if (iThisSector == this->memorySectors.end())
-            break;
+    }
+
+    if (newData.size() < this->memorySectors.size())
+    {
+        //  fill with default data
+        while (iThisSector != this->memorySectors.end())
+        {
+            auto iThisBlock = iThisSector->begin();
+            while (iThisBlock != iThisSector->end())
+            {
+                *iThisBlock = new ByteBlock(true);
+                ++iThisBlock;
+            }
+            ++iThisSector;
+        }
     }
 }
 
-void MifareClassicCard::write_sector(const std::vector<std::string> &newSector, uint32_t iSector)
+void MifareClassicCard::fill_empty_memory()
+{
+    for (int iSector = 0; iSector < memorySectors.size(); ++iSector)
+    {
+        for (int iBlock = 0; iBlock < memorySectors[iSector].size(); ++iBlock)
+        {
+            if (memorySectors[iSector][iBlock] == nullptr)
+                memorySectors[iSector][iBlock] = new ByteBlock(true);
+        }
+    }
+}
+
+void MifareClassicCard::write_sector(const std::vector<Block *> &newSector, uint32_t iSector)
 {
     if (iSector > this->memorySectors.size())
-        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map.");
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map");
 
     uint32_t iNewBlock = 0;
     for (auto &thisBlock : this->memorySectors[iSector])
     {
+        if (thisBlock != nullptr)
+            delete thisBlock;
         thisBlock = newSector[iNewBlock];
-        thisBlock.resize(16, '*');
         ++iNewBlock;
     }
 }
 
-void MifareClassicCard::write_block(const std::string &newBlock, uint32_t iBlock)
+void MifareClassicCard::write_data_block(const std::string &newData, uint32_t iBlock)
 {
     if (iSector > this->memorySectors.size())
-        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map.");
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map");
     if (iBlock > this->memorySectors[iSector].size())
-        throw std::out_of_range("Provided memory block index is out of range of mifare card memory map.");
+        throw std::out_of_range("Provided memory block index is out of range of mifare card memory map");
 
-    this->memorySectors[iSector][iBlock] = newBlock;
-    if (this->memorySectors[iSector][iBlock].size() != BLOCK_SIZE)
-        this->memorySectors[iSector][iBlock].resize(16, '*');
+    if (this->memorySectors[iSector][iBlock]->is_value())
+    {
+        delete this->memorySectors[iSector][iBlock];
+        this->memorySectors[iSector][iBlock] = new ByteBlock(newData);
+    }
+    else
+    {
+        dynamic_cast<ByteBlock *>(this->memorySectors[iSector][iBlock])->set_data(newData);
+    }
+}
+
+void MifareClassicCard::write_value_block(int32_t newValue, uint32_t iBlock)
+{
+    if (iSector > this->memorySectors.size())
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map");
+    if (iBlock > this->memorySectors[iSector].size())
+        throw std::out_of_range("Provided memory block index is out of range of mifare card memory map");
+
+    if (this->memorySectors[iSector][iBlock]->is_value())
+    {
+        auto ffsPointer = this->memorySectors[iSector][iBlock];
+        dynamic_cast<ValueBlock *>(ffsPointer)->set_value(newValue);
+    }
+    else
+    {
+        delete this->memorySectors[iSector][iBlock];
+        this->memorySectors[iSector][iBlock] = new ValueBlock(newValue);
+    }
 }
 
 const std::string MifareClassicCard::get_clear_key_A(uint32_t iSector) const
 {
     if (iSector > this->memorySectors.size())
-        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is outside of range of mifare card memory map.");
-    return (this->memorySectors[iSector].end() - 1)->substr(0, 6);
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is outside of range of mifare card memory map");
+    return dynamic_cast<ByteBlock *>(*(memorySectors[iSector].end() - 1))->get_data().substr(0, 6);
 }
 
 const std::string MifareClassicCard::get_clear_key_B(uint32_t iSector) const
 {
     if (iSector > this->memorySectors.size())
-        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is outside of range of mifare card memory map.");
-    return (this->memorySectors[iSector].end() - 1)->substr(10, 6);
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is outside of range of mifare card memory map");
+    return dynamic_cast<ByteBlock *>(*(memorySectors[iSector].end() - 1))->get_data().substr(10, 6);
 }
 
-const std::string &MifareClassicCard::get_data_block(uint32_t iBlock)
+const std::string &MifareClassicCard::get_block_data(uint32_t iBlock)
 {
     if (this->iSector > this->memorySectors.size())
-        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map.");
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map");
     if (iBlock > this->memorySectors[this->iSector].size())
-        throw std::out_of_range("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " is out of range of mifare card memory map.");
+        throw std::out_of_range("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " is out of range of mifare card memory map");
+    if ((*(memorySectors[iSector].end() - 1))->is_value())
+        throw ex::BadType("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " stores a numeric value");
 
-    return this->memorySectors[this->iSector][iBlock];
+    return dynamic_cast<ByteBlock *>(*(memorySectors[iSector].end() - 1))->get_data();
+}
+
+int32_t MifareClassicCard::get_block_value(uint32_t iBlock)
+{
+    if (this->iSector > this->memorySectors.size())
+        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map");
+    if (iBlock > this->memorySectors[this->iSector].size())
+        throw std::out_of_range("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " is out of range of mifare card memory map");
+    if (!(*(memorySectors[iSector].end() - 1))->is_value())
+        throw ex::BadType("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " stores byte data");
+
+    return dynamic_cast<ValueBlock *>(*(memorySectors[iSector].end() - 1))->get_value();
 }
 
 void MifareClassicCard::authorize_sector(uint32_t iSector)
@@ -372,4 +428,101 @@ const std::string SmartWithMifareCard::str() const
                        this->isoToken->str() + "\n" +
                        "Mifare Classic token:" + "\n" +
                        this->mifareToken->str() + "\n");
+}
+
+Block::Block()
+{
+    isValue = false;
+}
+
+Block::~Block()
+{
+}
+
+bool Block::is_value()
+{
+    return isValue;
+}
+
+void ValueBlock::meme_method()
+{
+}
+
+ValueBlock::ValueBlock()
+{
+    isValue = true;
+    value = 0;
+}
+
+ValueBlock::ValueBlock(int32_t newValue)
+{
+    isValue = true;
+    value = newValue;
+}
+
+ValueBlock::~ValueBlock()
+{
+    std::cout << "Value: " << value << std::endl;
+}
+
+void ValueBlock::set_value(int32_t newValue)
+{
+    value = newValue;
+}
+
+int32_t ValueBlock::get_value() const
+{
+    return value;
+}
+
+std::string ValueBlock::str() const
+{
+    return std::to_string(this->value);
+}
+
+// ByteBlock::ByteBlock()
+// {
+//     isValue = false;
+//     data = "";
+// }
+
+void ByteBlock::meme_method()
+{
+}
+
+ByteBlock::ByteBlock(bool fill)
+{
+    isValue = false;
+    data = "he";
+    if (fill)
+        for (uint32_t i = 0; i < BLOCK_SIZE; ++i)
+            data += PLACEHOLDER;
+}
+
+ByteBlock::ByteBlock(const std::string &newData)
+{
+    isValue = false;
+    data = newData;
+    data.resize(BLOCK_SIZE, PLACEHOLDER);
+}
+
+ByteBlock::~ByteBlock()
+{
+    std::cout << "Bytes: " << data << std::endl;
+}
+
+void ByteBlock::set_data(const std::string &newData)
+{
+    data = newData;
+    data.resize(16, PLACEHOLDER);
+}
+
+const std::string &ByteBlock::get_data() const
+{
+    return this->data;
+}
+
+std::string ByteBlock::str() const
+{
+    return this->data;
 }

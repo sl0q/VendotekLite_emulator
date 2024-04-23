@@ -9,6 +9,9 @@
 #include "myExceptions.h"
 
 #define BLOCK_SIZE 16
+#define PLACEHOLDER '*'
+
+class Block;
 
 // class ContactCard
 // {
@@ -85,30 +88,26 @@ public:
     };
 
 private:
-    // mifare::classic::auth::KeyType keyType;
-    // mifare::classic::auth::ClearKey clearKey_A; //  key a of current sector
-    // mifare::classic::auth::ClearKey clearKey_B; //  key b of current sector
     uint32_t iSector = UINT32_MAX; // index of authenticated sector
-    std::vector<std::vector<std::string>> memorySectors;
+    std::vector<std::vector<Block *>> memorySectors;
+    int32_t internalRegister;
 
 public:
     MifareClassicCard();
     MifareClassicCard(MifareClassicCard::m_classic_K k);
     ~MifareClassicCard();
 
-    // void set_key_type(mifare::classic::auth::KeyType newKeyType);
-    // void set_clear_key_A(mifare::classic::auth::ClearKey &newClearKey);
-    // void set_clear_key_B(mifare::classic::auth::ClearKey &newClearKey);
-    // void set_clear_key_A(const std::string &newClearKey);
-    // void set_clear_key_B(const std::string &newClearKey);
-    void fill_memory(const std::vector<std::vector<std::string>> &newData);
-    void write_sector(const std::vector<std::string> &newSector, uint32_t iSector);
-    void write_block(const std::string &newBlock, uint32_t iBlock);
+    void fill_memory(const std::vector<std::vector<Block *>> &newData);
+    void fill_empty_memory();
+    void write_sector(const std::vector<Block *> &newSector, uint32_t iSector);
+    void write_data_block(const std::string &newData, uint32_t iBlock);
+    void write_value_block(int32_t newValue, uint32_t iBlock);
 
     // const mifare::classic::auth::KeyType &get_key_type() const;
     const std::string get_clear_key_A(uint32_t iSector) const;
     const std::string get_clear_key_B(uint32_t iSector) const;
-    const std::string &get_data_block(uint32_t iBlock);
+    const std::string &get_block_data(uint32_t iBlock);
+    int32_t get_block_value(uint32_t iBlock);
 
     void authorize_sector(uint32_t iSector);
     void reset_sector();
@@ -153,4 +152,51 @@ public:
     const MifareClassicCard &get_mifare_token() const;
 
     const std::string str() const;
+};
+
+//////////////////////////////////////////////////////////////////////
+
+class Block
+{
+protected:
+    bool isValue;
+    virtual void meme_method() = 0;
+
+public:
+    Block();
+    ~Block();
+    bool is_value();
+
+    virtual std::string str() const = 0;
+};
+
+class ValueBlock : public Block
+{
+private:
+    int32_t value;
+    void meme_method();
+
+public:
+    ValueBlock();
+    ValueBlock(const int32_t newValue);
+    ~ValueBlock();
+    void set_value(const int32_t newValue);
+    int32_t get_value() const;
+    std::string str() const;
+};
+
+class ByteBlock : public Block
+{
+private:
+    std::string data;
+    void meme_method();
+
+public:
+    // ByteBlock();
+    ByteBlock(bool fill = false);
+    ByteBlock(const std::string &newData);
+    ~ByteBlock();
+    void set_data(const std::string &newData);
+    const std::string &get_data() const;
+    std::string str() const;
 };

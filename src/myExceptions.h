@@ -51,4 +51,16 @@ namespace ex
 
         std::string what() const { return (msg_); }
     };
+
+    class BadType
+    {
+    private:
+        std::string msg_;
+
+    public:
+        BadType(const std::string &msg) : msg_(msg) {}
+        BadType() {}
+
+        std::string what() const { return (msg_); }
+    };
 }

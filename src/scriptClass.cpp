@@ -167,13 +167,11 @@ void Script::parse_card(json cardJson)
 
 void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
 {
-    // if (cardJson.count("clearKey_A") == 0)
-    //     throw ex::JsonParsingException("Could not find required [clearKey_A] field for card with [MIFARE_CLASSIC] token type");
-    // if (cardJson.count("clearKey_B") == 0)
-    //     throw ex::JsonParsingException("Could not find required [clearKey_B] field for card with [MIFARE_CLASSIC] token type");
+    // creating card memory
 
-    // card.set_clear_key_A(cardJson.at("clearKey_A").get<std::string>());
-    // card.set_clear_key_B(cardJson.at("clearKey_B").get<std::string>());
+    // std::vector<std::vector<Block*>> newMemory;
+
+    // card
 
     if (cardJson.count("memorySectors") != 0)
     {
@@ -182,10 +180,19 @@ void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
         {
             if (sectorJson.count("blocks") != 0)
             {
+                // building a sector
                 uint32_t iBlock = 0;
-                std::vector<std::string> newSector;
+                std::vector<Block *> newSector;
                 for (auto &blockJson : sectorJson["blocks"])
-                    newSector.push_back(blockJson);
+                    if (blockJson.is_string())
+                        newSector.push_back(new ByteBlock(blockJson.get<std::string>()));
+                    else if (blockJson.is_number_integer())
+                        newSector.push_back(new ValueBlock(blockJson.get<int32_t>()));
+                    else
+                    {
+                        newSector.push_back(new ByteBlock(true));
+                        std::cout << "WARNING: Sector " << iSector << ", Block " << iBlock << " unexpected type. The block will be filled with placeholder data.\n";
+                    }
 
                 try
                 {

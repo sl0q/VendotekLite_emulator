@@ -1102,7 +1102,7 @@ bool MessageIR::execute_mfr_classic_read_blocks(Mifare &mifareMessage, Device &m
 
     for (int i = 0; i < mfrReadBlocks.block_count(); ++i)
     {
-        readData += dynamic_cast<MifareClassicCard *>(card)->get_data_block(mfrReadBlocks.start_block() + i);
+        readData += dynamic_cast<MifareClassicCard *>(card)->get_block_data(mfrReadBlocks.start_block() + i);
         std::cout << "readData: " << readData << std::endl;
     }
 
@@ -1128,12 +1128,12 @@ bool MessageIR::execute_mfr_classic_write_blocks(Mifare &mifareMessage, Device &
     uint32_t numBlocks = (mfrWriteBlocks.data().length() + BLOCK_SIZE - 1) / BLOCK_SIZE;
     for (uint32_t i = 0; i < numBlocks; ++i)
     {
-        std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_data_block(mfrWriteBlocks.start_block() + i) << std::endl;
+        std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_block_data(mfrWriteBlocks.start_block() + i) << std::endl;
         size_t startIndex = i * BLOCK_SIZE;
         size_t endIndex = std::min(startIndex + BLOCK_SIZE, mfrWriteBlocks.data().length());
-        card->write_block(mfrWriteBlocks.data().substr(startIndex, endIndex - startIndex), mfrWriteBlocks.start_block() + i);
+        card->write_data_block(mfrWriteBlocks.data().substr(startIndex, endIndex - startIndex), mfrWriteBlocks.start_block() + i);
         std::cout << "Rewrited\n";
-        std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_data_block(mfrWriteBlocks.start_block() + i) << std::endl;
+        std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_block_data(mfrWriteBlocks.start_block() + i) << std::endl;
     }
 
     std::cout << "Finised execution.\n\n";
