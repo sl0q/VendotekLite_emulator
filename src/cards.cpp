@@ -287,6 +287,7 @@ void MifareClassicCard::write_value_block(int32_t newValue, uint32_t iBlock)
     if (iBlock > this->memorySectors[iSector].size())
         throw std::out_of_range("Provided memory block index is out of range of mifare card memory map");
 
+    //  check if the block is a value block
     if (this->memorySectors[iSector][iBlock]->is_value())
     {
         auto ffsPointer = this->memorySectors[iSector][iBlock];
@@ -294,6 +295,7 @@ void MifareClassicCard::write_value_block(int32_t newValue, uint32_t iBlock)
     }
     else
     {
+        //  reinitilize block as value block
         delete this->memorySectors[iSector][iBlock];
         this->memorySectors[iSector][iBlock] = new ValueBlock(newValue);
     }

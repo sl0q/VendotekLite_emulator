@@ -2,7 +2,7 @@
     "scripts": 
     [
         {
-            "title": "test get counter",
+            "title": "test set counter",
             "cards":
             [
                 {
@@ -53,8 +53,8 @@
                     "message": "SVIAEQEFAQoMCAEQABoGYWFhYWFhD9g="
                 },
                 {
-                    "comment": "get counter value from block 1",
-                    "message": "SVIABwUFATICCAFnkg=="
+                    "comment": "set counter value block 1 to -100",
+                    "message": "SVIAEgYFAToNCAEQnP//////////AZXR"
                 }
             ]
         }

@@ -999,6 +999,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrClassicGetCounter:
         res = execute_mfr_classic_get_counter(mifareMessage, myDevice);
         break;
+    case Mifare::kMfrClassicSetCounter:
+        res = execute_mfr_classic_set_counter(mifareMessage, myDevice);
+        break;
 
     default:
         res = false;
@@ -1151,7 +1154,6 @@ bool MessageIR::execute_mfr_classic_write_blocks(Mifare &mifareMessage, Device &
 
 bool MessageIR::execute_mfr_classic_get_counter(Mifare &mifareMessage, Device &myDevice)
 {
-    // CONFIGURATION ERROR
     std::cout << "Executing [mfr_classic_get_counter]...\n\n";
 
     bool res;
@@ -1179,6 +1181,26 @@ bool MessageIR::execute_mfr_classic_get_counter(Mifare &mifareMessage, Device &m
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
+
+    return res;
+}
+
+bool MessageIR::execute_mfr_classic_set_counter(Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_classic_set_counter]...\n\n";
+
+    bool res;
+
+    auto mfrSetCounter = mifareMessage.mfr_classic_set_counter();
+    auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
+
+    card->write_value_block(mfrSetCounter.value(), mfrSetCounter.dst_block());
+
+    std::cout << "Finised execution.\n\n";
+
+    Msg generatedResponce = generate_responce(SUCCESS);
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce.print_MSG();
 
     return res;
 }
