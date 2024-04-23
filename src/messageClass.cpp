@@ -1005,6 +1005,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrClassicModifyCounter:
         res = execute_mfr_classic_modify_counter(mifareMessage, myDevice);
         break;
+    case Mifare::kMfrClassicCopyCounter:
+        res = execute_mfr_classic_copy_counter(mifareMessage, myDevice);
+        break;
 
     default:
         res = false;
@@ -1173,6 +1176,7 @@ bool MessageIR::execute_mfr_classic_get_counter(Mifare &mifareMessage, Device &m
     catch (const ex::BadType &ex)
     {
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
+        res = false;
     }
 
     if (generatedResponce == nullptr)
@@ -1237,6 +1241,45 @@ bool MessageIR::execute_mfr_classic_modify_counter(Mifare &mifareMessage, Device
     Msg generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
+
+    return res;
+}
+
+bool MessageIR::execute_mfr_classic_copy_counter(Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_classic_copy_counter]...\n\n";
+
+    bool res;
+
+    auto mfrCopyCounter = mifareMessage.mfr_classic_copy_counter();
+    auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
+    int counter;
+
+    const Msg *generatedResponce = nullptr;
+    try
+    {
+        counter = card->get_block_value(mfrCopyCounter.src_block());
+    }
+    catch (const ex::BadType &ex)
+    {
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
+        res = false;
+    }
+
+    if (generatedResponce == nullptr)
+    {
+        if (mfrCopyCounter.has_dst_block())
+            card->write_value_block(counter, mfrCopyCounter.dst_block());
+        else
+            card->set_internal_register(counter);
+        generatedResponce = &generate_responce(SUCCESS);
+        res = true;
+    }
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
 
     return res;
 }
