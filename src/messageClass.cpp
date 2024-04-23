@@ -1008,6 +1008,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrClassicCopyCounter:
         res = execute_mfr_classic_copy_counter(mifareMessage, myDevice);
         break;
+    case Mifare::kMfrClassicCommitCounter:
+        res = execute_mfr_classic_commit_counter(mifareMessage, myDevice);
+        break;
 
     default:
         res = false;
@@ -1280,6 +1283,28 @@ bool MessageIR::execute_mfr_classic_copy_counter(Mifare &mifareMessage, Device &
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
+
+    return res;
+}
+
+bool MessageIR::execute_mfr_classic_commit_counter(Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_classic_commit_counter]...\n\n";
+
+    bool res;
+
+    auto mfrCommitCounter = mifareMessage.mfr_classic_commit_counter();
+    auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
+
+    card->write_value_block(card->get_internal_register(), mfrCommitCounter.dst_block());
+
+    res = true;
+
+    std::cout << "Finised execution.\n\n";
+
+    Msg generatedResponce = generate_responce(SUCCESS);
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce.print_MSG();
 
     return res;
 }

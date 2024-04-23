@@ -1,0 +1,66 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test commit counter",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "MIFARE_CLASSIC_1K",
+                    "tokenID": "1234uniqueID",
+                    "memorySectors":
+                    [
+                        {
+                            "blocks":
+                            [
+                                "block.00",
+                                "bl",
+                                "",
+                                "aaaaaax01xbbbbbb"
+                            ]
+                        },
+                        {
+                            "blocks":
+                            [
+                                "block.10",
+                                5005,
+                                "block.12",
+                                "aaaaaax02xbbbbbb"
+                            ]
+                        },
+                        {
+                            "blocks":
+                            [
+                                "block.20",
+                                "block.21",
+                                "block.22",
+                                "aaaaaax03xbbbbbb"
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "steps":
+            [
+                {
+                    "comment": "poll for token (timeout 1s)",
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":[{"attach_card": 1}]
+                },
+                {
+                    "comment": "auth on clear key command sector=1, type_a, key=aaaaaa",
+                    "message": "SVIAEQEFAQoMCAEQABoGYWFhYWFhD9g="
+                },
+                {
+                    "comment": "increment value in block 1 and store it in internal register",
+                    "message": "SVIACQcFAUIECAEQAVWe"
+                },
+                {
+                    "comment": "commit value from internal register to block 2",
+                    "message": "SVIABwkFAVICCAJcSA=="
+                }
+            ]
+        }
+    ]
+}
