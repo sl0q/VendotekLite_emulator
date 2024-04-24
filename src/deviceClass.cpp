@@ -20,14 +20,14 @@ Device::~Device()
     }
 }
 
-const DeviceInfoStruct Device::get_device_info()
+const StoredDeviceInfo &Device::get_device_info()
 {
-    return {this->serialNumber, this->IntelliReaderVersion};
+    return deviceInfo;
 }
 
-const DeviceStatusStruct Device::get_device_status()
+const StoredDeviceStatus &Device::get_device_status()
 {
-    return {this->timeToRestart, *this->security};
+    return deviceStatus;
 }
 
 bool Device::is_config_loaded()
@@ -64,14 +64,14 @@ void Device::load_config(std::string configFilePath)
     json deviceJson = json_content["device"];
 
     if (deviceJson.count("serialNumber") != 0)
-        this->serialNumber = deviceJson.at("serialNumber").get<std::string>();
+        this->deviceInfo.set_serial_number(deviceJson.at("serialNumber").get<std::string>());
     else
-        this->serialNumber = "CL4P7R4P";
+        this->deviceInfo.set_serial_number("1483369");
 
     if (deviceJson.count("IntelliReaderVersion") != 0)
-        this->IntelliReaderVersion = deviceJson.at("IntelliReaderVersion").get<std::string>();
+        this->deviceInfo.set_IR_version(deviceJson.at("IntelliReaderVersion").get<std::string>());
     else
-        this->IntelliReaderVersion = "1.50";
+        this->deviceInfo.set_IR_version("1.50");
 
     if (deviceJson.count("operationMode") != 0)
     {
@@ -89,37 +89,38 @@ void Device::load_config(std::string configFilePath)
     else
         this->baudrate = misc::baudrate::BPS_115200;
 
-    this->security = new misc::device::Security();
+    auto newSecurity = new misc::device::Security();
+    this->deviceStatus.set_security(newSecurity);
     if (deviceJson.count("security") != 0)
     {
         if (deviceJson["security"].count("enabled") == 0)
             throw ex::JsonParsingException("Could not find required [device:security:enabled] field in [" + configFilePath + "] file.");
-        this->security->set_enabled(deviceJson["security"].at("enabled").get<bool>());
+        newSecurity->set_enabled(deviceJson["security"].at("enabled").get<bool>());
 
         if (deviceJson["security"].count("pciPtsFunctionsPermitted") == 0)
             throw ex::JsonParsingException("Could not find required [device:security:pciPtsFunctionPermitted] field in [" + configFilePath + "] file.");
-        this->security->set_pci_pts_functions_permitted(deviceJson["security"].at("pciPtsFunctionsPermitted").get<bool>());
+        newSecurity->set_pci_pts_functions_permitted(deviceJson["security"].at("pciPtsFunctionsPermitted").get<bool>());
 
         if (deviceJson["security"].count("restrictionsReason") != 0)
-            this->security->set_restrictions_reason(deviceJson["security"].at("restrictionsReason").get<std::string>());
+            newSecurity->set_restrictions_reason(deviceJson["security"].at("restrictionsReason").get<std::string>());
 
         if (deviceJson["security"].count("antiRemovalProtection") != 0)
         {
             std::string tempStr = deviceJson["security"].at("antiRemovalProtection").get<std::string>();
             if ("ACTIVATED" == tempStr)
-                this->security->set_anti_removal_protection(misc::device::ACTIVATED);
+                newSecurity->set_anti_removal_protection(misc::device::ACTIVATED);
             else if ("DEACTIVATED" == tempStr)
-                this->security->set_anti_removal_protection(misc::device::DEACTIVATED);
+                newSecurity->set_anti_removal_protection(misc::device::DEACTIVATED);
         }
         else
-            this->security->set_anti_removal_protection(misc::device::DEACTIVATED);
+            newSecurity->set_anti_removal_protection(misc::device::DEACTIVATED);
     }
     else
     {
-        this->security->set_enabled(true);
-        this->security->set_pci_pts_functions_permitted(true);
-        this->security->set_restrictions_reason("");
-        this->security->set_anti_removal_protection(misc::device::AntiRemovalProtState::ACTIVATED);
+        newSecurity->set_enabled(true);
+        newSecurity->set_pci_pts_functions_permitted(true);
+        newSecurity->set_restrictions_reason("");
+        newSecurity->set_anti_removal_protection(misc::device::AntiRemovalProtState::ACTIVATED);
     }
 
     if (deviceJson.count("lanSettings") != 0)
@@ -418,17 +419,20 @@ void Device::execute_scripts()
 
 void Device::load_default_state()
 {
-    this->serialNumber = "1483369";
-    this->IntelliReaderVersion = "1.50";
+    this->deviceInfo.set_serial_number("1483369");
+    this->deviceInfo.set_IR_version("1.50");
+
+    this->deviceStatus.set_time_to_restart(0);
+
+    auto newSecurity = new misc::device::Security();
+    newSecurity->set_enabled(true);
+    newSecurity->set_pci_pts_functions_permitted(true);
+    newSecurity->set_restrictions_reason("");
+    newSecurity->set_anti_removal_protection(misc::device::AntiRemovalProtState::ACTIVATED);
+    this->deviceStatus.set_security(newSecurity);
+
     this->operationMode = misc::reboot::Reboot_OperationMode::Reboot_OperationMode_NORMAL_MODE;
     this->baudrate = misc::baudrate::BPS_115200;
-
-    this->timeToRestart = 0;
-    this->security = new misc::device::Security();
-    this->security->set_enabled(true);
-    this->security->set_pci_pts_functions_permitted(true);
-    this->security->set_restrictions_reason("");
-    this->security->set_anti_removal_protection(misc::device::AntiRemovalProtState::ACTIVATED);
 
     auto dhcp = new misc::lan_settings::Dhcp();
     this->lanSettings.set_allocated_dhcp(dhcp);
@@ -550,4 +554,72 @@ const contactless::token::Token &Device::get_stored_token()
 void Device::store_token(const contactless::token::Token &responce)
 {
     this->storedToken = responce;
+}
+
+StoredDeviceInfo::StoredDeviceInfo()
+{
+}
+
+StoredDeviceInfo::StoredDeviceInfo(const std::string &newSerialNumber, const std::string newIRVersion)
+{
+    serialNumber = newSerialNumber;
+    intellireaderVersion = newIRVersion;
+}
+
+void StoredDeviceInfo::set_serial_number(const std::string &newSerialNumber)
+{
+    serialNumber = newSerialNumber;
+}
+
+void StoredDeviceInfo::set_IR_version(const std::string &newIRVersion)
+{
+    intellireaderVersion = newIRVersion;
+}
+
+const std::string &StoredDeviceInfo::get_serial_number() const
+{
+    return serialNumber;
+}
+
+const std::string &StoredDeviceInfo::get_IR_version() const
+{
+    return intellireaderVersion;
+}
+
+StoredDeviceStatus::StoredDeviceStatus()
+{
+}
+
+StoredDeviceStatus::StoredDeviceStatus(uint32_t newTimeToRestart, misc::device::Security *newSecurity)
+{
+    timeToRestart = newTimeToRestart;
+    security = newSecurity;
+}
+
+StoredDeviceStatus::~StoredDeviceStatus()
+{
+    if (security != nullptr)
+        delete security;
+}
+
+void StoredDeviceStatus::set_time_to_restart(uint32_t newTimeToRestart)
+{
+    timeToRestart = newTimeToRestart;
+}
+
+void StoredDeviceStatus::set_security(misc::device::Security *newSecurity)
+{
+    if (security != nullptr)
+        delete security;
+    security = newSecurity;
+}
+
+uint32_t StoredDeviceStatus::get_time_to_restart() const
+{
+    return timeToRestart;
+}
+
+const misc::device::Security &StoredDeviceStatus::get_security() const
+{
+    return *security;
 }

@@ -4,17 +4,21 @@
 #include <vector>
 #include <string>
 
+#include <google/protobuf/message.h>
+
 class Payload
 {
 private:
     std::string debugString;
     std::vector<uint8_t> data;
+    const google::protobuf::Message *responceMsg = nullptr;
 
 public:
     Payload();
-    Payload(const std::string &newDebugString, const std::vector<uint8_t> &newData);
+    Payload(google::protobuf::Message *newResponceData);
     ~Payload();
 
-    const std::string &getDebugString() const;
-    const std::vector<uint8_t> &getData() const;
+    const std::string &get_debug_string() const;
+    const std::vector<uint8_t> &get_data() const;
+    const google::protobuf::Message *get_responce_msg() const;
 };

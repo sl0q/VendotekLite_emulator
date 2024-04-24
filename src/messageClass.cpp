@@ -985,34 +985,36 @@ bool MessageIR::execute_mifare(Device &myDevice)
     switch (mifareMessage.mifare_cmd_case())
     {
     case Mifare::kMfrClassicAuthOnClearKey:
-        res = execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice);
+        res = execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice).is_failure();
         break;
     case Mifare::kMfrClassicAuthOnSamKey:
-        res = execute_mfr_classic_auth_on_sam_key(mifareMessage, myDevice);
+        res = execute_mfr_classic_auth_on_sam_key(mifareMessage, myDevice).is_failure();
         break;
     case Mifare::kMfrClassicReadBlocks:
-        res = execute_mfr_classic_read_blocks(mifareMessage, myDevice);
+        // analyse return value
+        res = execute_mfr_classic_read_blocks(mifareMessage, myDevice).is_failure();
         break;
     case Mifare::kMfrClassicWriteBlocks:
-        res = execute_mfr_classic_write_blocks(mifareMessage, myDevice);
+        res = execute_mfr_classic_write_blocks(mifareMessage, myDevice).is_failure();
         break;
     case Mifare::kMfrClassicGetCounter:
-        res = execute_mfr_classic_get_counter(mifareMessage, myDevice);
+        // analyse return value
+        res = execute_mfr_classic_get_counter(mifareMessage, myDevice).is_failure();
         break;
     case Mifare::kMfrClassicSetCounter:
-        res = execute_mfr_classic_set_counter(mifareMessage, myDevice);
+        res = execute_mfr_classic_set_counter(mifareMessage, myDevice).is_failure();
         break;
     case Mifare::kMfrClassicModifyCounter:
-        res = execute_mfr_classic_modify_counter(mifareMessage, myDevice);
+        res = execute_mfr_classic_modify_counter(mifareMessage, myDevice).is_failure();
         break;
     case Mifare::kMfrClassicCopyCounter:
-        res = execute_mfr_classic_copy_counter(mifareMessage, myDevice);
+        res = execute_mfr_classic_copy_counter(mifareMessage, myDevice).is_failure();
         break;
     case Mifare::kMfrClassicCommitCounter:
-        res = execute_mfr_classic_commit_counter(mifareMessage, myDevice);
+        res = execute_mfr_classic_commit_counter(mifareMessage, myDevice).is_failure();
         break;
     case Mifare::kMfrClassicBulkOperation:
-        res = execute_mfr_classic_bulk_operation(mifareMessage, myDevice);
+        res = execute_mfr_classic_bulk_operation(mifareMessage, myDevice).is_failure();
         break;
 
     default:
@@ -1030,11 +1032,10 @@ bool MessageIR::execute_mifare(Device &myDevice)
     return res;
 }
 
-bool MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_auth_on_clear_key]...\n\n";
 
-    bool res;
     auto mfrAuth = mifareMessage.mfr_classic_auth_on_clear_key();
     auto storedToken = &myDevice.get_stored_token();
 
@@ -1046,7 +1047,6 @@ bool MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessag
         storedToken->type() != contactless::token_type::MIFARE_CLASSIC_MINI)
     {
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong token type"));
-        res = false;
     }
     else
     {
@@ -1058,33 +1058,28 @@ bool MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessag
             if (dynamic_cast<MifareClassicCard *>(card)->get_clear_key_A(mfrAuth.sector_number()) != mfrAuth.clear_key())
             {
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Mismatch of clear key type_a"));
-                res = false;
             }
             else
             {
                 generatedResponce = &generate_responce(SUCCESS);
                 dynamic_cast<MifareClassicCard *>(card)->authorize_sector(mfrAuth.sector_number());
                 std::cout << "Authenticated sector " << mfrAuth.sector_number() << std::endl;
-                res = true;
             }
             break;
         case mifare::classic::auth::TYPE_B:
             if (dynamic_cast<const MifareClassicCard *>(card)->get_clear_key_B(mfrAuth.sector_number()) != mfrAuth.clear_key())
             {
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Mismatch of clear key type_b"));
-                res = false;
             }
             else
             {
                 generatedResponce = &generate_responce(SUCCESS);
                 dynamic_cast<MifareClassicCard *>(card)->authorize_sector(mfrAuth.sector_number());
                 std::cout << "Authenticated sector " << mfrAuth.sector_number() << std::endl;
-                res = true;
             }
             break;
         default:
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Unknown key type"));
-            res = false;
         }
     }
     std::cout << "Finised execution.\n\n";
@@ -1092,26 +1087,22 @@ bool MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessag
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
 
-    delete generatedResponce;
-
-    return res;
+    return *generatedResponce;
 }
 
-bool MessageIR::execute_mfr_classic_auth_on_sam_key(Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_auth_on_sam_key(const Mifare &mifareMessage, Device &myDevice)
 {
     std::string errorMessage("Command [mfr_classic_auth_on_sam_key] of module [Mifare] is not supported. MSG_ID: " + std::to_string(this->msgID));
-    Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage));
+    const Msg &generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage));
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
 
-    return false;
+    return generatedResponce;
 }
 
-bool MessageIR::execute_mfr_classic_read_blocks(Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_read_blocks(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_read_blocks]...\n\n";
-
-    bool res;
 
     auto mfrReadBlocks = mifareMessage.mfr_classic_read_blocks();
     auto card = myDevice.get_card_in_field();
@@ -1126,19 +1117,17 @@ bool MessageIR::execute_mfr_classic_read_blocks(Mifare &mifareMessage, Device &m
 
     std::cout << "Finised execution.\n\n";
 
-    res = true;
+    // res = true;
     std::cout << "Generated responce:" << std::endl;
-    Msg generatedResponce = generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
+    const Msg &generatedResponce = generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
     generatedResponce.print_MSG();
 
-    return res;
+    return generatedResponce;
 }
 
-bool MessageIR::execute_mfr_classic_write_blocks(Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_write_blocks(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_write_blocks]...\n\n";
-
-    bool res;
 
     auto mfrWriteBlocks = mifareMessage.mfr_classic_write_blocks();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
@@ -1156,19 +1145,16 @@ bool MessageIR::execute_mfr_classic_write_blocks(Mifare &mifareMessage, Device &
 
     std::cout << "Finised execution.\n\n";
 
-    res = true;
     std::cout << "Generated responce:" << std::endl;
-    Msg generatedResponce = generate_responce(SUCCESS);
+    const Msg &generatedResponce = generate_responce(SUCCESS);
     generatedResponce.print_MSG();
 
-    return res;
+    return generatedResponce;
 }
 
-bool MessageIR::execute_mfr_classic_get_counter(Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_get_counter(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_get_counter]...\n\n";
-
-    bool res;
 
     auto mfrGetCounter = mifareMessage.mfr_classic_get_counter();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
@@ -1182,48 +1168,41 @@ bool MessageIR::execute_mfr_classic_get_counter(Mifare &mifareMessage, Device &m
     catch (const ex::BadType &ex)
     {
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
-        res = false;
     }
 
     if (generatedResponce == nullptr)
     {
         generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_get_counter_payload(counter));
-        res = true;
     }
     std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
 
-    return res;
+    return *generatedResponce;
 }
 
-bool MessageIR::execute_mfr_classic_set_counter(Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_set_counter(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_set_counter]...\n\n";
-
-    bool res;
 
     auto mfrSetCounter = mifareMessage.mfr_classic_set_counter();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
 
     card->write_value_block(mfrSetCounter.value(), mfrSetCounter.dst_block());
-    res = true;
 
     std::cout << "Finised execution.\n\n";
 
-    Msg generatedResponce = generate_responce(SUCCESS);
+    const Msg &generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
 
-    return res;
+    return generatedResponce;
 }
 
-bool MessageIR::execute_mfr_classic_modify_counter(Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_modify_counter(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_modify_counter]...\n\n";
-
-    bool res;
 
     auto mfrModCounter = mifareMessage.mfr_classic_modify_counter();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
@@ -1240,22 +1219,18 @@ bool MessageIR::execute_mfr_classic_modify_counter(Mifare &mifareMessage, Device
     else
         card->set_internal_register(counterValue);
 
-    res = true;
-
     std::cout << "Finised execution.\n\n";
 
-    Msg generatedResponce = generate_responce(SUCCESS);
+    const Msg &generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
 
-    return res;
+    return generatedResponce;
 }
 
-bool MessageIR::execute_mfr_classic_copy_counter(Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_copy_counter(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_copy_counter]...\n\n";
-
-    bool res;
 
     auto mfrCopyCounter = mifareMessage.mfr_classic_copy_counter();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
@@ -1269,7 +1244,6 @@ bool MessageIR::execute_mfr_classic_copy_counter(Mifare &mifareMessage, Device &
     catch (const ex::BadType &ex)
     {
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
-        res = false;
     }
 
     if (generatedResponce == nullptr)
@@ -1279,7 +1253,6 @@ bool MessageIR::execute_mfr_classic_copy_counter(Mifare &mifareMessage, Device &
         else
             card->set_internal_register(counter);
         generatedResponce = &generate_responce(SUCCESS);
-        res = true;
     }
 
     std::cout << "Finised execution.\n\n";
@@ -1287,36 +1260,31 @@ bool MessageIR::execute_mfr_classic_copy_counter(Mifare &mifareMessage, Device &
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
 
-    return res;
+    return *generatedResponce;
 }
 
-bool MessageIR::execute_mfr_classic_commit_counter(Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_commit_counter(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_commit_counter]...\n\n";
-
-    bool res;
 
     auto mfrCommitCounter = mifareMessage.mfr_classic_commit_counter();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
 
     card->write_value_block(card->get_internal_register(), mfrCommitCounter.dst_block());
 
-    res = true;
-
     std::cout << "Finised execution.\n\n";
 
-    Msg generatedResponce = generate_responce(SUCCESS);
+    const Msg &generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
 
-    return res;
+    return generatedResponce;
 }
 
-bool MessageIR::execute_mfr_classic_bulk_operation(Mifare &mifareMessage, Device &myDevice)
+const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_bulk_operation]...\n\n";
 
-    bool res;
     /*
         MAYBE CHANGE ARCHETECTURE SO EXE METHODS WOULD RETURN PAYLOAD CLASS
         AND THAT WOULD BE POSSIBLE TO WRITE INTO LOG FILE OUTSIDE OF THE EXE METHOD.
@@ -1333,9 +1301,15 @@ bool MessageIR::execute_mfr_classic_bulk_operation(Mifare &mifareMessage, Device
         {
         case mifare::classic::bulk::Command::kAuthOnClearKey:
         {
-            std::cout << operation.auth_on_clear_key().DebugString() << std::endl;
-            //  cast bulk::Command to base google::protobuf::Message and then cast it to Mifare type
-            execute_mfr_classic_auth_on_clear_key(*dynamic_cast<const Mifare *>(google::protobuf::implicit_cast<const google::protobuf::Message *, const mifare::classic::bulk::Command *>(&operation)), myDevice);
+            std::cout << "[auth_on_clear]\n"
+                      << operation.auth_on_clear_key().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::classic::auth::ClearKey(operation.auth_on_clear_key());
+            tempMifare->set_allocated_mfr_classic_auth_on_clear_key(tempCommand);
+            execute_mfr_classic_auth_on_clear_key(*tempMifare, myDevice);
+
+            delete tempMifare;
             break;
         }
         case mifare::classic::bulk::Command::kAuthOnSamKey:
@@ -1345,71 +1319,138 @@ bool MessageIR::execute_mfr_classic_bulk_operation(Mifare &mifareMessage, Device
         }
         case mifare::classic::bulk::Command::kReadBlocks:
         {
-            std::cout << operation.read_blocks().DebugString() << std::endl;
+            std::cout << "[read_blocks]\n"
+                      << operation.read_blocks().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::classic::read::ReadBlocks(operation.read_blocks());
+            tempMifare->set_allocated_mfr_classic_read_blocks(tempCommand);
+            auto responce = execute_mfr_classic_read_blocks(*tempMifare, myDevice);
+
+            // get read data from responce of exe method
             auto commandResult = results->add_results();
             auto newBlocks = new mifare::classic::read::Blocks();
             commandResult->set_allocated_read_blocks(newBlocks);
-            newBlocks->set_data("");
 
+            newBlocks->set_data(dynamic_cast<const mifare::classic::read::Blocks *>(responce.get_payload().get_responce_msg())->data());
+
+            delete tempMifare;
             break;
         }
         case mifare::classic::bulk::Command::kWriteBlocks:
         {
-            std::cout << operation.write_blocks().DebugString() << std::endl;
+            std::cout << "[write_blocks]\n"
+                      << operation.write_blocks().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::classic::write::WriteBlocks(operation.write_blocks());
+            tempMifare->set_allocated_mfr_classic_write_blocks(tempCommand);
+            execute_mfr_classic_write_blocks(*tempMifare, myDevice);
+
+            delete tempMifare;
             break;
         }
         case mifare::classic::bulk::Command::kGetCounter:
         {
-            std::cout << operation.get_counter().DebugString() << std::endl;
+            std::cout << "[get_counter]\n"
+                      << operation.get_counter().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::classic::counter::get::GetCounter(operation.get_counter());
+            tempMifare->set_allocated_mfr_classic_get_counter(tempCommand);
+            auto responce = execute_mfr_classic_get_counter(*tempMifare, myDevice);
+
+            //  if failed return error
+            if (responce.is_failure())
+            {
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+                break;
+            }
+
+            //  get counter value from responce of exe method
             auto commandResult = results->add_results();
             auto newCounter = new mifare::classic::counter::get::Counter();
             commandResult->set_allocated_get_counter(newCounter);
-            newCounter->set_value(0);
+            newCounter->set_value(dynamic_cast<const mifare::classic::counter::get::Counter *>(responce.get_payload().get_responce_msg())->value());
+
+            delete tempMifare;
             break;
         }
         case mifare::classic::bulk::Command::kSetCounter:
         {
-            std::cout << operation.set_counter().DebugString() << std::endl;
+            std::cout << "[set_counter]\n"
+                      << operation.set_counter().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::classic::counter::set::SetCounter(operation.set_counter());
+            tempMifare->set_allocated_mfr_classic_set_counter(tempCommand);
+            execute_mfr_classic_set_counter(*tempMifare, myDevice);
+
+            delete tempMifare;
             break;
         }
         case mifare::classic::bulk::Command::kModifyCounter:
         {
-            std::cout << operation.modify_counter().DebugString() << std::endl;
+            std::cout << "[modify_counter]\n"
+                      << operation.modify_counter().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::classic::counter::modify::ModifyCounter(operation.modify_counter());
+            tempMifare->set_allocated_mfr_classic_modify_counter(tempCommand);
+            execute_mfr_classic_modify_counter(*tempMifare, myDevice);
+
+            delete tempMifare;
             break;
         }
         case mifare::classic::bulk::Command::kCopyCounter:
         {
-            std::cout << operation.copy_counter().DebugString() << std::endl;
+            std::cout << "[copy_counter]\n"
+                      << operation.copy_counter().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::classic::counter::copy::CopyCounter(operation.copy_counter());
+            tempMifare->set_allocated_mfr_classic_copy_counter(tempCommand);
+            execute_mfr_classic_copy_counter(*tempMifare, myDevice);
+
+            delete tempMifare;
             break;
         }
         case mifare::classic::bulk::Command::kCommitCounter:
         {
-            std::cout << operation.commit_counter().DebugString() << std::endl;
+            std::cout << "[commit_counter]\n"
+                      << operation.commit_counter().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::classic::counter::commit::CommitCounter(operation.commit_counter());
+            tempMifare->set_allocated_mfr_classic_commit_counter(tempCommand);
+            execute_mfr_classic_commit_counter(*tempMifare, myDevice);
+
+            delete tempMifare;
             break;
         }
         default:
         {
             // failure UNSUPPORTED COMMAND
             std::cout << "unsopported command" << std::endl;
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, "Bulk operation has unsupported command"));
         }
         }
 
-        //  if failure responce already was generated
+        //  if failure responce already was generated (failure occired): exit loop
         if (generatedResponce != nullptr)
             break;
     }
 
+    //  if there was no failure
     if (generatedResponce == nullptr)
         generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_bulk_operation_payload(*results));
-
-    res = true;
 
     std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
 
-    return res;
+    return *generatedResponce;
 }
 
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)
@@ -1419,14 +1460,7 @@ const Payload &MessageIR::generate_failure_payload(common::failure::Error errorT
     if (!errorString.empty())
         failureResponce->set_error_string(errorString);
 
-    std::vector<uint8_t> buf;
-    buf.resize(failureResponce->ByteSizeLong());
-    int buf_size = buf.size();
-    failureResponce->SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(failureResponce->DebugString(), buf));
-
-    delete failureResponce;
+    Payload &generatedPayload = *(new Payload(failureResponce));
 
     return generatedPayload;
 }
@@ -1438,14 +1472,7 @@ const Payload &MessageIR::generate_log_notification_payload(common::notification
     if (!msgString.empty())
         notifyResponce->set_msg(msgString);
 
-    std::vector<uint8_t> buf;
-    buf.resize(notifyResponce->ByteSizeLong());
-    int buf_size = buf.size();
-    notifyResponce->SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(notifyResponce->DebugString(), buf));
-
-    delete notifyResponce;
+    Payload &generatedPayload = *(new Payload(notifyResponce));
 
     return generatedPayload;
 }
@@ -1455,106 +1482,60 @@ const Payload &MessageIR::generate_user_notification_payload(common::notificatio
     auto notifyResponce = new common::notification::UserMessage();
     notifyResponce->set_message_id(id);
 
-    std::vector<uint8_t> buf;
-    buf.resize(notifyResponce->ByteSizeLong());
-    int buf_size = buf.size();
-    notifyResponce->SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(notifyResponce->DebugString(), buf));
-
-    delete notifyResponce;
+    Payload &generatedPayload = *(new Payload(notifyResponce));
 
     return generatedPayload;
 }
 
 const Payload &MessageIR::generate_device_info_payload(Device &myDevice)
 {
-    std::vector<uint8_t> buf;
-    misc::device::DeviceInfo *deviceInfo = new misc::device::DeviceInfo();
+    auto deviceInfo = new misc::device::DeviceInfo();
 
-    DeviceInfoStruct deviceInfoStruct = myDevice.get_device_info();
-    deviceInfo->set_serial_number(deviceInfoStruct.serialNumber);
-    deviceInfo->set_intellireader_version(deviceInfoStruct.intellireaderVersion);
+    deviceInfo->set_serial_number(myDevice.get_device_info().get_serial_number());
+    deviceInfo->set_intellireader_version(myDevice.get_device_info().get_IR_version());
 
-    buf.resize(deviceInfo->ByteSizeLong());
-    int buf_size = buf.size();
-    deviceInfo->SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(deviceInfo->DebugString(), buf));
-
-    delete deviceInfo;
+    Payload &generatedPayload = *(new Payload(deviceInfo));
 
     return generatedPayload;
 }
 
 const Payload &MessageIR::generate_device_status_payload(Device &myDevice)
 {
-    misc::device::DeviceStatus *deviceStatus = new misc::device::DeviceStatus();
+    auto deviceStatus = new misc::device::DeviceStatus();
 
-    DeviceStatusStruct deviceStatusStruct = myDevice.get_device_status();
-    deviceStatus->set_time_left_to_restart(deviceStatusStruct.timeToRestart);
-    deviceStatus->set_allocated_security(&(deviceStatusStruct.security));
+    deviceStatus->set_time_left_to_restart(myDevice.get_device_status().get_time_to_restart());
+    auto newSecurity = new misc::device::Security(myDevice.get_device_status().get_security());
+    deviceStatus->set_allocated_security(newSecurity);
 
-    std::cout << "Device status:" << std::endl
-              << deviceStatus->DebugString() << std::endl;
-
-    std::vector<uint8_t> buf;
-    buf.resize(deviceStatus->ByteSizeLong());
-    int buf_size = buf.size();
-    deviceStatus->SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(deviceStatus->DebugString(), buf));
-
-    delete deviceStatus;
+    Payload &generatedPayload = *(new Payload(deviceStatus));
 
     return generatedPayload;
 }
 
 const Payload &MessageIR::generate_device_statistic_payload(Device &myDevice)
 {
-    auto deviceStatistic = myDevice.get_device_statistic();
+    auto deviceStatistic = new misc::stats::DeviceStatistic(myDevice.get_device_statistic());
 
-    std::cout << "Device statistic:" << std::endl
-              << deviceStatistic.DebugString() << std::endl;
+    Payload &generatedPayload = *(new Payload(deviceStatistic));
 
-    std::vector<uint8_t> buf;
-    buf.resize(deviceStatistic.ByteSizeLong());
-    int buf_size = buf.size();
-    deviceStatistic.SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(deviceStatistic.DebugString(), buf));
     return generatedPayload;
 }
 
 const Payload &MessageIR::generate_echo_payload(uint32_t replySize, const std::string &data)
 {
-    misc::echo::Echo echo;
-    echo.set_echo(data.substr(0, replySize));
+    auto echo = new misc::echo::Echo();
+    echo->set_echo(data.substr(0, replySize));
 
-    std::cout << "Echo reply:" << std::endl
-              << echo.DebugString() << std::endl;
+    Payload &generatedPayload = *(new Payload(echo));
 
-    std::vector<uint8_t> buf;
-    buf.resize(echo.ByteSizeLong());
-    int buf_size = buf.size();
-    echo.SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(echo.DebugString(), buf));
     return generatedPayload;
 }
 
 const Payload &MessageIR::generate_lan_settings_payload(Device &myDevice)
 {
-    const misc::lan_settings::LanSettings &lanSettings = myDevice.get_lan_settings();
-    std::cout << "Lan settings:" << std::endl
-              << lanSettings.DebugString() << std::endl;
+    auto lanSettings = new misc::lan_settings::LanSettings(myDevice.get_lan_settings());
 
-    std::vector<uint8_t> buf;
-    buf.resize(lanSettings.ByteSizeLong());
-    int buf_size = buf.size();
-    lanSettings.SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(lanSettings.DebugString(), buf));
+    Payload &generatedPayload = *(new Payload(lanSettings));
     return generatedPayload;
 }
 
@@ -1597,39 +1578,30 @@ const Payload &MessageIR::generate_lan_settings_payload(Device &myDevice)
 
 const Payload &MessageIR::generate_poll_for_token_payload(Device &myDevice, bool preferMifare)
 {
-    auto responcePFT = myDevice.get_card_in_field()->get_card_token();
+    auto responcePFT = new contactless::token::Token(*myDevice.get_card_in_field()->get_card_token());
 
     if (responcePFT->type() == contactless::token_type::SMART_MX_WITH_MIFARE_1K ||
         responcePFT->type() == contactless::token_type::SMART_MX_WITH_MIFARE_4K)
     {
+        delete responcePFT;
         if (preferMifare)
-            responcePFT = (dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_mifare_token().get_card_token();
+            responcePFT = new contactless::token::Token(*(dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_mifare_token().get_card_token());
         else
-            responcePFT = (dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_iso_token().get_card_token();
+            responcePFT = new contactless::token::Token(*(dynamic_cast<const SmartWithMifareCard *>(myDevice.get_card_in_field()))->get_iso_token().get_card_token());
     }
 
     myDevice.store_token(*responcePFT);
 
-    std::vector<uint8_t> buf;
-    buf.resize(responcePFT->ByteSizeLong());
-    int buf_size = buf.size();
-    responcePFT->SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(responcePFT->DebugString(), buf));
+    Payload &generatedPayload = *(new Payload(responcePFT));
 
     return generatedPayload;
 }
 
 const Payload &MessageIR::generate_stored_poll_for_token_payload(Device &myDevice)
 {
-    auto storedToken = &myDevice.get_stored_token();
+    auto storedToken = new contactless::token::Token(myDevice.get_stored_token());
 
-    std::vector<uint8_t> buf;
-    buf.resize(storedToken->ByteSizeLong());
-    int buf_size = buf.size();
-    storedToken->SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(storedToken->DebugString(), buf));
+    Payload &generatedPayload = *(new Payload(storedToken));
 
     return generatedPayload;
 }
@@ -1671,14 +1643,7 @@ const Payload &MessageIR::generate_perform_transaction_payload(Device &myDevice,
     if (false)
         transactionResult->set_encrypted_sensitive_data("some sensitive data");
 
-    std::vector<uint8_t> buf;
-    buf.resize(transactionResult->ByteSizeLong());
-    int buf_size = buf.size();
-    transactionResult->SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(transactionResult->DebugString(), buf));
-
-    delete transactionResult;
+    Payload &generatedPayload = *(new Payload(transactionResult));
 
     return generatedPayload;
 }
@@ -1689,14 +1654,7 @@ const Payload &MessageIR::generate_mfr_classic_read_blocks_payload(std::string &
 
     blocks->set_data(data);
 
-    std::vector<uint8_t> buf;
-    buf.resize(blocks->ByteSizeLong());
-    int buf_size = buf.size();
-    blocks->SerializeToArray(buf.data(), buf_size);
-
-    Payload &generatedPayload = *(new Payload(blocks->DebugString(), buf));
-
-    delete blocks;
+    Payload &generatedPayload = *(new Payload(blocks));
 
     return generatedPayload;
 }
@@ -1706,14 +1664,14 @@ const Payload &MessageIR::generate_mfr_classic_get_counter_payload(int32_t count
     auto getCounter = new mifare::classic::counter::get::Counter();
     getCounter->set_value(counterValue);
 
-    std::vector<uint8_t> buf;
-    buf.resize(getCounter->ByteSizeLong());
-    int buf_size = buf.size();
-    getCounter->SerializeToArray(buf.data(), buf_size);
+    Payload &generatedPayload = *(new Payload(getCounter));
 
-    Payload &generatedPayload = *(new Payload(getCounter->DebugString(), buf));
+    return generatedPayload;
+}
 
-    delete getCounter;
+const Payload &MessageIR::generate_mfr_classic_bulk_operation_payload(mifare::classic::bulk::BulkResult &results)
+{
+    Payload &generatedPayload = *(new Payload(&results));
 
     return generatedPayload;
 }
@@ -1726,7 +1684,7 @@ const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &gen
     buf.push_back(0x52); // add 'R'
 
     const uint16_t kHeaderLen = 3; // msg_id (1 byte) + module (1 byte) + type (1 byte)
-    uint16_t payload_size = generatedPayload.getData().size();
+    uint16_t payload_size = generatedPayload.get_data().size();
     uint16_t msg_len = kHeaderLen + payload_size;
     append_big_endian(buf, msg_len);
 
@@ -1745,6 +1703,7 @@ const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &gen
         newModuleID = this->moduleID;
     }
 
+    bool isFailure = false;
     switch (responseType)
     {
     case SUCCESS: // Success
@@ -1752,6 +1711,7 @@ const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &gen
         break;
     case FAILURE: // Failure
         newMessageType = FAILURE;
+        isFailure = true;
         break;
     case PENDING: // Pending
         newMessageType = PENDING;
@@ -1767,11 +1727,11 @@ const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &gen
     buf.push_back(newModuleID);
     buf.push_back(newMessageType);
 
-    buf.insert(buf.end(), generatedPayload.getData().begin(), generatedPayload.getData().end());
+    buf.insert(buf.end(), generatedPayload.get_data().begin(), generatedPayload.get_data().end());
     uint16_t crc = crc::calcCrc16(buf);
     append_big_endian(buf, crc);
 
-    return *(new Msg(generatedPayload.getDebugString(), buf));
+    return *(new Msg(generatedPayload, buf, isFailure));
 }
 
 void MessageIR::append_big_endian(std::vector<uint8_t> &buf, uint16_t n)

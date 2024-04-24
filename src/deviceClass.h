@@ -20,24 +20,11 @@
 #include "nlohmann/json.hpp"
 
 class Script;
-// class Step;
 
 #include "myExceptions.h"
 #include "scriptClass.h"
 #include "cards.h"
 #include "msg.h"
-
-struct DeviceInfoStruct
-{
-    std::string serialNumber;
-    std::string intellireaderVersion;
-};
-
-struct DeviceStatusStruct
-{
-    uint32_t timeToRestart;
-    misc::device::Security security;
-};
 
 struct ContactCardSlots
 {
@@ -46,6 +33,41 @@ struct ContactCardSlots
         SAM3_SLOT,
         SAM4_SLOT,
         SAM5_SLOT;
+};
+
+class StoredDeviceInfo
+{
+private:
+    std::string serialNumber;
+    std::string intellireaderVersion;
+
+public:
+    StoredDeviceInfo();
+    StoredDeviceInfo(const std::string &newSerialNumber, const std::string newIRVersion);
+
+    void set_serial_number(const std::string &newSerialNumber);
+    void set_IR_version(const std::string &newIRVersion);
+
+    const std::string &get_serial_number() const;
+    const std::string &get_IR_version() const;
+};
+
+class StoredDeviceStatus
+{
+private:
+    uint32_t timeToRestart;
+    misc::device::Security *security = nullptr;
+
+public:
+    StoredDeviceStatus();
+    StoredDeviceStatus(uint32_t newTimeToRestart, misc::device::Security *newSecurity);
+    ~StoredDeviceStatus();
+
+    void set_time_to_restart(uint32_t newTimeToRestart);
+    void set_security(misc::device::Security *newSecurity);
+
+    uint32_t get_time_to_restart() const;
+    const misc::device::Security &get_security() const;
 };
 
 class Device
@@ -57,12 +79,16 @@ private:
     std::string inputFilePath;
 
     // Device properties
-    std::string serialNumber;
-    std::string IntelliReaderVersion;
+    StoredDeviceInfo deviceInfo;
+    StoredDeviceStatus deviceStatus;
+
+    // std::string serialNumber;
+    // std::string IntelliReaderVersion;
+    // uint32_t timeToRestart = 0;
+    // misc::device::Security *security;
+
     misc::reboot::Reboot_OperationMode operationMode;
     misc::baudrate::Baudrate baudrate;
-    uint32_t timeToRestart = 0;
-    misc::device::Security *security;
     misc::lan_settings::LanSettings lanSettings;
     misc::leds::Leds leds;
 
@@ -108,8 +134,8 @@ public:
     void set_lan_settings(const misc::lan_settings::LanSettings &newLanSettings);
 
     // make const return values
-    const DeviceInfoStruct get_device_info();
-    const DeviceStatusStruct get_device_status();
+    const StoredDeviceInfo &get_device_info();
+    const StoredDeviceStatus &get_device_status();
     const misc::leds::Leds &get_leds_state();
     const misc::reboot::Reboot_OperationMode &get_operation_mode();
     const misc::stats::DeviceStatistic &get_device_statistic();

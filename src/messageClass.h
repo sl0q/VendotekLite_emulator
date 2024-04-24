@@ -115,16 +115,16 @@ private:
     bool execute_mifare(Device &myDevice);
 
     //  Classic
-    bool execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
-    bool execute_mfr_classic_auth_on_sam_key(Mifare &mifareMessage, Device &myDevice);
-    bool execute_mfr_classic_read_blocks(Mifare &mifareMessage, Device &myDevice);
-    bool execute_mfr_classic_write_blocks(Mifare &mifareMessage, Device &myDevice);
-    bool execute_mfr_classic_get_counter(Mifare &mifareMessage, Device &myDevice);
-    bool execute_mfr_classic_set_counter(Mifare &mifareMessage, Device &myDevice);
-    bool execute_mfr_classic_modify_counter(Mifare &mifareMessage, Device &myDevice);
-    bool execute_mfr_classic_copy_counter(Mifare &mifareMessage, Device &myDevice);
-    bool execute_mfr_classic_commit_counter(Mifare &mifareMessage, Device &myDevice);
-    bool execute_mfr_classic_bulk_operation(Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_auth_on_sam_key(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_read_blocks(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_write_blocks(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_get_counter(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_set_counter(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_modify_counter(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_copy_counter(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_commit_counter(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_classic_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
     const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");
