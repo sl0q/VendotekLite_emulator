@@ -545,3 +545,58 @@ std::string ByteBlock::str() const
 {
     return this->data;
 }
+
+Page::Page()
+{
+    bytes.resize(PAGE_LENGTH);
+    type = DATA;
+}
+
+Page::Page(Page::PageType newPageType, const std::vector<uint8_t> &newData)
+{
+    type = newPageType;
+    bytes.resize(PAGE_LENGTH);
+    int iByte = 0;
+    for (auto &byte : this->bytes)
+        byte = newData[iByte++];
+}
+
+bool Page::is_read_only() const
+{
+    return readOnly;
+}
+
+void Page::set_data(const std::vector<uint8_t> &newData)
+{
+    int iByte = 0;
+    for (auto &byte : this->bytes)
+        byte = newData[iByte++];
+}
+
+void Page::set_type(Page::PageType newPageType)
+{
+    type = newPageType;
+}
+
+void Page::set_bit(uint8_t iBit)
+{
+    uint8_t i = iBit % 32;
+    bytes[i / 8] |= (1 << (i % 8));
+}
+
+const std::vector<uint8_t> &Page::get_data() const
+{
+    return bytes;
+}
+
+const std::string &Page::get_data_str() const
+{
+    char hex[2];
+    std::stringstream buf;
+    for (auto &byte : bytes)
+    {
+        sprintf(hex, "%X", byte);
+        buf << "0x" << hex << ' ';
+    }
+    return buf.str();
+}

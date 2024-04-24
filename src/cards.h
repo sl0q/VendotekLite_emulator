@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include <string>
 
 #include <../proto_src/intellireader/contact/card_slot.pb.h>
@@ -221,12 +222,17 @@ public:
 private:
     std::vector<uint8_t> bytes;
     PageType type;
+    bool readOnly = false;
 
 public:
     Page();
-    Page(std::vector<uint8_t>);
+    Page(Page::PageType newPageType, const std::vector<uint8_t> &newData);
 
-    void set_data(std::vector<uint8_t> &newData);
+    bool is_read_only() const;
+
+    void set_data(const std::vector<uint8_t> &newData);
+    void set_type(Page::PageType newPageType);
+    void set_bit(uint8_t iBit); //  this method will be used for permanent writing. It can only set bit to 1
 
     const std::vector<uint8_t> &get_data() const;
     const std::string &get_data_str() const;
