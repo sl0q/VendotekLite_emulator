@@ -104,7 +104,6 @@ public:
     void write_value_block(int32_t newValue, uint32_t iBlock);
     void set_internal_register(int32_t value);
 
-    // const mifare::classic::auth::KeyType &get_key_type() const;
     const std::string get_clear_key_A(uint32_t iSector) const;
     const std::string get_clear_key_B(uint32_t iSector) const;
     const std::string &get_block_data(uint32_t iBlock) const;
@@ -116,15 +115,6 @@ public:
 
     const std::string str() const;
 };
-
-// class MifarePlusCard : public ContactlessCard
-// {
-// };
-
-// class MifareUltralightCard : public ContactlessCard
-// {
-
-// };
 
 class SmartWithMifareCard : public ContactlessCard
 {
@@ -158,6 +148,9 @@ public:
 
 //////////////////////////////////////////////////////////////////////
 
+//  memory block types of mifare classic
+
+//  base
 class Block
 {
 protected:
@@ -172,6 +165,7 @@ public:
     virtual std::string str() const = 0;
 };
 
+//  block initilized for storing numeric values
 class ValueBlock : public Block
 {
 private:
@@ -188,6 +182,7 @@ public:
     std::string str() const;
 };
 
+//  block initilized for storing byte data
 class ByteBlock : public Block
 {
 private:
@@ -203,3 +198,69 @@ public:
     const std::string &get_data() const;
     std::string str() const;
 };
+
+///////////////////////////////////////////////////////////////////////////
+
+//  memory page of mifare ultralight
+#define PAGE_LENGTH 4 // how many bytes in one page
+
+class Page
+{
+public:
+    enum PageType
+    {
+        SERIAL_NUMBER = 1, //  for page #0 and #1
+        DATA = 2,          // for pages #4 - #15
+        OTP = 3,           //  for page #3
+        PWD = 4,           //  for page #18
+        CFG = 5,           // for pages #16, 17, (19)
+        COUNTER = 6,       // for pages #20 and beyond
+        LOCK = 7           //  for page #2
+    };
+
+private:
+    std::vector<uint8_t> bytes;
+    PageType type;
+
+public:
+    Page();
+    Page(std::vector<uint8_t>);
+
+    void set_data(std::vector<uint8_t> &newData);
+
+    const std::vector<uint8_t> &get_data() const;
+    const std::string &get_data_str() const;
+};
+
+class MifareUltralightCard : public ContactlessCard
+{
+public:
+    enum m_ul_type
+    {
+        m_EV1 = 1,
+        m_C = 2
+    };
+
+private:
+    std::vector<Page *> memoryPages;
+    int32_t internalRegister; // exist?
+
+public:
+    MifareUltralightCard();
+    MifareUltralightCard(MifareUltralightCard::m_ul_type type);
+    ~MifareUltralightCard();
+
+    void fill_memory(const std::vector<Page *> &newData);
+    void fill_empty_memory();
+    void write_page(const Page &newPage, uint32_t iPage);
+    void set_internal_register(int32_t value); //  exist?
+
+    const std::string &get_page_data(uint32_t iPage) const;
+    int32_t get_internal_register() const; //  exist?
+
+    const std::string str() const;
+};
+
+// class MifarePlusCard : public ContactlessCard
+// {
+// };

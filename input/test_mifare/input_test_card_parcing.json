@@ -1,0 +1,59 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test mifare ultralight load",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "MIFARE_UL_OR_ULC",
+                    "tokenID": "1234uniqueID",
+                    "ev1_c": "EV1",
+                    "version": "stdMifare V0.0.1",
+                    "memorySectors":
+                    [
+                        {
+                            "pageNumber": 0,
+                            "bytes": "\\0xed\\0x75\\0x44\\0x54"
+                        },
+                        {
+                            "pageNumber": 1,
+                            "bytes": "\\0x04\\0xf3\\0xd2\\0x0f"
+                        },
+                        {
+                            "pageNumber": 2,
+                            "bytes": "\\0x2a\\0x00\\0x00\\0x00"
+                        },
+                        {
+                            "pageNumber": 3,
+                            "bytes": "\\0x00\\0x00\\0x00\\0x00",
+                            "comment": "OTP"
+                        },
+                        {
+                            "pageNumber": 4,
+                            "bytes": "\\0x00\\0x11\\0x22\\0x33"
+                        },
+                        {
+                            "pageNumber": 5,
+                            "bytes": "\\0x44\\0x55\\0x66\\0x77"
+                        },
+                        {
+                            "pageNumber": 18,
+                            "bytes": "\\0x01\\0x02\\0x03\\0x04"
+                        }
+                    ]
+                }
+            ],
+            "steps":
+            [
+                {
+                    "comment": "poll for token (timeout 1s)",
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":[{"attach_card": 1}]
+                }
+                
+            ]
+        }
+    ]
+}
