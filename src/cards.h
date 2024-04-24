@@ -184,6 +184,7 @@ public:
     ~ValueBlock();
     void set_value(const int32_t newValue);
     int32_t get_value() const;
+    const std::string &get_data() const; //  get value as a string
     std::string str() const;
 };
 

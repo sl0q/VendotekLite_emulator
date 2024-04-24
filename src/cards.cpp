@@ -487,6 +487,13 @@ int32_t ValueBlock::get_value() const
     return value;
 }
 
+const std::string &ValueBlock::get_data() const
+{
+    std::string s(std::to_string(this->value));
+    s.resize(16, PLACEHOLDER);
+    return s;
+}
+
 std::string ValueBlock::str() const
 {
     return std::to_string(this->value);
