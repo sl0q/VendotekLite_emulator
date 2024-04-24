@@ -1011,6 +1011,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrClassicCommitCounter:
         res = execute_mfr_classic_commit_counter(mifareMessage, myDevice);
         break;
+    case Mifare::kMfrClassicBulkOperation:
+        res = execute_mfr_classic_bulk_operation(mifareMessage, myDevice);
+        break;
 
     default:
         res = false;
@@ -1027,7 +1030,7 @@ bool MessageIR::execute_mifare(Device &myDevice)
     return res;
 }
 
-bool MessageIR::execute_mfr_classic_auth_on_clear_key(Mifare &mifareMessage, Device &myDevice)
+bool MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_classic_auth_on_clear_key]...\n\n";
 
@@ -1309,6 +1312,106 @@ bool MessageIR::execute_mfr_classic_commit_counter(Mifare &mifareMessage, Device
     return res;
 }
 
+bool MessageIR::execute_mfr_classic_bulk_operation(Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_classic_bulk_operation]...\n\n";
+
+    bool res;
+    /*
+        MAYBE CHANGE ARCHETECTURE SO EXE METHODS WOULD RETURN PAYLOAD CLASS
+        AND THAT WOULD BE POSSIBLE TO WRITE INTO LOG FILE OUTSIDE OF THE EXE METHOD.
+        ALSO WOULD BE POSIBLE TO REUSE THEM
+    */
+    auto mfrBulk = mifareMessage.mfr_classic_bulk_operation();
+    auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
+    const Msg *generatedResponce = nullptr;
+    auto results = new mifare::classic::bulk::BulkResult();
+
+    for (auto &operation : mfrBulk.operations())
+    {
+        switch (operation.MfrCmd_case())
+        {
+        case mifare::classic::bulk::Command::kAuthOnClearKey:
+        {
+            std::cout << operation.auth_on_clear_key().DebugString() << std::endl;
+            //  cast bulk::Command to base google::protobuf::Message and then cast it to Mifare type
+            execute_mfr_classic_auth_on_clear_key(*dynamic_cast<const Mifare *>(google::protobuf::implicit_cast<const google::protobuf::Message *, const mifare::classic::bulk::Command *>(&operation)), myDevice);
+            break;
+        }
+        case mifare::classic::bulk::Command::kAuthOnSamKey:
+        {
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_FEATURE, "No physical card slot"));
+            break;
+        }
+        case mifare::classic::bulk::Command::kReadBlocks:
+        {
+            std::cout << operation.read_blocks().DebugString() << std::endl;
+            auto commandResult = results->add_results();
+            auto newBlocks = new mifare::classic::read::Blocks();
+            commandResult->set_allocated_read_blocks(newBlocks);
+            newBlocks->set_data("");
+
+            break;
+        }
+        case mifare::classic::bulk::Command::kWriteBlocks:
+        {
+            std::cout << operation.write_blocks().DebugString() << std::endl;
+            break;
+        }
+        case mifare::classic::bulk::Command::kGetCounter:
+        {
+            std::cout << operation.get_counter().DebugString() << std::endl;
+            auto commandResult = results->add_results();
+            auto newCounter = new mifare::classic::counter::get::Counter();
+            commandResult->set_allocated_get_counter(newCounter);
+            newCounter->set_value(0);
+            break;
+        }
+        case mifare::classic::bulk::Command::kSetCounter:
+        {
+            std::cout << operation.set_counter().DebugString() << std::endl;
+            break;
+        }
+        case mifare::classic::bulk::Command::kModifyCounter:
+        {
+            std::cout << operation.modify_counter().DebugString() << std::endl;
+            break;
+        }
+        case mifare::classic::bulk::Command::kCopyCounter:
+        {
+            std::cout << operation.copy_counter().DebugString() << std::endl;
+            break;
+        }
+        case mifare::classic::bulk::Command::kCommitCounter:
+        {
+            std::cout << operation.commit_counter().DebugString() << std::endl;
+            break;
+        }
+        default:
+        {
+            // failure UNSUPPORTED COMMAND
+            std::cout << "unsopported command" << std::endl;
+        }
+        }
+
+        //  if failure responce already was generated
+        if (generatedResponce != nullptr)
+            break;
+    }
+
+    if (generatedResponce == nullptr)
+        generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_bulk_operation_payload(*results));
+
+    res = true;
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    return res;
+}
+
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)
 {
     auto failureResponce = new common::failure::FailureResponse();
@@ -1538,6 +1641,8 @@ const Payload &MessageIR::generate_perform_transaction_payload(Device &myDevice,
     transactionResult->set_status(contactless::transaction::ONLINE_AUTHORIZATION_REQUIRED); // don't know what status to choose
 
     auto newToken = new contactless::token::Token(*myDevice.get_card_in_field()->get_card_token());
+
+    //  if it is double card, get one of its tokens
     if (newToken->type() == contactless::token_type::SMART_MX_WITH_MIFARE_1K ||
         newToken->type() == contactless::token_type::SMART_MX_WITH_MIFARE_4K)
     {
