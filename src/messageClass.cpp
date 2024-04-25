@@ -984,6 +984,7 @@ bool MessageIR::execute_mifare(Device &myDevice)
     Mifare mifareMessage = *(dynamic_cast<Mifare *>(this->msg));
     switch (mifareMessage.mifare_cmd_case())
     {
+        //  Classic
     case Mifare::kMfrClassicAuthOnClearKey:
         res = execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice).is_failure();
         break;
@@ -1015,6 +1016,38 @@ bool MessageIR::execute_mifare(Device &myDevice)
         break;
     case Mifare::kMfrClassicBulkOperation:
         res = execute_mfr_classic_bulk_operation(mifareMessage, myDevice).is_failure();
+        break;
+
+        // Ultralight
+    case Mifare::kMfrUlReadPages:
+        res = execute_mfr_ul_read_pages(mifareMessage, myDevice).is_failure();
+        break;
+    case Mifare::kMfrUlWritePages:
+        res = execute_mfr_ul_write_pages(mifareMessage, myDevice).is_failure();
+        break;
+    case Mifare::kMfrUlGetVersion:
+        res = execute_mfr_ul_get_version(mifareMessage, myDevice).is_failure();
+        break;
+    case Mifare::kMfrUlGetCounter:
+        res = execute_mfr_ul_get_counter(mifareMessage, myDevice).is_failure();
+        break;
+    case Mifare::kMfrUlIncrementCounter:
+        res = execute_mfr_ul_increment_counter(mifareMessage, myDevice).is_failure();
+        break;
+    case Mifare::kMfrUlBulkOperation:
+        res = execute_mfr_ul_bulk_operation(mifareMessage, myDevice).is_failure();
+        break;
+    case Mifare::kMfrUlAuthOnClearKey:
+        res = execute_mfr_ul_auth_on_clear_key(mifareMessage, myDevice).is_failure();
+        break;
+    case Mifare::kMfrUlAuthOnSamKey:
+        res = execute_mfr_ul_auth_on_sam_key(mifareMessage, myDevice).is_failure();
+        break;
+    case Mifare::kMfrUlAuthClearPassword:
+        res = execute_mfr_ul_auth_clear_password(mifareMessage, myDevice).is_failure();
+        break;
+    case Mifare::kMfrUlAuthSamPassword:
+        res = execute_mfr_ul_auth_sam_password(mifareMessage, myDevice).is_failure();
         break;
 
     default:

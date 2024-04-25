@@ -126,6 +126,18 @@ private:
     const Msg &execute_mfr_classic_commit_counter(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_classic_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
 
+    //  Ultralight
+    const Msg &execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_write_pages(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_get_version(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_get_counter(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_increment_counter(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_auth_on_sam_key(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_auth_sam_password(const Mifare &mifareMessage, Device &myDevice);
+
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
     const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");
     const Payload &generate_user_notification_payload(common::notification::UserMessage_MessageId id);
