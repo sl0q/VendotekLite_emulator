@@ -63,4 +63,5 @@ namespace ex
 
         std::string what() const { return (msg_); }
     };
+
 }

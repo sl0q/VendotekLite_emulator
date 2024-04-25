@@ -271,12 +271,18 @@ private:
     m_ul_type type;
     std::vector<Page *> memoryPages;
     std::vector<CounterPage *> counters;
+    bool isAuth = false;      //  a successful authentication occured in the past
     int32_t internalRegister; // exist?
+
+    const std::vector<uint8_t> &get_password() const;
 
 public:
     MifareUltralightCard();
     MifareUltralightCard(MifareUltralightCard::m_ul_type newType);
     ~MifareUltralightCard();
+
+    bool auth_on_pasword(const std::string &password);
+    bool auth_on_pasword(const std::vector<uint8_t> &password);
 
     void fill_memory(const std::vector<Page *> &newData);
     void fill_empty_memory();
@@ -289,6 +295,8 @@ public:
     const Page &get_page(uint32_t iPage) const;
     int32_t get_internal_register() const; //  exist?
     const std::string &get_version() const;
+    const std::vector<uint8_t> &get_pack() const;
+    const std::string &get_pack_str() const;
 
     const std::string str() const;
 };
