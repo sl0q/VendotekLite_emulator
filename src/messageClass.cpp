@@ -1282,11 +1282,6 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
 {
     std::cout << "Executing [mfr_classic_bulk_operation]...\n\n";
 
-    /*
-        MAYBE CHANGE ARCHETECTURE SO EXE METHODS WOULD RETURN PAYLOAD CLASS
-        AND THAT WOULD BE POSSIBLE TO WRITE INTO LOG FILE OUTSIDE OF THE EXE METHOD.
-        ALSO WOULD BE POSIBLE TO REUSE THEM
-    */
     auto mfrBulk = mifareMessage.mfr_classic_bulk_operation();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
     const Msg *generatedResponce = nullptr;

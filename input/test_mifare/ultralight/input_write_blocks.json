@@ -1,0 +1,78 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test mifare ultralight EV1 auth on clear password",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "MIFARE_UL_OR_ULC",
+                    "tokenID": "1234uniqueID",
+                    "ev1_c": "EV1",
+                    "version": "stdMifare V0.0.1",
+                    "memoryPages":
+                    [
+                        {
+                            "pageNumber": 0,
+                            "bytes": "\\0xed\\0x75\\0x44\\0x54"
+                        },
+                        {
+                            "pageNumber": 1,
+                            "bytes": "\\0x04\\0xf3\\0xd2\\0x0f"
+                        },
+                        {
+                            "pageNumber": 2,
+                            "bytes": "\\0x2a\\0x00\\0x00\\0x00"
+                        },
+                        {
+                            "pageNumber": 3,
+                            "bytes": "\\0x00\\0x00\\0x00\\0x00",
+                            "comment": "OTP"
+                        },
+                        {
+                            "pageNumber": 4,
+                            "bytes": "\\0x00\\0x11\\0x22\\0x33"
+                        },
+                        {
+                            "pageNumber": 5,
+                            "bytes": "\\0x44\\0x55\\0x66\\0x77"
+                        },
+                        {
+                            "bytes": "\\0x66\\0x66\\0x66\\0x66"
+                        },
+                        {
+                            "bytes": "\\0x77\\0x77\\0x77\\0x77"
+                        },
+                        {
+                            "pageNumber": 18,
+                            "bytes": "\\0x01\\0x02\\0x03\\0x04"
+                        }
+                    ],
+                    "counters":
+                    [
+                        {"initialValue": 1000},
+                        {"initialValue": 1000},
+                        {}
+                    ]
+                }
+            ],
+            "steps":
+            [
+                {
+                    "comment": "poll for token (timeout 1s)",
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":[{"attach_card": 1}]
+                },
+                {
+                    "comment": "auth on clear key command sector=0, type_a, key=aaaaaa",
+                    "message": "SVIAEQEFAQoMCAAQABoGYWFhYWFh15E="
+                },
+                {
+                    "comment": "write data starting from block 1 of sector 0",
+                    "message": "SVIAKQQFASIkCAESIDAxMjM0NTY3ODlhYmNkZWZhbmRzb21lbW9yZWJ5dGVzzP0="
+                }
+            ]
+        }
+    ]
+}

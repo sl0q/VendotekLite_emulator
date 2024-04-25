@@ -369,6 +369,7 @@ const std::string MifareClassicCard::str() const
 
 SmartWithMifareCard::SmartWithMifareCard()
 {
+    this->token = new contactless::token::Token();
     this->token->set_type(contactless::token_type::SMART_MX_WITH_MIFARE_1K);
     this->isoToken = nullptr;
     this->mifareToken = nullptr;
@@ -636,6 +637,8 @@ const std::string Page::get_data_str() const
 
 MifareUltralightCard::MifareUltralightCard()
 {
+    this->token = new contactless::token::Token();
+    this->token->set_type(contactless::token_type::MIFARE_UL_OR_ULC);
     type = m_C;
     memoryPages.resize(16);
 }

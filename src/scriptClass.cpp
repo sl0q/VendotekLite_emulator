@@ -277,8 +277,6 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
             card.add_counter(newInitialValue);
         }
     }
-
-    std::cout << card.str() << std::endl;
 }
 
 void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)
