@@ -148,8 +148,9 @@ void Script::parse_card(json cardJson)
     }
     case contactless::token_type::MIFARE_UL_OR_ULC:
     {
-        // newCard = new MifareUltralightCard();
+        newCard = new MifareUltralightCard();
         parse_mifare_ultralight_card(cardJson, dynamic_cast<MifareUltralightCard &>(*newCard));
+        std::cout << newCard->str() << std::endl;
         break;
     }
     default:
@@ -224,7 +225,7 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
             throw std::invalid_argument("Failed to parse [ev1_c] parameter correctly");
     }
 
-    card = *(new MifareUltralightCard(ulType));
+    card.set_type(ulType);
 
     if (cardJson.count("memoryPages") != 0)
     {
@@ -245,10 +246,10 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
                 while (std::getline(bytesString, byteStr, delimiter) && byteArray.size() < 4)
                 {
                     //  convert hex string to uint8
-                    uint8_t byte;
-                    std::stringstream hexStr;
-                    hexStr << std::hex << byteStr;
-                    hexStr >> byte;
+                    if (byteStr.empty())
+                        continue;
+                    uint8_t byte = std::stoul(byteStr, nullptr, 16);
+
                     byteArray.push_back(byte);
                 }
             }
@@ -263,7 +264,7 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
         }
     }
 
-    // card.fill_empty_memory();
+    card.fill_empty_memory();
 }
 
 void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)

@@ -487,7 +487,7 @@ int32_t ValueBlock::get_value() const
     return value;
 }
 
-const std::string &ValueBlock::get_data() const
+const std::string ValueBlock::get_data() const
 {
     std::string s(std::to_string(this->value));
     s.resize(16, PLACEHOLDER);
@@ -563,8 +563,14 @@ Page::Page(Page::PageType newPageType, const std::vector<uint8_t> &newData)
 
 Page::Page(uint32_t iPage, const std::vector<uint8_t> &newData)
 {
+    if (iPage > 19)
+        throw std::invalid_argument("Too big page index (" + std::to_string(iPage) + ")");
+
     if (iPage < 2)
+    {
         type = SERIAL_NUMBER;
+        readOnly = true;
+    }
     else if (iPage == 2)
         type = LOCK;
     else if (iPage == 3)
@@ -572,11 +578,15 @@ Page::Page(uint32_t iPage, const std::vector<uint8_t> &newData)
     else if (iPage < 16)
         type = DATA;
     else if (iPage < 18 || iPage == 19)
+    {
         type = CFG;
+        readOnly = true;
+    }
     else if (iPage == 18)
+    {
         type = PWD;
-    else
-        type = COUNTER;
+        readOnly = true;
+    }
 
     bytes.resize(PAGE_LENGTH);
     int iByte = 0;
@@ -612,7 +622,7 @@ const std::vector<uint8_t> &Page::get_data() const
     return bytes;
 }
 
-const std::string &Page::get_data_str() const
+const std::string Page::get_data_str() const
 {
     char hex[2];
     std::stringstream buf;
@@ -633,12 +643,25 @@ MifareUltralightCard::MifareUltralightCard()
 MifareUltralightCard::MifareUltralightCard(MifareUltralightCard::m_ul_type newType)
 {
     type = newType;
+
+    switch (type)
+    {
+    case m_C:
+        memoryPages.resize(16);
+        break;
+    case m_EV1:
+        memoryPages.resize(20);
+        break;
+    default:
+        throw ex::BadType("Unknown carddmifare ultralight type");
+    }
 }
 
 MifareUltralightCard::~MifareUltralightCard()
 {
     for (auto &page : memoryPages)
-        delete page;
+        if (page != nullptr)
+            delete page;
 }
 
 void MifareUltralightCard::fill_memory(const std::vector<Page *> &newData)
@@ -646,21 +669,44 @@ void MifareUltralightCard::fill_memory(const std::vector<Page *> &newData)
     memoryPages = newData;
 }
 
-// void MifareUltralightCard::fill_empty_memory()
-// {
-//     for (auto &page : memoryPages)
-//         if (page == nullptr)
-//             page = new Page();
-// }
+void MifareUltralightCard::fill_empty_memory()
+{
+    for (auto &page : memoryPages)
+        if (page == nullptr)
+            page = new Page();
+}
 
 void MifareUltralightCard::write_page(const Page &newPage, uint32_t iPage)
 {
-    *memoryPages[iPage] = newPage;
+    if (memoryPages[iPage] == nullptr)
+        delete memoryPages[iPage];
+    memoryPages[iPage] = new Page(newPage);
 }
 
 void MifareUltralightCard::set_internal_register(int32_t value)
 {
     internalRegister = value;
+}
+
+void MifareUltralightCard::set_type(MifareUltralightCard::m_ul_type newType)
+{
+    type = newType;
+
+    for (auto &page : memoryPages)
+        if (page != nullptr)
+            delete page;
+
+    switch (type)
+    {
+    case m_C:
+        memoryPages.resize(16);
+        break;
+    case m_EV1:
+        memoryPages.resize(20);
+        break;
+    default:
+        throw ex::BadType("Unknown carddmifare ultralight type");
+    }
 }
 
 const Page &MifareUltralightCard::get_page(uint32_t iPage) const
@@ -683,7 +729,7 @@ const std::string MifareUltralightCard::str() const
     int iPage = 0;
     for (auto &page : memoryPages)
     {
-        buf << "\tPage #" << iPage << ": ";
+        buf << "\tPage #" << iPage++ << ": ";
         for (auto &byte : page->get_data())
         {
             sprintf(hex, "%X", byte);
@@ -692,4 +738,63 @@ const std::string MifareUltralightCard::str() const
         buf << std::endl;
     }
     return buf.str();
+}
+
+CounterPage::CounterPage()
+{
+    value = 0;
+}
+
+CounterPage::CounterPage(uint32_t newValue)
+{
+    value = newValue;
+}
+
+void CounterPage::shrink_to_24b()
+{
+    value <<= 2;
+    value >>= 2;
+}
+
+uint32_t CounterPage::get_value() const
+{
+    return value;
+}
+
+std::vector<uint8_t> CounterPage::get_value_hex() const
+{
+    uint32_t temp = value;
+    std::vector<uint8_t> buf;
+
+    for (int i = 0; i < 3; ++i)
+    {
+        uint8_t byte = temp;
+        buf.push_back(byte);
+        temp >>= 2;
+    }
+
+    return buf;
+}
+
+std::string CounterPage::get_value_hex_str() const
+{
+    std::stringstream buf;
+    char hex[2];
+    for (auto &byte : get_value_hex())
+    {
+        sprintf(hex, "%X", byte);
+        buf << "0x" << hex << ' ';
+        buf << std::endl;
+    }
+    return buf.str();
+}
+
+void CounterPage::set_value(uint32_t newValue)
+{
+    value = newValue;
+}
+
+void CounterPage::modify_value(uint32_t operand)
+{
+    value += operand;
 }

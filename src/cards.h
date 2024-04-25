@@ -179,7 +179,7 @@ public:
     ~ValueBlock();
     void set_value(const int32_t newValue);
     int32_t get_value() const;
-    const std::string &get_data() const; //  get value as a string
+    const std::string get_data() const; //  get value as a string
     std::string str() const;
 };
 
@@ -215,8 +215,7 @@ public:
         OTP = 3,           //  for page #3
         PWD = 4,           //  for page #18
         CFG = 5,           // for pages #16, 17, (19)
-        COUNTER = 6,       // for pages #20 and beyond
-        LOCK = 7           //  for page #2
+        LOCK = 6           //  for page #2
     };
 
 private:
@@ -236,7 +235,26 @@ public:
     void set_bit(uint8_t iBit); //  this method will be used for permanent writing. It can only set bit to 1
 
     const std::vector<uint8_t> &get_data() const;
-    const std::string &get_data_str() const;
+    const std::string get_data_str() const;
+};
+
+class CounterPage
+{
+private:
+    uint32_t value;
+
+    void shrink_to_24b();
+
+public:
+    CounterPage();
+    CounterPage(uint32_t newValue);
+
+    uint32_t get_value() const;
+    std::vector<uint8_t> get_value_hex() const;
+    std::string get_value_hex_str() const;
+
+    void set_value(uint32_t newValue);
+    void modify_value(uint32_t operand);
 };
 
 class MifareUltralightCard : public ContactlessCard
@@ -251,6 +269,7 @@ public:
 private:
     m_ul_type type;
     std::vector<Page *> memoryPages;
+    std::vector<CounterPage *> counters;
     int32_t internalRegister; // exist?
 
 public:
@@ -259,9 +278,11 @@ public:
     ~MifareUltralightCard();
 
     void fill_memory(const std::vector<Page *> &newData);
-    // void fill_empty_memory();
+    void fill_empty_memory();
     void write_page(const Page &newPage, uint32_t iPage);
+    void add_counter(uint32_t newInitialValue);
     void set_internal_register(int32_t value); //  exist?
+    void set_type(MifareUltralightCard::m_ul_type newType);
 
     const Page &get_page(uint32_t iPage) const;
     int32_t get_internal_register() const; //  exist?

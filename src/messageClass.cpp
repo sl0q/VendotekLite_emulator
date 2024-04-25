@@ -1209,10 +1209,7 @@ const Msg &MessageIR::execute_mfr_classic_modify_counter(const Mifare &mifareMes
 
     int32_t counterValue = card->get_block_value(mfrModCounter.src_block());
 
-    if (mfrModCounter.operand() < 0)
-        --counterValue;
-    else
-        ++counterValue;
+    counterValue += mfrModCounter.operand();
 
     if (mfrModCounter.has_dst_block())
         card->write_value_block(counterValue, mfrModCounter.dst_block());
