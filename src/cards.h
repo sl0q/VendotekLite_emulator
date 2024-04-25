@@ -248,12 +248,13 @@ public:
     };
 
 private:
+    m_ul_type type;
     std::vector<Page *> memoryPages;
     int32_t internalRegister; // exist?
 
 public:
     MifareUltralightCard();
-    MifareUltralightCard(MifareUltralightCard::m_ul_type type);
+    MifareUltralightCard(MifareUltralightCard::m_ul_type newType);
     ~MifareUltralightCard();
 
     void fill_memory(const std::vector<Page *> &newData);
@@ -261,7 +262,7 @@ public:
     void write_page(const Page &newPage, uint32_t iPage);
     void set_internal_register(int32_t value); //  exist?
 
-    const std::string &get_page_data(uint32_t iPage) const;
+    const Page &get_page(uint32_t iPage) const;
     int32_t get_internal_register() const; //  exist?
 
     const std::string str() const;

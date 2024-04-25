@@ -600,3 +600,73 @@ const std::string &Page::get_data_str() const
     }
     return buf.str();
 }
+
+MifareUltralightCard::MifareUltralightCard()
+{
+    type = m_C;
+    memoryPages.resize(16);
+}
+
+MifareUltralightCard::MifareUltralightCard(MifareUltralightCard::m_ul_type newType)
+{
+    type = newType;
+}
+
+MifareUltralightCard::~MifareUltralightCard()
+{
+    for (auto &page : memoryPages)
+        delete page;
+}
+
+void MifareUltralightCard::fill_memory(const std::vector<Page *> &newData)
+{
+    memoryPages = newData;
+}
+
+void MifareUltralightCard::fill_empty_memory()
+{
+    for (auto &page : memoryPages)
+        if (page == nullptr)
+            page = new Page();
+}
+
+void MifareUltralightCard::write_page(const Page &newPage, uint32_t iPage)
+{
+    *memoryPages[iPage] = newPage;
+}
+
+void MifareUltralightCard::set_internal_register(int32_t value)
+{
+    internalRegister = value;
+}
+
+const Page &MifareUltralightCard::get_page(uint32_t iPage) const
+{
+    return *memoryPages[iPage];
+}
+
+int32_t MifareUltralightCard::get_internal_register() const
+{
+    return internalRegister;
+}
+
+const std::string MifareUltralightCard::str() const
+{
+    std::stringstream buf;
+    buf << "Type: " << (type == m_C ? "m_C" : "m_EV1") << std::endl
+        << "Memory:" << std::endl;
+
+    char hex[2];
+    int iPage = 0;
+    for (auto &page : memoryPages)
+    {
+        buf << "\tPage #" << iPage << ": ";
+        for (auto &byte : page->get_data())
+        {
+            sprintf(hex, "%X", byte);
+            buf << "0x" << hex << ' ';
+        }
+        buf << std::endl;
+    }
+    return buf.str();
+}
