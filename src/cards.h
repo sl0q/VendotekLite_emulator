@@ -280,7 +280,7 @@ public:
     void fill_memory(const std::vector<Page *> &newData);
     void fill_empty_memory();
     void write_page(const Page &newPage, uint32_t iPage);
-    void add_counter(uint32_t newInitialValue);
+    void add_counter(uint32_t newInitialValue = 0);
     void set_internal_register(int32_t value); //  exist?
     void set_type(MifareUltralightCard::m_ul_type newType);
 

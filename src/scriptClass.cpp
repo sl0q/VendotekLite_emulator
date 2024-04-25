@@ -227,6 +227,7 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
 
     card.set_type(ulType);
 
+    //  parse memory pages
     if (cardJson.count("memoryPages") != 0)
     {
         uint32_t iPage = 0;
@@ -263,8 +264,21 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
             ++iPage;
         }
     }
+    card.fill_empty_memory(); //  fill undefined pages with default data
 
-    card.fill_empty_memory();
+    //  parse counters
+    if (cardJson.count("counters") != 0)
+    {
+        for (auto &counterJson : cardJson["counters"])
+        {
+            uint32_t newInitialValue = 0;
+            if (counterJson.count("initialValue") != 0)
+                newInitialValue = counterJson.at("initialValue").get<uint32_t>();
+            card.add_counter(newInitialValue);
+        }
+    }
+
+    std::cout << card.str() << std::endl;
 }
 
 void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)

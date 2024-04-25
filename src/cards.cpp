@@ -662,6 +662,11 @@ MifareUltralightCard::~MifareUltralightCard()
     for (auto &page : memoryPages)
         if (page != nullptr)
             delete page;
+    memoryPages.clear();
+
+    for (auto &counter : counters)
+        delete counter;
+    counters.clear();
 }
 
 void MifareUltralightCard::fill_memory(const std::vector<Page *> &newData)
@@ -681,6 +686,11 @@ void MifareUltralightCard::write_page(const Page &newPage, uint32_t iPage)
     if (memoryPages[iPage] == nullptr)
         delete memoryPages[iPage];
     memoryPages[iPage] = new Page(newPage);
+}
+
+void MifareUltralightCard::add_counter(uint32_t newInitialValue /* = 0*/)
+{
+    counters.push_back(new CounterPage(newInitialValue));
 }
 
 void MifareUltralightCard::set_internal_register(int32_t value)
@@ -726,10 +736,10 @@ const std::string MifareUltralightCard::str() const
         << "Memory:" << std::endl;
 
     char hex[2];
-    int iPage = 0;
+    int index = 0;
     for (auto &page : memoryPages)
     {
-        buf << "\tPage #" << iPage++ << ": ";
+        buf << "\tPage #" << index++ << ": ";
         for (auto &byte : page->get_data())
         {
             sprintf(hex, "%X", byte);
@@ -737,6 +747,12 @@ const std::string MifareUltralightCard::str() const
         }
         buf << std::endl;
     }
+
+    buf << "Counters: " << std::endl;
+    index = 0;
+    for (auto &counter : counters)
+        buf << "\tCounter #" << index++ << ": " << counter->get_value() << std::endl;
+
     return buf.str();
 }
 
