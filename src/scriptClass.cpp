@@ -146,6 +146,12 @@ void Script::parse_card(json cardJson)
         dynamic_cast<SmartWithMifareCard *>(newCard)->set_allocated_mifare(newMifareCard);
         break;
     }
+    case contactless::token_type::MIFARE_UL_OR_ULC:
+    {
+        // newCard = new MifareUltralightCard();
+        parse_mifare_ultralight_card(cardJson, dynamic_cast<MifareUltralightCard &>(*newCard));
+        break;
+    }
     default:
     {
         newCard = new ContactlessCard(newTokenType);
@@ -167,12 +173,6 @@ void Script::parse_card(json cardJson)
 
 void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
 {
-    // creating card memory
-
-    // std::vector<std::vector<Block*>> newMemory;
-
-    // card
-
     if (cardJson.count("memorySectors") != 0)
     {
         uint32_t iSector = 0;
@@ -207,6 +207,63 @@ void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
             ++iSector;
         }
     }
+}
+
+void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &card)
+{
+    std::string ulTypeStr;
+    MifareUltralightCard::m_ul_type ulType = MifareUltralightCard::m_C;
+    if (cardJson.count("ev1_c") != 0)
+    {
+        ulTypeStr = cardJson.at("ev1_c").get<std::string>();
+        if ("EV1" == ulTypeStr)
+            ulType = MifareUltralightCard::m_EV1;
+        else if ("C" == ulTypeStr)
+            ; //  value already set
+        else
+            throw std::invalid_argument("Failed to parse [ev1_c] parameter correctly");
+    }
+
+    card = *(new MifareUltralightCard(ulType));
+
+    if (cardJson.count("memoryPages") != 0)
+    {
+        uint32_t iPage = 0;
+        for (auto &pageJson : cardJson["memoryPages"])
+        {
+            if (pageJson.count("pageNumber") != 0)
+            {
+                iPage = pageJson.at("pageNumber").get<uint32_t>();
+            }
+
+            std::vector<uint8_t> byteArray;
+            if (pageJson.count("bytes") != 0)
+            {
+                std::stringstream bytesString(pageJson.at("bytes").get<std::string>());
+                std::string byteStr;
+                char delimiter = '\\';
+                while (std::getline(bytesString, byteStr, delimiter) && byteArray.size() < 4)
+                {
+                    //  convert hex string to uint8
+                    uint8_t byte;
+                    std::stringstream hexStr;
+                    hexStr << std::hex << byteStr;
+                    hexStr >> byte;
+                    byteArray.push_back(byte);
+                }
+            }
+            //  if read less than 4 bytes - fill rest
+            while (byteArray.size() < 4)
+                byteArray.push_back(0);
+
+            Page newPage(iPage, byteArray);
+            card.write_page(newPage, iPage);
+
+            ++iPage;
+        }
+    }
+
+    // card.fill_empty_memory();
 }
 
 void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)

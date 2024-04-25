@@ -11,7 +11,7 @@
                     "tokenID": "1234uniqueID",
                     "ev1_c": "EV1",
                     "version": "stdMifare V0.0.1",
-                    "memorySectors":
+                    "memoryPages":
                     [
                         {
                             "pageNumber": 0,

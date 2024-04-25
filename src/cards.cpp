@@ -561,6 +561,29 @@ Page::Page(Page::PageType newPageType, const std::vector<uint8_t> &newData)
         byte = newData[iByte++];
 }
 
+Page::Page(uint32_t iPage, const std::vector<uint8_t> &newData)
+{
+    if (iPage < 2)
+        type = SERIAL_NUMBER;
+    else if (iPage == 2)
+        type = LOCK;
+    else if (iPage == 3)
+        type = OTP;
+    else if (iPage < 16)
+        type = DATA;
+    else if (iPage < 18 || iPage == 19)
+        type = CFG;
+    else if (iPage == 18)
+        type = PWD;
+    else
+        type = COUNTER;
+
+    bytes.resize(PAGE_LENGTH);
+    int iByte = 0;
+    for (auto &byte : this->bytes)
+        byte = newData[iByte++];
+}
+
 bool Page::is_read_only() const
 {
     return readOnly;
@@ -623,12 +646,12 @@ void MifareUltralightCard::fill_memory(const std::vector<Page *> &newData)
     memoryPages = newData;
 }
 
-void MifareUltralightCard::fill_empty_memory()
-{
-    for (auto &page : memoryPages)
-        if (page == nullptr)
-            page = new Page();
-}
+// void MifareUltralightCard::fill_empty_memory()
+// {
+//     for (auto &page : memoryPages)
+//         if (page == nullptr)
+//             page = new Page();
+// }
 
 void MifareUltralightCard::write_page(const Page &newPage, uint32_t iPage)
 {

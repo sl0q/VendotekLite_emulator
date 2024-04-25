@@ -227,6 +227,7 @@ private:
 public:
     Page();
     Page(Page::PageType newPageType, const std::vector<uint8_t> &newData);
+    Page(uint32_t iPage, const std::vector<uint8_t> &newData);
 
     bool is_read_only() const;
 
@@ -258,7 +259,7 @@ public:
     ~MifareUltralightCard();
 
     void fill_memory(const std::vector<Page *> &newData);
-    void fill_empty_memory();
+    // void fill_empty_memory();
     void write_page(const Page &newPage, uint32_t iPage);
     void set_internal_register(int32_t value); //  exist?
 
