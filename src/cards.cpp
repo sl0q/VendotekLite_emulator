@@ -653,11 +653,15 @@ MifareUltralightCard::MifareUltralightCard()
     this->token->set_type(contactless::token_type::MIFARE_UL_OR_ULC);
     type = m_C;
     memoryPages.resize(16);
+    this->version = "No version";
 }
 
 MifareUltralightCard::MifareUltralightCard(MifareUltralightCard::m_ul_type newType)
 {
+    this->token = new contactless::token::Token();
+    this->token->set_type(contactless::token_type::MIFARE_UL_OR_ULC);
     type = newType;
+    this->version = "No version";
 
     switch (type)
     {
