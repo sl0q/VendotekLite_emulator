@@ -267,6 +267,7 @@ public:
     };
 
 private:
+    std::string version;
     m_ul_type type;
     std::vector<Page *> memoryPages;
     std::vector<CounterPage *> counters;
@@ -283,9 +284,11 @@ public:
     void add_counter(uint32_t newInitialValue = 0);
     void set_internal_register(int32_t value); //  exist?
     void set_type(MifareUltralightCard::m_ul_type newType);
+    void set_version(const std::string &newVersion);
 
     const Page &get_page(uint32_t iPage) const;
     int32_t get_internal_register() const; //  exist?
+    const std::string &get_version() const;
 
     const std::string str() const;
 };

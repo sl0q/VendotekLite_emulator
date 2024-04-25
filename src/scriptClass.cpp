@@ -224,8 +224,10 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
         else
             throw std::invalid_argument("Failed to parse [ev1_c] parameter correctly");
     }
-
     card.set_type(ulType);
+
+    if (cardJson.count("version") != 0)
+        card.set_version(cardJson.at("version").get<std::string>());
 
     //  parse memory pages
     if (cardJson.count("memoryPages") != 0)

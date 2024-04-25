@@ -722,6 +722,11 @@ void MifareUltralightCard::set_type(MifareUltralightCard::m_ul_type newType)
     }
 }
 
+void MifareUltralightCard::set_version(const std::string &newVersion)
+{
+    version = newVersion;
+}
+
 const Page &MifareUltralightCard::get_page(uint32_t iPage) const
 {
     return *memoryPages[iPage];
@@ -730,6 +735,11 @@ const Page &MifareUltralightCard::get_page(uint32_t iPage) const
 int32_t MifareUltralightCard::get_internal_register() const
 {
     return internalRegister;
+}
+
+const std::string &MifareUltralightCard::get_version() const
+{
+    return version;
 }
 
 const std::string MifareUltralightCard::str() const
