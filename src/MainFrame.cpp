@@ -11,7 +11,7 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
 
     wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Input file path:", wxPoint(50, 25), wxDefaultSize);
     this->_configPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/config.json", wxPoint(150, 50), wxSize(200, -1));
-    this->_inputPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/test_mifare/input_test_card_parcing.json", wxPoint(150, 75), wxSize(200, -1));
+    this->_inputPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/test_mifare/ultralight/input_auth_on_clear_password.json", wxPoint(150, 75), wxSize(200, -1));
 
     // wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Config path", wxPoint(50, 50), wxDefaultSize);
 

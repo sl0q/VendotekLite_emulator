@@ -1019,36 +1019,36 @@ bool MessageIR::execute_mifare(Device &myDevice)
         break;
 
         // Ultralight
-    case Mifare::kMfrUlReadPages:
-        res = execute_mfr_ul_read_pages(mifareMessage, myDevice).is_failure();
-        break;
-    case Mifare::kMfrUlWritePages:
-        res = execute_mfr_ul_write_pages(mifareMessage, myDevice).is_failure();
-        break;
-    case Mifare::kMfrUlGetVersion:
-        res = execute_mfr_ul_get_version(mifareMessage, myDevice).is_failure();
-        break;
-    case Mifare::kMfrUlGetCounter:
-        res = execute_mfr_ul_get_counter(mifareMessage, myDevice).is_failure();
-        break;
-    case Mifare::kMfrUlIncrementCounter:
-        res = execute_mfr_ul_increment_counter(mifareMessage, myDevice).is_failure();
-        break;
-    case Mifare::kMfrUlBulkOperation:
-        res = execute_mfr_ul_bulk_operation(mifareMessage, myDevice).is_failure();
-        break;
-    case Mifare::kMfrUlAuthOnClearKey:
-        res = execute_mfr_ul_auth_on_clear_key(mifareMessage, myDevice).is_failure();
-        break;
-    case Mifare::kMfrUlAuthOnSamKey:
-        res = execute_mfr_ul_auth_on_sam_key(mifareMessage, myDevice).is_failure();
-        break;
+    // case Mifare::kMfrUlReadPages:
+    //     res = execute_mfr_ul_read_pages(mifareMessage, myDevice).is_failure();
+    //     break;
+    // case Mifare::kMfrUlWritePages:
+    //     res = execute_mfr_ul_write_pages(mifareMessage, myDevice).is_failure();
+    //     break;
+    // case Mifare::kMfrUlGetVersion:
+    //     res = execute_mfr_ul_get_version(mifareMessage, myDevice).is_failure();
+    //     break;
+    // case Mifare::kMfrUlGetCounter:
+    //     res = execute_mfr_ul_get_counter(mifareMessage, myDevice).is_failure();
+    //     break;
+    // case Mifare::kMfrUlIncrementCounter:
+    //     res = execute_mfr_ul_increment_counter(mifareMessage, myDevice).is_failure();
+    //     break;
+    // case Mifare::kMfrUlBulkOperation:
+    //     res = execute_mfr_ul_bulk_operation(mifareMessage, myDevice).is_failure();
+    //     break;
+    // case Mifare::kMfrUlAuthOnClearKey:
+    //     res = execute_mfr_ul_auth_on_clear_key(mifareMessage, myDevice).is_failure();
+    //     break;
+    // case Mifare::kMfrUlAuthOnSamKey:
+    //     res = execute_mfr_ul_auth_on_sam_key(mifareMessage, myDevice).is_failure();
+    //     break;
     case Mifare::kMfrUlAuthClearPassword:
         res = execute_mfr_ul_auth_clear_password(mifareMessage, myDevice).is_failure();
         break;
-    case Mifare::kMfrUlAuthSamPassword:
-        res = execute_mfr_ul_auth_sam_password(mifareMessage, myDevice).is_failure();
-        break;
+        // case Mifare::kMfrUlAuthSamPassword:
+        //     res = execute_mfr_ul_auth_sam_password(mifareMessage, myDevice).is_failure();
+        //     break;
 
     default:
         res = false;
@@ -1478,6 +1478,42 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
     return *generatedResponce;
 }
 
+const Msg &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_ul_auth_clear_password]...\n\n";
+
+    auto mfrAuth = mifareMessage.mfr_ul_auth_clear_password();
+    auto storedToken = &myDevice.get_stored_token();
+
+    const Msg *generatedResponce = nullptr;
+
+    if (storedToken->type() != contactless::token_type::MIFARE_UL_OR_ULC)
+    {
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong token type"));
+    }
+    else
+    {
+        auto card = dynamic_cast<MifareUltralightCard *>(myDevice.get_card_in_field());
+
+        card->auth_on_pasword(mfrAuth.password());
+
+        auto packStr = card->get_pack_str();
+        if (packStr.empty())
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong password"));
+        else
+        {
+            std::cout << "Authentificated successfully" << std::endl;
+            generatedResponce = &generate_responce(SUCCESS, generate_mfr_ul_auth_clear_password_payload(packStr));
+        }
+    }
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    return *generatedResponce;
+}
+
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)
 {
     auto failureResponce = new common::failure::FailureResponse();
@@ -1697,6 +1733,16 @@ const Payload &MessageIR::generate_mfr_classic_get_counter_payload(int32_t count
 const Payload &MessageIR::generate_mfr_classic_bulk_operation_payload(mifare::classic::bulk::BulkResult &results)
 {
     Payload &generatedPayload = *(new Payload(&results));
+
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_mfr_ul_auth_clear_password_payload(std::string &newPack)
+{
+    auto pack = new mifare::ultralight::password::PasswordAcknowledge();
+    pack->set_password_ack(newPack);
+
+    Payload &generatedPayload = *(new Payload(pack));
 
     return generatedPayload;
 }

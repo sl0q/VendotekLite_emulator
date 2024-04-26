@@ -127,16 +127,16 @@ private:
     const Msg &execute_mfr_classic_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
 
     //  Ultralight
-    const Msg &execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice);
-    const Msg &execute_mfr_ul_write_pages(const Mifare &mifareMessage, Device &myDevice);
-    const Msg &execute_mfr_ul_get_version(const Mifare &mifareMessage, Device &myDevice);
-    const Msg &execute_mfr_ul_get_counter(const Mifare &mifareMessage, Device &myDevice);
-    const Msg &execute_mfr_ul_increment_counter(const Mifare &mifareMessage, Device &myDevice);
-    const Msg &execute_mfr_ul_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
-    const Msg &execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
-    const Msg &execute_mfr_ul_auth_on_sam_key(const Mifare &mifareMessage, Device &myDevice);
+    // const Msg &execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice);
+    // const Msg &execute_mfr_ul_write_pages(const Mifare &mifareMessage, Device &myDevice);
+    // const Msg &execute_mfr_ul_get_version(const Mifare &mifareMessage, Device &myDevice);
+    // const Msg &execute_mfr_ul_get_counter(const Mifare &mifareMessage, Device &myDevice);
+    // const Msg &execute_mfr_ul_increment_counter(const Mifare &mifareMessage, Device &myDevice);
+    // const Msg &execute_mfr_ul_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
+    // const Msg &execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
+    // const Msg &execute_mfr_ul_auth_on_sam_key(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice);
-    const Msg &execute_mfr_ul_auth_sam_password(const Mifare &mifareMessage, Device &myDevice);
+    // const Msg &execute_mfr_ul_auth_sam_password(const Mifare &mifareMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
     const Payload &generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString = "");
@@ -163,6 +163,9 @@ private:
     const Payload &generate_mfr_classic_read_blocks_payload(std::string &data);
     const Payload &generate_mfr_classic_get_counter_payload(int32_t counterValue);
     const Payload &generate_mfr_classic_bulk_operation_payload(mifare::classic::bulk::BulkResult &results);
+
+    // Mifare ultralight util
+    const Payload &generate_mfr_ul_auth_clear_password_payload(std::string &newPack);
 
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());
 

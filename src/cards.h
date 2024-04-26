@@ -295,8 +295,9 @@ public:
     const Page &get_page(uint32_t iPage) const;
     int32_t get_internal_register() const; //  exist?
     const std::string &get_version() const;
-    const std::vector<uint8_t> &get_pack() const;
-    const std::string &get_pack_str() const;
+    const std::string get_password_str() const;
+    const std::vector<uint8_t> get_pack() const;
+    const std::string get_pack_str() const;
 
     const std::string str() const;
 };

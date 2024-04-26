@@ -636,17 +636,6 @@ const std::string Page::get_data_str() const
     return buf.str();
 }
 
-const std::vector<uint8_t> &MifareUltralightCard::get_password() const
-{
-    if (this->type != m_EV1)
-        throw ex::BadType("Only EV1 type of Mifare Ultralight Card support passwords");
-    if (this->memoryPages[18] == nullptr)
-        throw std::runtime_error("Attempt to access undefined memory page of a Mifare Ultralight EV1 card");
-
-    //  page 18 stores password
-    return this->memoryPages[18]->get_data();
-}
-
 MifareUltralightCard::MifareUltralightCard()
 {
     this->token = new contactless::token::Token();
@@ -711,6 +700,9 @@ bool MifareUltralightCard::auth_on_pasword(const std::string &password)
 bool MifareUltralightCard::auth_on_pasword(const std::vector<uint8_t> &password)
 {
     this->isAuth = false;
+
+    if (type != MifareUltralightCard::m_EV1)
+        return false;
 
     if (password.size() != 4)
         return false;
@@ -794,7 +786,32 @@ const std::string &MifareUltralightCard::get_version() const
     return version;
 }
 
-const std::vector<uint8_t> &MifareUltralightCard::get_pack() const
+const std::vector<uint8_t> &MifareUltralightCard::get_password() const
+{
+    if (this->type != m_EV1)
+        throw ex::BadType("Only EV1 type of Mifare Ultralight Card support passwords");
+    if (this->memoryPages[18] == nullptr)
+        throw std::runtime_error("Attempt to access undefined memory page of a Mifare Ultralight EV1 card");
+
+    //  page 18 stores password
+    return this->memoryPages[18]->get_data();
+}
+
+const std::string MifareUltralightCard::get_password_str() const
+{
+    std::stringstream buf;
+    char hex[2];
+    for (auto &byte : get_password())
+    {
+        sprintf(hex, "%X", byte);
+        buf << "\\"
+            << "0x" << hex;
+        // buf << std::endl;
+    }
+    return buf.str();
+}
+
+const std::vector<uint8_t> MifareUltralightCard::get_pack() const
 {
     std::vector<uint8_t> pack;
     if (!isAuth)
@@ -807,14 +824,15 @@ const std::vector<uint8_t> &MifareUltralightCard::get_pack() const
     return pack;
 }
 
-const std::string &MifareUltralightCard::get_pack_str() const
+const std::string MifareUltralightCard::get_pack_str() const
 {
     std::stringstream buf;
     char hex[2];
     for (auto &byte : get_pack())
     {
         sprintf(hex, "%X", byte);
-        buf << "0x" << hex << ' ';
+        buf << "\\"
+            << "0x" << hex;
         // buf << std::endl;
     }
     return buf.str();
