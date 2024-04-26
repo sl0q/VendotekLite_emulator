@@ -37,6 +37,8 @@ public:
     void parse_card(json cardJson);
     void parse_mifare_classic_card(json cardJson, MifareClassicCard &card);
     void parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &card);
+    void parse_mifare_ultralight_C_card(json cardJson, MfrUl_C_Card &card);
+    void parse_mifare_ultralight_EV1_card(json cardJson, MfrUl_EV1_Card &card);
     void parse_iso_4a_card(json cardJson, Iso_4A &card);
     void parse_step(json stepJson);
     void add_contactless_card(ContactlessCard &newContactlessCard);

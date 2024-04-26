@@ -645,25 +645,25 @@ MifareUltralightCard::MifareUltralightCard()
     this->version = "No version";
 }
 
-MifareUltralightCard::MifareUltralightCard(MifareUltralightCard::m_ul_type newType)
-{
-    this->token = new contactless::token::Token();
-    this->token->set_type(contactless::token_type::MIFARE_UL_OR_ULC);
-    type = newType;
-    this->version = "No version";
+// MifareUltralightCard::MifareUltralightCard(MifareUltralightCard::m_ul_type newType)
+// {
+//     this->token = new contactless::token::Token();
+//     this->token->set_type(contactless::token_type::MIFARE_UL_OR_ULC);
+//     type = newType;
+//     this->version = "No version";
 
-    switch (type)
-    {
-    case m_C:
-        memoryPages.resize(16);
-        break;
-    case m_EV1:
-        memoryPages.resize(20);
-        break;
-    default:
-        throw ex::BadType("Unknown carddmifare ultralight type");
-    }
-}
+//     switch (type)
+//     {
+//     case m_C:
+//         memoryPages.resize(16);
+//         break;
+//     case m_EV1:
+//         memoryPages.resize(20);
+//         break;
+//     default:
+//         throw ex::BadType("Unknown carddmifare ultralight type");
+//     }
+// }
 
 MifareUltralightCard::~MifareUltralightCard()
 {
@@ -671,49 +671,6 @@ MifareUltralightCard::~MifareUltralightCard()
         if (page != nullptr)
             delete page;
     memoryPages.clear();
-
-    for (auto &counter : counters)
-        delete counter;
-    counters.clear();
-}
-
-bool MifareUltralightCard::auth_on_pasword(const std::string &password)
-{
-    //  password as byte string ("\0xff\0xff..."))
-    std::stringstream bytesString(password); // string with all password bytes
-    std::string byteStr;                     // single byte as hex string
-    std::vector<uint8_t> byteArray;
-    char delimiter = '\\';
-    while (std::getline(bytesString, byteStr, delimiter) && byteArray.size() < 4)
-    {
-        //  convert hex string to uint8
-        if (byteStr.empty())
-            continue;
-        uint8_t byte = std::stoul(byteStr, nullptr, 16);
-
-        byteArray.push_back(byte);
-    }
-
-    return auth_on_pasword(byteArray);
-}
-
-bool MifareUltralightCard::auth_on_pasword(const std::vector<uint8_t> &password)
-{
-    this->isAuth = false;
-
-    if (type != MifareUltralightCard::m_EV1)
-        return false;
-
-    if (password.size() != 4)
-        return false;
-
-    int iByte = 0;
-    for (auto &byte : this->get_password())
-        if (byte != password[iByte++])
-            return false;
-
-    this->isAuth = true;
-    return true;
 }
 
 void MifareUltralightCard::fill_memory(const std::vector<Page *> &newData)
@@ -735,10 +692,10 @@ void MifareUltralightCard::write_page(const Page &newPage, uint32_t iPage)
     memoryPages[iPage] = new Page(newPage);
 }
 
-void MifareUltralightCard::add_counter(uint32_t newInitialValue /* = 0*/)
-{
-    counters.push_back(new CounterPage(newInitialValue));
-}
+// void MifareUltralightCard::add_counter(uint32_t newInitialValue /* = 0*/)
+// {
+//     counters.push_back(new CounterPage(newInitialValue));
+// }
 
 void MifareUltralightCard::set_internal_register(int32_t value)
 {
@@ -771,6 +728,11 @@ void MifareUltralightCard::set_version(const std::string &newVersion)
     version = newVersion;
 }
 
+MifareUltralightCard::m_ul_type MifareUltralightCard::get_type() const
+{
+    return this->type;
+}
+
 const Page &MifareUltralightCard::get_page(uint32_t iPage) const
 {
     return *memoryPages[iPage];
@@ -786,57 +748,57 @@ const std::string &MifareUltralightCard::get_version() const
     return version;
 }
 
-const std::vector<uint8_t> &MifareUltralightCard::get_password() const
-{
-    if (this->type != m_EV1)
-        throw ex::BadType("Only EV1 type of Mifare Ultralight Card support passwords");
-    if (this->memoryPages[18] == nullptr)
-        throw std::runtime_error("Attempt to access undefined memory page of a Mifare Ultralight EV1 card");
+// const std::vector<uint8_t> &MifareUltralightCard::get_password() const
+// {
+//     if (this->type != m_EV1)
+//         throw ex::BadType("Only EV1 type of Mifare Ultralight Card support passwords");
+//     if (this->memoryPages[18] == nullptr)
+//         throw std::runtime_error("Attempt to access undefined memory page of a Mifare Ultralight EV1 card");
 
-    //  page 18 stores password
-    return this->memoryPages[18]->get_data();
-}
+//     //  page 18 stores password
+//     return this->memoryPages[18]->get_data();
+// }
 
-const std::string MifareUltralightCard::get_password_str() const
-{
-    std::stringstream buf;
-    char hex[2];
-    for (auto &byte : get_password())
-    {
-        sprintf(hex, "%X", byte);
-        buf << "\\"
-            << "0x" << hex;
-        // buf << std::endl;
-    }
-    return buf.str();
-}
+// const std::string MifareUltralightCard::get_password_str() const
+// {
+//     std::stringstream buf;
+//     char hex[2];
+//     for (auto &byte : get_password())
+//     {
+//         sprintf(hex, "%X", byte);
+//         buf << "\\"
+//             << "0x" << hex;
+//         // buf << std::endl;
+//     }
+//     return buf.str();
+// }
 
-const std::vector<uint8_t> MifareUltralightCard::get_pack() const
-{
-    std::vector<uint8_t> pack;
-    if (!isAuth)
-        return pack;
+// const std::vector<uint8_t> MifareUltralightCard::get_pack() const
+// {
+//     std::vector<uint8_t> pack;
+//     if (!isAuth)
+//         return pack;
 
-    //  first 2 bytes of page 19 store PACK
-    pack.push_back(this->memoryPages[19]->get_data()[0]);
-    pack.push_back(this->memoryPages[19]->get_data()[1]);
+//     //  first 2 bytes of page 19 store PACK
+//     pack.push_back(this->memoryPages[19]->get_data()[0]);
+//     pack.push_back(this->memoryPages[19]->get_data()[1]);
 
-    return pack;
-}
+//     return pack;
+// }
 
-const std::string MifareUltralightCard::get_pack_str() const
-{
-    std::stringstream buf;
-    char hex[2];
-    for (auto &byte : get_pack())
-    {
-        sprintf(hex, "%X", byte);
-        buf << "\\"
-            << "0x" << hex;
-        // buf << std::endl;
-    }
-    return buf.str();
-}
+// const std::string MifareUltralightCard::get_pack_str() const
+// {
+//     std::stringstream buf;
+//     char hex[2];
+//     for (auto &byte : get_pack())
+//     {
+//         sprintf(hex, "%X", byte);
+//         buf << "\\"
+//             << "0x" << hex;
+//         // buf << std::endl;
+//     }
+//     return buf.str();
+// }
 
 const std::string MifareUltralightCard::str() const
 {
@@ -857,10 +819,10 @@ const std::string MifareUltralightCard::str() const
         buf << std::endl;
     }
 
-    buf << "Counters: " << std::endl;
-    index = 0;
-    for (auto &counter : counters)
-        buf << "\tCounter #" << index++ << ": " << counter->get_value() << std::endl;
+    // buf << "Counters: " << std::endl;
+    // index = 0;
+    // for (auto &counter : counters)
+    //     buf << "\tCounter #" << index++ << ": " << counter->get_value() << std::endl;
 
     return buf.str();
 }
@@ -922,4 +884,152 @@ void CounterPage::set_value(uint32_t newValue)
 void CounterPage::modify_value(uint32_t operand)
 {
     value += operand;
+}
+
+const std::vector<uint8_t> &MfrUl_EV1_Card::get_password() const
+{
+    if (this->memoryPages[18] == nullptr)
+        throw std::runtime_error("Attempt to access undefined memory page of a Mifare Ultralight EV1 card");
+
+    //  page 18 stores password
+    return this->memoryPages[18]->get_data();
+}
+
+MfrUl_EV1_Card::MfrUl_EV1_Card()
+{
+    this->token = new contactless::token::Token();
+    this->token->set_type(contactless::token_type::MIFARE_UL_OR_ULC);
+    type = m_EV1;
+    memoryPages.resize(20);
+    this->version = "No version";
+}
+
+MfrUl_EV1_Card::~MfrUl_EV1_Card()
+{
+    for (auto &counter : counters)
+        delete counter;
+    counters.clear();
+}
+
+//  auth using password
+bool MfrUl_EV1_Card::auth(const std::string &token)
+{
+    //  password as byte string ("\0xff\0xff..."))
+    std::stringstream bytesString(token); // string with all password bytes
+    std::string byteStr;                  // single byte as hex string
+    std::vector<uint8_t> byteArray;
+    char delimiter = '\\';
+    while (std::getline(bytesString, byteStr, delimiter) && byteArray.size() < 4)
+    {
+        //  convert hex string to uint8
+        if (byteStr.empty())
+            continue;
+        uint8_t byte = std::stoul(byteStr, nullptr, 16);
+
+        byteArray.push_back(byte);
+    }
+
+    return auth(byteArray);
+}
+
+//  auth using password
+bool MfrUl_EV1_Card::auth(const std::vector<uint8_t> &token)
+{
+    this->isAuth = false;
+
+    if (type != MifareUltralightCard::m_EV1)
+        return false;
+
+    if (token.size() != 4)
+        return false;
+
+    int iByte = 0;
+    for (auto &byte : this->get_password())
+        if (byte != token[iByte++])
+            return false;
+
+    this->isAuth = true;
+    return true;
+}
+
+void MfrUl_EV1_Card::add_counter(uint32_t newInitialValue)
+{
+    counters.push_back(new CounterPage(newInitialValue));
+}
+
+const std::string MfrUl_EV1_Card::get_password_str() const
+{
+    std::stringstream buf;
+    char hex[2];
+    for (auto &byte : get_password())
+    {
+        sprintf(hex, "%X", byte);
+        buf << "\\"
+            << "0x" << hex;
+        // buf << std::endl;
+    }
+    return buf.str();
+}
+
+const std::vector<uint8_t> MfrUl_EV1_Card::get_pack() const
+{
+    std::vector<uint8_t> pack;
+    if (!isAuth)
+        return pack;
+
+    //  first 2 bytes of page 19 store PACK
+    pack.push_back(this->memoryPages[19]->get_data()[0]);
+    pack.push_back(this->memoryPages[19]->get_data()[1]);
+
+    return pack;
+}
+
+const std::string MfrUl_EV1_Card::get_pack_str() const
+{
+    std::stringstream buf;
+    char hex[2];
+    for (auto &byte : get_pack())
+    {
+        sprintf(hex, "%X", byte);
+        buf << "\\"
+            << "0x" << hex;
+        // buf << std::endl;
+    }
+    return buf.str();
+}
+
+const std::string MfrUl_EV1_Card::str() const
+{
+    std::stringstream buf(MifareUltralightCard::str());
+    buf << "Counters: " << std::endl;
+    int index = 0;
+    for (auto &counter : counters)
+        buf << "\tCounter #" << index++ << ": " << counter->get_value() << std::endl;
+
+    return buf.str();
+}
+
+MfrUl_C_Card::MfrUl_C_Card()
+{
+    this->token = new contactless::token::Token();
+    this->token->set_type(contactless::token_type::MIFARE_UL_OR_ULC);
+    type = m_C;
+    memoryPages.resize(48);
+    this->version = "No version";
+}
+
+MfrUl_C_Card::~MfrUl_C_Card()
+{
+}
+
+bool MfrUl_C_Card::auth(const std::string &token)
+{
+    throw ex::FailedExecution("not implemented");
+    return false;
+}
+
+bool MfrUl_C_Card::auth(const std::vector<uint8_t> &token)
+{
+    throw ex::FailedExecution("not implemented");
+    return false;
 }

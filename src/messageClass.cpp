@@ -1486,18 +1486,21 @@ const Msg &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMes
     auto storedToken = &myDevice.get_stored_token();
 
     const Msg *generatedResponce = nullptr;
+    auto card = dynamic_cast<MifareUltralightCard *>(myDevice.get_card_in_field());
 
     if (storedToken->type() != contactless::token_type::MIFARE_UL_OR_ULC)
     {
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong token type"));
     }
+    else if (card->get_type() != MifareUltralightCard::m_EV1)
+    {
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong type of Mfr UL"));
+    }
     else
     {
-        auto card = dynamic_cast<MifareUltralightCard *>(myDevice.get_card_in_field());
+        card->auth(mfrAuth.password());
 
-        card->auth_on_pasword(mfrAuth.password());
-
-        auto packStr = card->get_pack_str();
+        auto packStr = dynamic_cast<MfrUl_EV1_Card *>(card)->get_pack_str();
         if (packStr.empty())
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong password"));
         else

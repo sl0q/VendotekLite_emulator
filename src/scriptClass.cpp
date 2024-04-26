@@ -148,7 +148,20 @@ void Script::parse_card(json cardJson)
     }
     case contactless::token_type::MIFARE_UL_OR_ULC:
     {
-        newCard = new MifareUltralightCard();
+        std::string ulTypeStr;
+        if (cardJson.count("ev1_c") != 0)
+        {
+            ulTypeStr = cardJson.at("ev1_c").get<std::string>();
+            if ("EV1" == ulTypeStr)
+                newCard = new MfrUl_EV1_Card();
+            else if ("C" == ulTypeStr)
+                newCard = new MfrUl_C_Card();
+            else
+                throw std::invalid_argument("Failed to parse [ev1_c] parameter correctly");
+        }
+        else
+            newCard = new MfrUl_C_Card();
+
         parse_mifare_ultralight_card(cardJson, dynamic_cast<MifareUltralightCard &>(*newCard));
         std::cout << newCard->str() << std::endl;
         break;
@@ -212,20 +225,6 @@ void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
 
 void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &card)
 {
-    std::string ulTypeStr;
-    MifareUltralightCard::m_ul_type ulType = MifareUltralightCard::m_C;
-    if (cardJson.count("ev1_c") != 0)
-    {
-        ulTypeStr = cardJson.at("ev1_c").get<std::string>();
-        if ("EV1" == ulTypeStr)
-            ulType = MifareUltralightCard::m_EV1;
-        else if ("C" == ulTypeStr)
-            ; //  value already set
-        else
-            throw std::invalid_argument("Failed to parse [ev1_c] parameter correctly");
-    }
-    card.set_type(ulType);
-
     if (cardJson.count("version") != 0)
         card.set_version(cardJson.at("version").get<std::string>());
 
@@ -268,9 +267,19 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
     }
     card.fill_empty_memory(); //  fill undefined pages with default data
 
+    //  parse counters for ev1 card
+    if (card.get_type() == MifareUltralightCard::m_EV1)
+        parse_mifare_ultralight_EV1_card(cardJson, *dynamic_cast<MfrUl_EV1_Card *>(&card));
+}
+
+void Script::parse_mifare_ultralight_C_card(json cardJson, MfrUl_C_Card &card)
+{
+}
+
+void Script::parse_mifare_ultralight_EV1_card(json cardJson, MfrUl_EV1_Card &card)
+{
     //  parse counters
     if (cardJson.count("counters") != 0)
-    {
         for (auto &counterJson : cardJson["counters"])
         {
             uint32_t newInitialValue = 0;
@@ -278,7 +287,6 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
                 newInitialValue = counterJson.at("initialValue").get<uint32_t>();
             card.add_counter(newInitialValue);
         }
-    }
 }
 
 void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)
