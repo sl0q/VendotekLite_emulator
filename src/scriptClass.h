@@ -53,6 +53,8 @@ class Step
     using json = nlohmann::json;
 
 private:
+    std::vector<Action *> preactions; // actions to do before executing aany messages on current step
+
     MessageIR *messageIR = nullptr;
     std::vector<MessageIR *> messagesIR;
     std::string origMsg;
@@ -67,6 +69,7 @@ public:
 
     void set_message(const std::string newMsg);
     void add_message(const std::string newMsg);
+    void add_preaction(Action &newPreaction);
 
     void execute_step(Device &myDevice);
 };

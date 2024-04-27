@@ -62,8 +62,7 @@ public:
     };
 
 private:
-    std::vector<Action *> preactions; // actions to do before executing a message
-    std::vector<Action *> actions;    // actions to do until timeout of IR message runs out if there is any
+    std::vector<Action *> actions; // actions to do until timeout of IR message runs out if there is any
 
     std::vector<uint8_t> origMsg;
     uint8_t msgID;
@@ -178,7 +177,6 @@ public:
     bool is_control();
 
     bool execute_message(Device &myDevice);
-    void add_preaction(Action &newPreaction);
     void add_action(Action &newAction);
     const std::string str() const;
 };

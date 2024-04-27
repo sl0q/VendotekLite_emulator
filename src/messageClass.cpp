@@ -68,11 +68,6 @@ MessageIR::~MessageIR()
             delete action;
     this->actions.clear();
 
-    for (auto &preaction : this->preactions)
-        if (preaction)
-            delete preaction;
-    this->preactions.clear();
-
     if (this->msg)
         delete this->msg;
 }
@@ -183,11 +178,11 @@ bool MessageIR::parse_payload()
 bool MessageIR::execute_message(Device &myDevice)
 {
     bool res;
-    for (auto &preaction : this->preactions)
-    {
-        preaction->make_action(myDevice);
-        std::cout << "Action {" << preaction->str() << "} was made\n";
-    }
+    // for (auto &preaction : this->preactions)
+    // {
+    //     preaction->make_action(myDevice);
+    //     std::cout << "Action {" << preaction->str() << "} was made\n";
+    // }
 
     switch (this->moduleID)
     {
@@ -219,11 +214,6 @@ bool MessageIR::execute_message(Device &myDevice)
         throw ex::FailedExecution(errorMessage.str());
     }
     return res;
-}
-
-void MessageIR::add_preaction(Action &newPreaction)
-{
-    this->preactions.push_back(&newPreaction);
 }
 
 void MessageIR::add_action(Action &newAction)

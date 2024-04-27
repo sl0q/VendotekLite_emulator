@@ -362,6 +362,10 @@ Step::Step(const std::string newMsg)
 
 Step::~Step()
 {
+    for (auto &preaction : this->preactions)
+        delete preaction;
+    this->preactions.clear();
+
     for (auto &m : this->messagesIR)
         delete m;
     this->messagesIR.clear();
@@ -388,7 +392,7 @@ void Step::parse_preaction(json preactionJson)
     else if (preactionJson.count("remove_card") != 0)
         newPreaction = new CardRemover(preactionJson.at("remove_card").get<uint32_t>());
 
-    this->messageIR->add_preaction(*newPreaction);
+    this->add_preaction(*newPreaction);
 }
 
 void Step::parse_action(json actionJson)
@@ -417,12 +421,26 @@ void Step::add_message(const std::string newMsg)
     this->messagesIR.push_back(new MessageIR(newMsg));
 }
 
+void Step::add_preaction(Action &newPreaction)
+{
+    this->preactions.push_back(&newPreaction);
+}
+
 void Step::execute_step(Device &myDevice)
 {
+    //  exe preacitons
+    for (auto &preaction : this->preactions)
+    {
+        preaction->make_action(myDevice);
+        std::cout << "Action {" << preaction->str() << "} was made\n";
+    }
+
+    //  if there is a single message
     if (this->messageIR != nullptr)
         this->messageIR->execute_message(myDevice);
     else
     {
+        //  if there is a message barrage
         auto message = messagesIR.begin();
 
         // execute messages until one of them is successful (returns TRUE)
