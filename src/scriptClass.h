@@ -7,10 +7,12 @@
 class Device;
 class Step;
 class MessageIR;
+class Action;
 
 #include "messageClass.h"
 #include "deviceClass.h"
 #include "cards.h"
+#include "actionClass.h"
 
 class Script
 {

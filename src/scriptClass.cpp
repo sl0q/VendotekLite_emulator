@@ -306,8 +306,6 @@ void Script::parse_step(json stepJson)
     else if (stepJson.count("messages") != 0)
         for (auto &messageJson : stepJson["messages"])
             newStep->add_message(messageJson);
-    else
-        throw ex::JsonParsingException("Could not find required [message] or [messages] field");
 
     if (stepJson.count("preactions") != 0)
         for (auto &preactionJson : stepJson["preactions"])
@@ -438,7 +436,7 @@ void Step::execute_step(Device &myDevice)
     //  if there is a single message
     if (this->messageIR != nullptr)
         this->messageIR->execute_message(myDevice);
-    else
+    else if (!messagesIR.empty())
     {
         //  if there is a message barrage
         auto message = messagesIR.begin();
