@@ -53,6 +53,10 @@ const contactless::token::Token *ContactlessCard::get_card_token() const
     return this->token;
 }
 
+void ContactlessCard::deauth()
+{
+}
+
 const std::string ContactlessCard::str() const
 {
     return std::string("TokenType: " + contactless::token_type::TokenType_Name(this->token->type()) + "\n" +
@@ -76,6 +80,10 @@ void Iso_4A::set_answer_to_select(const std::string newATS)
     this->token->set_answer_to_select(newATS);
 }
 
+void Iso_4A::deauth()
+{
+}
+
 const std::string Iso_4A::str() const
 {
     return std::string("TokenType: " + contactless::token_type::TokenType_Name(this->token->type()) + "\n" +
@@ -92,6 +100,10 @@ Iso_B::Iso_B()
 }
 
 Iso_B::~Iso_B()
+{
+}
+
+void Iso_B::deauth()
 {
 }
 
@@ -354,6 +366,11 @@ void MifareClassicCard::authorize_sector(uint32_t iSector)
     this->iSector = iSector;
 }
 
+void MifareClassicCard::deauth()
+{
+    reset_sector();
+}
+
 void MifareClassicCard::reset_sector()
 {
     this->iSector = UINT32_MAX;
@@ -429,6 +446,10 @@ MifareClassicCard &SmartWithMifareCard::get_mifare_token()
 const MifareClassicCard &SmartWithMifareCard::get_mifare_token() const
 {
     return *this->mifareToken;
+}
+
+void SmartWithMifareCard::deauth()
+{
 }
 
 const std::string SmartWithMifareCard::str() const
@@ -553,51 +574,64 @@ Page::Page()
     type = DATA;
 }
 
-Page::Page(Page::PageType newPageType, const std::vector<uint8_t> &newData)
+// Page::Page(Page::PageType newPageType, const std::vector<uint8_t> &newData)
+// {
+//     type = newPageType;
+//     bytes.resize(PAGE_LENGTH);
+//     int iByte = 0;
+//     for (auto &byte : this->bytes)
+//         byte = newData[iByte++];
+// }
+
+// Page::Page(uint32_t iPage, const std::vector<uint8_t> &newData)
+// {
+//     if (iPage > 19)
+//         throw std::invalid_argument("Too big page index (" + std::to_string(iPage) + ")");
+
+//     if (iPage < 2)
+//     {
+//         type = SERIAL_NUMBER;
+//         readOnly = true;
+//     }
+//     else if (iPage == 2)
+//         type = LOCK;
+//     else if (iPage == 3)
+//         type = OTP;
+//     else if (iPage < 16)
+//         type = DATA;
+//     else if (iPage < 18 || iPage == 19)
+//     {
+//         type = CFG;
+//         readOnly = true;
+//     }
+//     else if (iPage == 18)
+//     {
+//         type = PWD;
+//         readOnly = true;
+//     }
+
+//     bytes.resize(PAGE_LENGTH);
+//     int iByte = 0;
+//     for (auto &byte : this->bytes)
+//         byte = newData[iByte++];
+// }
+
+Page::Page(const std::vector<uint8_t> &newData)
 {
-    type = newPageType;
     bytes.resize(PAGE_LENGTH);
     int iByte = 0;
     for (auto &byte : this->bytes)
         byte = newData[iByte++];
 }
 
-Page::Page(uint32_t iPage, const std::vector<uint8_t> &newData)
+bool Page::is_readable() const
 {
-    if (iPage > 19)
-        throw std::invalid_argument("Too big page index (" + std::to_string(iPage) + ")");
-
-    if (iPage < 2)
-    {
-        type = SERIAL_NUMBER;
-        readOnly = true;
-    }
-    else if (iPage == 2)
-        type = LOCK;
-    else if (iPage == 3)
-        type = OTP;
-    else if (iPage < 16)
-        type = DATA;
-    else if (iPage < 18 || iPage == 19)
-    {
-        type = CFG;
-        readOnly = true;
-    }
-    else if (iPage == 18)
-    {
-        type = PWD;
-        readOnly = true;
-    }
-
-    bytes.resize(PAGE_LENGTH);
-    int iByte = 0;
-    for (auto &byte : this->bytes)
-        byte = newData[iByte++];
+    return readable;
 }
 
-bool Page::is_read_only() const
+bool Page::is_writable() const
 {
-    return readOnly;
+    return writable;
 }
 
 void Page::set_data(const std::vector<uint8_t> &newData)
@@ -616,6 +650,16 @@ void Page::set_bit(uint8_t iBit)
 {
     uint8_t i = iBit % 32;
     bytes[i / 8] |= (1 << (i % 8));
+}
+
+void Page::set_readable(bool value)
+{
+    readable = value;
+}
+
+void Page::set_writable(bool value)
+{
+    writable = value;
 }
 
 const std::vector<uint8_t> &Page::get_data() const
@@ -685,12 +729,12 @@ void MifareUltralightCard::fill_empty_memory()
             page = new Page();
 }
 
-void MifareUltralightCard::write_page(const Page &newPage, uint32_t iPage)
-{
-    if (memoryPages[iPage] == nullptr)
-        delete memoryPages[iPage];
-    memoryPages[iPage] = new Page(newPage);
-}
+// void MifareUltralightCard::write_page(const Page &newPage, uint32_t iPage)
+// {
+//     if (memoryPages[iPage] == nullptr)
+//         delete memoryPages[iPage];
+//     memoryPages[iPage] = new Page(newPage);
+// }
 
 // void MifareUltralightCard::add_counter(uint32_t newInitialValue /* = 0*/)
 // {
@@ -733,9 +777,12 @@ MifareUltralightCard::m_ul_type MifareUltralightCard::get_type() const
     return this->type;
 }
 
-const Page &MifareUltralightCard::get_page(uint32_t iPage) const
+const Page *MifareUltralightCard::read_page(uint32_t iPage) const
 {
-    return *memoryPages[iPage];
+    if (isAuth && memoryPages[iPage]->is_readable())
+        return memoryPages[iPage];
+
+    return nullptr;
 }
 
 int32_t MifareUltralightCard::get_internal_register() const
@@ -802,7 +849,8 @@ const std::string &MifareUltralightCard::get_version() const
 
 const std::string MifareUltralightCard::str() const
 {
-    std::stringstream buf;
+    std::stringstream buf(ContactlessCard::str(), std::ios::app | std::ios::out);
+
     buf << "Type: " << (type == m_C ? "m_C" : "m_EV1") << std::endl
         << "Memory:" << std::endl;
 
@@ -952,24 +1000,84 @@ bool MfrUl_EV1_Card::auth(const std::vector<uint8_t> &token)
     return true;
 }
 
+void MfrUl_EV1_Card::deauth()
+{
+    isAuth = false;
+}
+
+bool MfrUl_EV1_Card::write_page(const Page &newPage, uint32_t iPage)
+{
+    if (iPage > 19)
+        return false;
+
+    // if it is initialization of a completly new page
+    if (memoryPages[iPage] == nullptr)
+    {
+        memoryPages[iPage] = new Page(newPage);
+
+        //  set permanent read/write rules
+        if (iPage < 2)
+        {
+            memoryPages[iPage]->set_type(Page::SERIAL_NUMBER);
+            memoryPages[iPage]->set_writable(false);
+        }
+        else if (iPage == 2)
+            memoryPages[iPage]->set_type(Page::LOCK);
+        else if (iPage == 3)
+            memoryPages[iPage]->set_type(Page::OTP);
+        else if (iPage < 16)
+            memoryPages[iPage]->set_type(Page::DATA);
+        else if (iPage < 18 || iPage == 19)
+        {
+            memoryPages[iPage]->set_type(Page::CFG);
+            memoryPages[iPage]->set_writable(false);
+        }
+        else if (iPage == 18)
+        {
+            memoryPages[iPage]->set_type(Page::PWD);
+            memoryPages[iPage]->set_writable(false);
+            memoryPages[iPage]->set_readable(false);
+        }
+        else if (iPage == 19)
+        {
+            memoryPages[iPage]->set_type(Page::PACK);
+            memoryPages[iPage]->set_writable(false);
+            memoryPages[iPage]->set_readable(false);
+        }
+
+        return true;
+    }
+
+    if (memoryPages[iPage]->is_writable() && isAuth)
+    {
+        //  safe to delete, since we already checked if it's a nullptr
+        delete memoryPages[iPage];
+        memoryPages[iPage] = new Page(newPage);
+    }
+    else
+        return false;
+
+    return true;
+}
+
 void MfrUl_EV1_Card::add_counter(uint32_t newInitialValue)
 {
     counters.push_back(new CounterPage(newInitialValue));
 }
 
-const std::string MfrUl_EV1_Card::get_password_str() const
-{
-    std::stringstream buf;
-    char hex[2];
-    for (auto &byte : get_password())
-    {
-        sprintf(hex, "%X", byte);
-        buf << "\\"
-            << "0x" << hex;
-        // buf << std::endl;
-    }
-    return buf.str();
-}
+// const std::string MfrUl_EV1_Card::get_password_str() const
+// {
+//     std::stringstream buf;
+//     char hex[2];
+//     for (auto &byte : get_password())
+//     {
+//         sprintf(hex, "%X", byte);
+//         buf << "\\"
+//             << "0x" << hex;
+//         // buf << std::endl;
+//     }
+//     return buf.str();
+// }
 
 const std::vector<uint8_t> MfrUl_EV1_Card::get_pack() const
 {
@@ -1000,7 +1108,7 @@ const std::string MfrUl_EV1_Card::get_pack_str() const
 
 const std::string MfrUl_EV1_Card::str() const
 {
-    std::stringstream buf(MifareUltralightCard::str());
+    std::stringstream buf(MifareUltralightCard::str(), std::ios::app | std::ios::out);
     buf << "Counters: " << std::endl;
     int index = 0;
     for (auto &counter : counters)
@@ -1009,8 +1117,21 @@ const std::string MfrUl_EV1_Card::str() const
     return buf.str();
 }
 
+const std::vector<uint8_t> &MfrUl_C_Card::get_key() const
+{
+    std::vector<uint8_t> clearKey;
+    clearKey.reserve(16);
+    clearKey.insert(clearKey.begin(), this->memoryPages[44]->get_data().begin(), this->memoryPages[44]->get_data().end());
+    clearKey.insert(clearKey.begin(), this->memoryPages[45]->get_data().begin(), this->memoryPages[45]->get_data().end());
+    clearKey.insert(clearKey.begin(), this->memoryPages[46]->get_data().begin(), this->memoryPages[46]->get_data().end());
+    clearKey.insert(clearKey.begin(), this->memoryPages[47]->get_data().begin(), this->memoryPages[47]->get_data().end());
+    return clearKey;
+}
+
 MfrUl_C_Card::MfrUl_C_Card()
 {
+    protectionType = WRITE;
+    protectedPage = 48; //  no protection
     this->token = new contactless::token::Token();
     this->token->set_type(contactless::token_type::MIFARE_UL_OR_ULC);
     type = m_C;
@@ -1024,12 +1145,161 @@ MfrUl_C_Card::~MfrUl_C_Card()
 
 bool MfrUl_C_Card::auth(const std::string &token)
 {
-    throw ex::FailedExecution("not implemented");
-    return false;
+    //  clear Key as byte string ("\0xff\0xff..."))
+    std::stringstream bytesString(token); // string with all clear key bytes
+    std::string byteStr;                  // single byte as hex string
+    std::vector<uint8_t> byteArray;
+    char delimiter = '\\';
+
+    // get a single byte from the string
+    while (std::getline(bytesString, byteStr, delimiter) && byteArray.size() < 4)
+    {
+        //  convert hex string to uint8
+        if (byteStr.empty())
+            continue;
+        uint8_t byte = std::stoul(byteStr, nullptr, 16);
+
+        byteArray.push_back(byte);
+    }
+
+    return auth(byteArray);
 }
 
 bool MfrUl_C_Card::auth(const std::vector<uint8_t> &token)
 {
-    throw ex::FailedExecution("not implemented");
-    return false;
+    isAuth = false;
+
+    if (token.size() < 16)
+        return false;
+
+    int iByte = 0;
+    for (auto &thisByte : this->get_key())
+        if (thisByte != token[iByte])
+            return false;
+
+    isAuth = true;
+    return true;
+}
+
+void MfrUl_C_Card::deauth()
+{
+    isAuth = false;
+    // set_protection();
+}
+
+bool MfrUl_C_Card::write_page(const Page &newPage, uint32_t iPage)
+{
+    if (iPage > 47)
+        return false;
+
+    // if it is initialization of a completly new page
+    if (memoryPages[iPage] == nullptr)
+    {
+        memoryPages[iPage] = new Page(newPage);
+
+        //  set permanent read/write rules
+        if (iPage < 2)
+        {
+            memoryPages[iPage]->set_type(Page::SERIAL_NUMBER);
+            memoryPages[iPage]->set_writable(false);
+        }
+        else if (iPage == 2 || iPage == 40)
+            memoryPages[iPage]->set_type(Page::LOCK);
+        else if (iPage == 3)
+            memoryPages[iPage]->set_type(Page::OTP);
+        else if (iPage < 40 || iPage == 41)
+            memoryPages[iPage]->set_type(Page::DATA);
+        else if (iPage < 44)
+        {
+            memoryPages[iPage]->set_type(Page::CFG);
+            memoryPages[iPage]->set_writable(false);
+        }
+        else // from 44 to 47
+        {
+            memoryPages[iPage]->set_type(Page::KEY);
+            memoryPages[iPage]->set_writable(false);
+            memoryPages[iPage]->set_readable(false);
+        }
+
+        return true;
+    }
+
+    ////////////////////
+    //  lambda for writing page
+    auto write = [](Page *thisPage, const Page &newPage)
+    {
+        //  safe to delete, since we already checked if it's a nullptr
+        delete thisPage;
+        thisPage = new Page(newPage);
+    };
+    //////////////////////
+
+    if (memoryPages[iPage]->is_writable())
+    {
+        if (iPage < protectedPage) //  if the page is protected by auth
+            write(memoryPages[iPage], newPage);
+        else if (isAuth) // if it IS protected, check auth
+            write(memoryPages[iPage], newPage);
+        else
+            return false;
+    }
+    else
+        return false;
+
+    return true;
+}
+
+void MfrUl_C_Card::set_protection()
+{
+    protectedPage = memoryPages[42]->get_data()[0];
+
+    //  check only the smallest bit
+    if (memoryPages[43]->get_data()[0] % 2)
+        //  if the bit was 1
+        protectionType = WRITE;
+    else
+        // if the bit was 0
+        protectionType = READ_WRITE;
+
+    // for (int iPage = 0; iPage < memoryPages.size(); ++iPage)
+    //     if (iPage > protectedPage)
+    //         switch (protectionType)
+    //         {
+    //         case READ_WRITE:
+    //             memoryPages[iPage]->set_readable(false);
+    //             memoryPages[iPage]->set_writable(false);
+    //         case WRITE:
+    //             memoryPages[iPage]->set_writable(false);
+    //         }
+}
+
+uint16_t MfrUl_C_Card::get_counter() const
+{
+    // big endian. byte0 is less sugnificant than byte1
+    return memoryPages[41]->get_data()[0] | (memoryPages[41]->get_data()[1] << 8);
+}
+
+const Page *MfrUl_C_Card::read_page(uint32_t iPage) const
+{
+    if (memoryPages[iPage]->is_readable()) //  clear key pages are unreadable
+    {
+        if (iPage < protectedPage)
+            return memoryPages[iPage];
+        else if (protectionType == WRITE) // if auth protection effects only write rights
+            return memoryPages[iPage];
+        else if (isAuth) // if read right are also effected
+            return memoryPages[iPage];
+    }
+
+    return nullptr;
+}
+
+const std::string MfrUl_C_Card::str() const
+{
+    std::stringstream buf(MifareUltralightCard::str(), std::ios::app | std::ios::out);
+
+    buf << "Protection type: " << ((protectionType == WRITE) ? "WRITE" : "READ_WRITE") << std::endl
+        << "Protect from page: " << protectedPage << std::endl;
+
+    return buf.str();
 }

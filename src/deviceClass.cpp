@@ -472,6 +472,7 @@ void Device::remove_contactless_card(uint32_t cardID)
 {
     int i = 0;
     auto cardToRemove = scripts[iScript]->find_cl_card(cardID);
+    cardToRemove->deauth();
     for (auto &card : this->cardsInField)
     {
         if (cardToRemove == card)

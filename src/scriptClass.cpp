@@ -235,9 +235,7 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
         for (auto &pageJson : cardJson["memoryPages"])
         {
             if (pageJson.count("pageNumber") != 0)
-            {
                 iPage = pageJson.at("pageNumber").get<uint32_t>();
-            }
 
             std::vector<uint8_t> byteArray;
             if (pageJson.count("bytes") != 0)
@@ -255,25 +253,28 @@ void Script::parse_mifare_ultralight_card(json cardJson, MifareUltralightCard &c
                     byteArray.push_back(byte);
                 }
             }
-            //  if read less than 4 bytes - fill rest
+            //  if read less than 4 bytes - fill the rest with 0x00
             while (byteArray.size() < 4)
                 byteArray.push_back(0);
 
-            Page newPage(iPage, byteArray);
-            card.write_page(newPage, iPage);
+            // Page newPage(iPage, byteArray);
+            card.write_page(Page(byteArray), iPage);
 
             ++iPage;
         }
     }
-    card.fill_empty_memory(); //  fill undefined pages with default data
+    card.fill_empty_memory(); //  fill undefined pages with default data (0x00)
 
     //  parse counters for ev1 card
     if (card.get_type() == MifareUltralightCard::m_EV1)
         parse_mifare_ultralight_EV1_card(cardJson, *dynamic_cast<MfrUl_EV1_Card *>(&card));
+    if (card.get_type() == MifareUltralightCard::m_C)
+        parse_mifare_ultralight_C_card(cardJson, *dynamic_cast<MfrUl_C_Card *>(&card));
 }
 
 void Script::parse_mifare_ultralight_C_card(json cardJson, MfrUl_C_Card &card)
 {
+    card.set_protection();
 }
 
 void Script::parse_mifare_ultralight_EV1_card(json cardJson, MfrUl_EV1_Card &card)

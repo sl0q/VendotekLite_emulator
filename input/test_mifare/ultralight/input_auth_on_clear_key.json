@@ -81,12 +81,12 @@
                     "preactions":[{"attach_card": 1}]
                 },
                 {
-                    "comment": "auth on clear password command key=\\0x04\\0x03\\0x02\\0x01 (correct)",
-                    "message": "SVIAHAkFAeICFgoUXDB4MDRcMHgwM1wweDAyXDB4MDFBIw=="
+                    "comment": "auth on clear key command key=\\0x11\\0x11\\0x11\\0x11\\0x22\\0x22... (correct)",
+                    "message": "SVIAWAcFAdICUgpQXDB4MTFcMHgxMVwweDExXDB4MTFcMHgyMlwweDIyXDB4MjJcMHgyMlwweDMzXDB4MzNcMHgzM1wweDMzXDB4NDRcMHg0NFwweDQ0XDB4NDSYTQ=="
                 },
                 {
-                    "comment": "auth on clear password command key=\\0xFF\\0xFF\\0xFF\\0xFF (incorrect)",
-                    "message": "SVIAHAkFAeICFgoUXDB4ZmZcMHhmZlwweGZmXDB4ZmZgZQ=="
+                    "comment": "auth on clear key command key=\\0xFF\\0xFF\\0xFF\\0xFF (incorrect)",
+                    "message": "SVIAWAcFAdICUgpQXDB4RkZcMHhGRlwweEZGXDB4RkZcMHhGRlwweEZGXDB4RkZcMHhGRlwweEZGXDB4RkZcMHhGRlwweEZGXDB4RkZcMHhGRlwweEZGXDB4RkZZbg=="
                 }
             ]
         }

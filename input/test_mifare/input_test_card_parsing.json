@@ -9,7 +9,7 @@
                     "cardID": 1,
                     "tokenType": "MIFARE_UL_OR_ULC",
                     "tokenID": "1234uniqueID",
-                    "ev1_c": "EV1",
+                    "ev1_c": "C",
                     "version": "stdMifare V0.0.1",
                     "memoryPages":
                     [
@@ -45,24 +45,47 @@
                             "bytes": "\\0x77\\0x77\\0x77\\0x77"
                         },
                         {
-                            "pageNumber": 16,
-                            "bytes": "\\0x04\\0x00\\0x0\\0x0",
-                            "comment": "strong modulation enabled"
+                            "bytes": "\\0x77\\0x77\\0x77\\0x77"
                         },
                         {
-                            "pageNumber": 17,
-                            "bytes": "\\0xC7\\0x05\\0x0\\0x0",
-                            "comment": "auth_lim = 7, password auth is required, config is read only"
+                            "pageNumber": 40,
+                            "bytes": "\\0x0\\0x0\\0x0\\0x0",
+                            "comment": "Lock bytes"
                         },
                         {
-                            "pageNumber": 18,
-                            "bytes": "\\0x04\\0x03\\0x02\\0x01",
-                            "comment": "password: 0x1 0x2 0x3 0x4 (least sugnificant byte first)"
+                            "pageNumber": 41,
+                            "bytes": "\\0x11\\0x11\\0x0\\0x0",
+                            "comment": "16-bit counter 1"
                         },
                         {
-                            "pageNumber": 19,
-                            "bytes": "\\0x0A\\0x00\\0x00\\0x00",
-                            "comment": "PACK: 0x0 0xA (least sugnificant byte first)"
+                            "pageNumber": 42,
+                            "bytes": "\\0x20\\0x0\\0x0\\0x0",
+                            "comment": "pages starting from 20h (#32) are protected and require auth"
+                        },
+                        {
+                            "pageNumber": 43,
+                            "bytes": "\\0x00\\0x0\\0x0\\0x0",
+                            "comment": "protection prevents from read/write pages (value 0h of the first byte)"
+                        },
+                        {
+                            "pageNumber": 44,
+                            "bytes": "\\0x11\\0x11\\0x11\\0x11",
+                            "comment": "key .1"
+                        },
+                        {
+                            "pageNumber": 45,
+                            "bytes": "\\0x22\\0x22\\0x22\\0x22",
+                            "comment": "key .2"
+                        },
+                        {
+                            "pageNumber": 46,
+                            "bytes": "\\0x33\\0x33\\0x33\\0x33",
+                            "comment": "key .3"
+                        },
+                        {
+                            "pageNumber": 47,
+                            "bytes": "\\0x44\\0x44\\0x44\\0x44",
+                            "comment": "key .4"
                         }
                     ],
                     "counters":

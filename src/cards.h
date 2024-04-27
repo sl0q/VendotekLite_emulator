@@ -52,6 +52,8 @@ public:
     uint32_t get_id() const;
     const contactless::token::Token *get_card_token() const;
 
+    virtual void deauth();
+
     const virtual std::string str() const;
 };
 
@@ -63,6 +65,7 @@ public:
     ~Iso_4A();
 
     void set_answer_to_select(const std::string newATS);
+    void deauth();
 
     const std::string str() const;
 };
@@ -73,6 +76,8 @@ class Iso_B : public ContactlessCard
 public:
     Iso_B();
     ~Iso_B();
+
+    void deauth();
 
     const std::string str() const;
 };
@@ -113,6 +118,7 @@ public:
 
     void authorize_sector(uint32_t iSector);
     void reset_sector();
+    void deauth();
 
     const std::string str() const;
 };
@@ -143,6 +149,8 @@ public:
     void set_allocated_mifare(MifareClassicCard *newMifareCard);
     MifareClassicCard &get_mifare_token();
     const MifareClassicCard &get_mifare_token() const;
+
+    void deauth();
 
     const std::string str() const;
 };
@@ -211,33 +219,41 @@ public:
     enum PageType
     {
         SERIAL_NUMBER = 1, //  for page #0 and #1
-        DATA = 2,          // for pages #4 - #15
+        DATA = 2,          // for user data pages
         OTP = 3,           //  for page #3
-        PWD = 4,           //  for page #18
+        PWD = 4,           //  for page #18 of EV1
         CFG = 5,           // for pages #16, 17, (19)
-        LOCK = 6           //  for page #2
+        LOCK = 6,          //  for page #2, and also page #40 (C only)
+        PACK = 7,          //  for page #19 of EV1
+        KEY = 8            // for pages #44-47 of C
     };
 
 private:
     std::vector<uint8_t> bytes;
     PageType type;
-    bool readOnly = false;
+    bool readable = true,
+         writable = true;
 
 public:
     Page();
-    Page(Page::PageType newPageType, const std::vector<uint8_t> &newData);
-    Page(uint32_t iPage, const std::vector<uint8_t> &newData);
+    // Page(Page::PageType newPageType, const std::vector<uint8_t> &newData);
+    // Page(uint32_t iPage, const std::vector<uint8_t> &newData);
+    Page(const std::vector<uint8_t> &newData);
 
-    bool is_read_only() const;
+    bool is_readable() const;
+    bool is_writable() const;
 
     void set_data(const std::vector<uint8_t> &newData);
     void set_type(Page::PageType newPageType);
     void set_bit(uint8_t iBit); //  this method will be used for permanent writing. It can only set bit to 1
+    void set_readable(bool value);
+    void set_writable(bool value);
 
     const std::vector<uint8_t> &get_data() const;
     const std::string get_data_str() const;
 };
 
+//  counter only for MfrUL_EV1
 class CounterPage
 {
 private:
@@ -286,17 +302,18 @@ public:
 
     virtual bool auth(const std::string &token) = 0;
     virtual bool auth(const std::vector<uint8_t> &token) = 0;
+    virtual void deauth() = 0;
 
     void fill_memory(const std::vector<Page *> &newData);
     void fill_empty_memory();
-    void write_page(const Page &newPage, uint32_t iPage);
+    virtual bool write_page(const Page &newPage, uint32_t iPage) = 0;
     // void add_counter(uint32_t newInitialValue = 0);
     void set_internal_register(int32_t value); //  exist?
     void set_type(MifareUltralightCard::m_ul_type newType);
     void set_version(const std::string &newVersion);
 
     MifareUltralightCard::m_ul_type get_type() const;
-    const Page &get_page(uint32_t iPage) const;
+    const Page *read_page(uint32_t iPage) const;
     int32_t get_internal_register() const; //  exist?
     const std::string &get_version() const;
     // const std::string get_password_str() const;
@@ -319,10 +336,12 @@ public:
 
     bool auth(const std::string &token);
     bool auth(const std::vector<uint8_t> &token);
+    void deauth();
 
+    bool write_page(const Page &newPage, uint32_t iPage);
     void add_counter(uint32_t newInitialValue = 0);
 
-    const std::string get_password_str() const;
+    // const std::string get_password_str() const;
     const std::vector<uint8_t> get_pack() const;
     const std::string get_pack_str() const;
 
@@ -332,7 +351,16 @@ public:
 class MfrUl_C_Card : public MifareUltralightCard
 {
 private:
+    enum ProtectionType
+    {
+        READ_WRITE = 1,
+        WRITE = 2
+    };
+
+    MfrUl_C_Card::ProtectionType protectionType; //  defines what actions will be restricted without auth
+    uint32_t protectedPage;                      //  defines from which page auth is required
     // const std::vector<uint8_t> &get_password() const;
+    const std::vector<uint8_t> &get_key() const;
 
 public:
     MfrUl_C_Card();
@@ -340,12 +368,14 @@ public:
 
     bool auth(const std::string &token);
     bool auth(const std::vector<uint8_t> &token);
+    void deauth();
 
-    // const std::string get_password_str() const;
-    // const std::vector<uint8_t> get_pack() const;
-    // const std::string get_pack_str() const;
+    bool write_page(const Page &newPage, uint32_t iPage);
+    void set_protection();
+    uint16_t get_counter() const;
+    const Page *read_page(uint32_t iPage) const;
 
-    // const std::string str() const;
+    const std::string str() const;
 };
 
 // class MifarePlusCard : public ContactlessCard
