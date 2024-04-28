@@ -2,7 +2,7 @@
     "scripts": 
     [
         {
-            "title": "test mifare ultralight C auth on clear key",
+            "title": "test mifare ultralight C auth on sam key",
             "cards":
             [
                 {
@@ -98,12 +98,8 @@
                     "preactions":[{"attach_card": 1}]
                 },
                 {
-                    "comment": "auth on clear key command key=\\0x11\\0x12\\0x13\\0x14\\0x21\\0x22... (correct)",
-                    "message": "SVIAWAcFAdICUgpQXDB4MTFcMHgxMlwweDEzXDB4MTRcMHgyMVwweDIyXDB4MjNcMHgyNFwweDMxXDB4MzJcMHgzM1wweDM0XDB4NDFcMHg0MlwweDQzXDB4NDSqrg=="
-                },
-                {
-                    "comment": "auth on clear key command key=\\0xFF\\0xFF\\0xFF\\0xFF (incorrect)",
-                    "message": "SVIAWAcFAdICUgpQXDB4RkZcMHhGRlwweEZGXDB4RkZcMHhGRlwweEZGXDB4RkZcMHhGRlwweEZGXDB4RkZcMHhGRlwweEZGXDB4RkZcMHhGRlwweEZGXDB4RkZZbg=="
+                    "comment": "auth on sam key command. unsupported_command responce will be returned",
+                    "message": "SVIAHQgFAdoCFwoECAMQGxIPZGl2IGlucHV0IGJ5dGVzbAs="
                 }
             ]
         }
