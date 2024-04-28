@@ -1025,10 +1025,10 @@ bool MessageIR::execute_mifare(Device &myDevice)
     //     responce = &execute_mfr_ul_get_version(mifareMessage, myDevice);
     // res = responce->is_failure();
     //     break;
-    // case Mifare::kMfrUlGetCounter:
-    //     responce = &execute_mfr_ul_get_counter(mifareMessage, myDevice);
-    // res = responce->is_failure();
-    //     break;
+    case Mifare::kMfrUlGetCounter:
+        responce = &execute_mfr_ul_get_counter(mifareMessage, myDevice);
+        res = responce->is_failure();
+        break;
     // case Mifare::kMfrUlIncrementCounter:
     //     responce = &execute_mfr_ul_increment_counter(mifareMessage, myDevice);
     // res = responce->is_failure();
@@ -1587,6 +1587,44 @@ const Msg &MessageIR::execute_mfr_ul_write_pages(const Mifare &mifareMessage, De
     return *generatedResponce;
 }
 
+const Msg &MessageIR::execute_mfr_ul_get_counter(const Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_ul_get_counter]...\n\n";
+
+    auto mfrGetCounter = mifareMessage.mfr_ul_get_counter();
+
+    auto card = myDevice.get_card_in_field();
+
+    const Msg *generatedResponce = nullptr;
+    if (dynamic_cast<MifareUltralightCard *>(card)->get_type() != MifareUltralightCard::m_EV1)
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_FEATURE, "Failed to write page"));
+    else
+    {
+        uint32_t value;
+        switch (mfrGetCounter.counter_number())
+        {
+        case mifare::ultralight::counter::number::FIRST:
+            value = dynamic_cast<MfrUl_EV1_Card *>(card)->get_counter(0);
+            break;
+        case mifare::ultralight::counter::number::SECOND:
+            value = dynamic_cast<MfrUl_EV1_Card *>(card)->get_counter(1);
+            break;
+        case mifare::ultralight::counter::number::THIRD:
+            value = dynamic_cast<MfrUl_EV1_Card *>(card)->get_counter(2);
+            break;
+        }
+        generatedResponce = &generate_responce(SUCCESS, generate_mfr_ul_get_counter_payload(value));
+    }
+
+    std::cout
+        << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    return *generatedResponce;
+}
+
 const Msg &MessageIR::execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_ul_auth_on_clear_key]...\n\n";
@@ -1911,6 +1949,16 @@ const Payload &MessageIR::generate_mfr_ul_read_pages_payload(std::string &newDat
     pages->set_data(newData);
 
     Payload &generatedPayload = *(new Payload(pages));
+
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_mfr_ul_get_counter_payload(uint32_t counterValue)
+{
+    auto counterResponce = new mifare::ultralight::counter::get::CounterValue();
+    counterResponce->set_value(counterValue);
+
+    Payload &generatedPayload = *(new Payload(counterResponce));
 
     return generatedPayload;
 }

@@ -340,13 +340,17 @@ void Script::parse_mifare_ultralight_EV1_card(json cardJson, MfrUl_EV1_Card &car
 {
     //  parse counters
     if (cardJson.count("counters") != 0)
+    {
+        int iCounter = 0;
         for (auto &counterJson : cardJson["counters"])
         {
             uint32_t newInitialValue = 0;
             if (counterJson.count("initialValue") != 0)
                 newInitialValue = counterJson.at("initialValue").get<uint32_t>();
-            card.add_counter(newInitialValue);
+            card.set_counter(iCounter, newInitialValue);
+            ++iCounter;
         }
+    }
 }
 
 void Script::parse_iso_4a_card(json cardJson, Iso_4A &card)

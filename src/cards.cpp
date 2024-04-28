@@ -892,6 +892,9 @@ MfrUl_EV1_Card::MfrUl_EV1_Card()
     type = m_EV1;
     memoryPages.resize(20);
     this->version = "No version";
+
+    for (int i = 0; i < 3; ++i)
+        counters.push_back(new CounterPage());
 }
 
 MfrUl_EV1_Card::MfrUl_EV1_Card(const MfrUl_EV1_Card &otherCard)
@@ -1013,9 +1016,19 @@ bool MfrUl_EV1_Card::write_page(const Page &newPage, uint32_t iPage)
     return true;
 }
 
-void MfrUl_EV1_Card::add_counter(uint32_t newInitialValue)
+void MfrUl_EV1_Card::set_counter(uint32_t iCounter, uint32_t newInitialValue)
 {
-    counters.push_back(new CounterPage(newInitialValue));
+    if (iCounter > 2)
+        throw std::invalid_argument("There are only 3 counters");
+    counters[iCounter]->set_value(newInitialValue);
+}
+
+uint32_t MfrUl_EV1_Card::get_counter(uint32_t iCounter)
+{
+    if (iCounter > 2)
+        throw std::invalid_argument("There are only 3 counters");
+
+    return counters[iCounter]->get_value();
 }
 
 const std::vector<uint8_t> MfrUl_EV1_Card::get_pack() const

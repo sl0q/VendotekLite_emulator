@@ -1,0 +1,98 @@
+{
+    "scripts": 
+    [
+        {
+            "title": "test mifare ultralight EV1 get counter",
+            "cards":
+            [
+                {
+                    "cardID": 1,
+                    "tokenType": "MIFARE_UL_OR_ULC",
+                    "tokenID": "1234uniqueID",
+                    "ev1_c": "EV1",
+                    "version": "stdMifare V0.0.1",
+                    "memoryPages":
+                    [
+                        {
+                            "pageNumber": 0,
+                            "bytes": "\\0xed\\0x75\\0x44\\0x54"
+                        },
+                        {
+                            "pageNumber": 1,
+                            "bytes": "\\0x04\\0xf3\\0xd2\\0x0f"
+                        },
+                        {
+                            "pageNumber": 2,
+                            "bytes": "\\0x2a\\0x00\\0x00\\0x00"
+                        },
+                        {
+                            "pageNumber": 3,
+                            "bytes": "\\0x00\\0x00\\0x00\\0x00",
+                            "comment": "OTP"
+                        },
+                        {
+                            "pageNumber": 4,
+                            "bytes": "\\0x00\\0x11\\0x22\\0x33"
+                        },
+                        {
+                            "pageNumber": 5,
+                            "bytes": "\\0x44\\0x55\\0x66\\0x77"
+                        },
+                        {
+                            "bytes": "\\0x66\\0x66\\0x66\\0x66"
+                        },
+                        {
+                            "bytes": "\\0x77\\0x77\\0x77\\0x77"
+                        },
+                        {
+                            "pageNumber": 16,
+                            "bytes": "\\0x04\\0x00\\0x0\\0x0",
+                            "comment": "strong modulation enabled"
+                        },
+                        {
+                            "pageNumber": 17,
+                            "bytes": "\\0xC7\\0x05\\0x0\\0x0",
+                            "comment": "auth_lim = 7, password auth is required, config is read only"
+                        },
+                        {
+                            "pageNumber": 18,
+                            "bytes": "\\0x04\\0x03\\0x02\\0x01",
+                            "comment": "password: 0x1 0x2 0x3 0x4 (least sugnificant byte first)"
+                        },
+                        {
+                            "pageNumber": 19,
+                            "bytes": "\\0x0A\\0x00\\0x00\\0x00",
+                            "comment": "PACK: 0x0 0xA (least sugnificant byte first)"
+                        }
+                    ],
+                    "counters":
+                    [
+                        {"initialValue": 1000},
+                        {"initialValue": 2000},
+                        {}
+                    ]
+                }
+            ],
+            "steps":
+            [
+                {
+                    "comment": "poll for token (timeout 1s)",
+                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "preactions":[{"attach_card": 1}]
+                },
+                {
+                    "comment": "BEFORE AUTH. get value of FIRST counter (#0)",
+                    "message": "SVIACAMFAboCAggAy3o="
+                },
+                {
+                    "comment": "auth on clear password command key=\\0x04\\0x03\\0x02\\0x01 (correct)",
+                    "message": "SVIAHAkFAeICFgoUXDB4MDRcMHgwM1wweDAyXDB4MDFBIw=="
+                },
+                {
+                    "comment": "AFTER SUCCESFUL AUTH. get value of FIRST counter (#0)",
+                    "message": "SVIACAMFAboCAggAy3o="
+                }
+            ]
+        }
+    ]
+}

@@ -317,7 +317,7 @@ public:
 class MfrUl_EV1_Card : public MifareUltralightCard
 {
 private:
-    std::vector<CounterPage *> counters;
+    std::vector<CounterPage *> counters; //  3 counters
 
     const std::vector<uint8_t> &get_password() const;
 
@@ -331,7 +331,8 @@ public:
     void deauth();
 
     bool write_page(const Page &newPage, uint32_t iPage);
-    void add_counter(uint32_t newInitialValue = 0);
+    void set_counter(uint32_t iCounter, uint32_t newInitialValue = 0);
+    uint32_t get_counter(uint32_t iCounter);
 
     const std::vector<uint8_t> get_pack() const;
     const std::string get_pack_str() const;
