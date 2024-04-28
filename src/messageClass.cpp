@@ -178,11 +178,6 @@ bool MessageIR::parse_payload()
 bool MessageIR::execute_message(Device &myDevice)
 {
     bool res;
-    // for (auto &preaction : this->preactions)
-    // {
-    //     preaction->make_action(myDevice);
-    //     std::cout << "Action {" << preaction->str() << "} was made\n";
-    // }
 
     switch (this->moduleID)
     {
@@ -1849,5 +1844,3 @@ void MessageIR::append_big_endian(std::vector<uint8_t> &buf, uint16_t n)
     buf.push_back((n & 0xFF00) >> 8); // добавили старший разряд
     buf.push_back(n & 0xFF);          // добавили младший разряд
 }
-
-/////////////////////////////////////////////////////////////////////////

@@ -82,11 +82,6 @@ private:
     StoredDeviceInfo deviceInfo;
     StoredDeviceStatus deviceStatus;
 
-    // std::string serialNumber;
-    // std::string IntelliReaderVersion;
-    // uint32_t timeToRestart = 0;
-    // misc::device::Security *security;
-
     misc::reboot::Reboot_OperationMode operationMode;
     misc::baudrate::Baudrate baudrate;
     misc::lan_settings::LanSettings lanSettings;

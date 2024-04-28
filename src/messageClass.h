@@ -5,32 +5,12 @@
 #include <ostream>
 
 #include <google/protobuf/message.h>
-// #include <google/protobuf/text_format.h>
-// #include <google/protobuf/util/json_util.h>
 
 #include "../proto_src/common/failure.pb.h"
 #include "../proto_src/common/notification.pb.h"
 
 // #include "../proto_src/intellireader/commands4.pb.h"
 #include "../proto_src/intellireader/commands7.pb.h"
-
-// #include "../proto_src/intellireader/misc/leds.pb.h"
-// #include "../proto_src/intellireader/misc/device.pb.h"
-// #include "../proto_src/intellireader/misc/reboot.pb.h"
-// #include "../proto_src/intellireader/misc/buzzer.pb.h"
-// #include "../proto_src/intellireader/misc/stats.pb.h"
-// #include "../proto_src/intellireader/misc/echo.pb.h"
-// #include "../proto_src/intellireader/misc/baudrate.pb.h"
-// #include "../proto_src/intellireader/misc/lan_settings.pb.h"
-
-// #include "../proto_src/intellireader/contact/power_on.pb.h"
-// #include "../proto_src/intellireader/contact/power_off.pb.h"
-// #include "../proto_src/intellireader/contact/card_slot.pb.h"
-// #include "../proto_src/intellireader/contact/iso7816_4.pb.h"
-
-// #include "../proto_src/intellireader/contactless/poll_for_token.pb.h"
-// #include "../proto_src/intellireader/contactless/token.pb.h"
-// #include "../proto_src/intellireader/contactless/token_type.pb.h"
 
 class Device;
 class Action;
@@ -180,7 +160,3 @@ public:
     void add_action(Action &newAction);
     const std::string str() const;
 };
-
-/////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////

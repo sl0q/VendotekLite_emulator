@@ -236,8 +236,6 @@ private:
 
 public:
     Page();
-    // Page(Page::PageType newPageType, const std::vector<uint8_t> &newData);
-    // Page(uint32_t iPage, const std::vector<uint8_t> &newData);
     Page(const std::vector<uint8_t> &newData);
 
     bool is_readable() const;
@@ -286,19 +284,12 @@ protected:
     std::string version;
     m_ul_type type;
     std::vector<Page *> memoryPages;
-    // std::vector<CounterPage *> counters;
-    bool isAuth = false;      //  a successful authentication occured in the past
+    bool isAuth = false;      //  was a successful authentication occured in the past?
     int32_t internalRegister; // exist?
-
-    // const std::vector<uint8_t> &get_password() const;
 
 public:
     MifareUltralightCard();
-    // MifareUltralightCard(MifareUltralightCard::m_ul_type newType);
     ~MifareUltralightCard();
-
-    // bool auth_on_pasword(const std::string &password);
-    // bool auth_on_pasword(const std::vector<uint8_t> &password);
 
     virtual bool auth(const std::string &token) = 0;
     virtual bool auth(const std::vector<uint8_t> &token) = 0;
@@ -307,7 +298,6 @@ public:
     void fill_memory(const std::vector<Page *> &newData);
     void fill_empty_memory();
     virtual bool write_page(const Page &newPage, uint32_t iPage) = 0;
-    // void add_counter(uint32_t newInitialValue = 0);
     void set_internal_register(int32_t value); //  exist?
     void set_type(MifareUltralightCard::m_ul_type newType);
     void set_version(const std::string &newVersion);
@@ -316,9 +306,6 @@ public:
     const Page *read_page(uint32_t iPage) const;
     int32_t get_internal_register() const; //  exist?
     const std::string &get_version() const;
-    // const std::string get_password_str() const;
-    // const std::vector<uint8_t> get_pack() const;
-    // const std::string get_pack_str() const;
 
     const std::string str() const;
 };
@@ -341,7 +328,6 @@ public:
     bool write_page(const Page &newPage, uint32_t iPage);
     void add_counter(uint32_t newInitialValue = 0);
 
-    // const std::string get_password_str() const;
     const std::vector<uint8_t> get_pack() const;
     const std::string get_pack_str() const;
 
@@ -359,7 +345,6 @@ private:
 
     MfrUl_C_Card::ProtectionType protectionType; //  defines what actions will be restricted without auth
     uint32_t protectedPage;                      //  defines from which page auth is required
-    // const std::vector<uint8_t> &get_password() const;
     std::vector<uint8_t> get_key() const;
 
 public:

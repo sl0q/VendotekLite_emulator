@@ -574,48 +574,6 @@ Page::Page()
     type = DATA;
 }
 
-// Page::Page(Page::PageType newPageType, const std::vector<uint8_t> &newData)
-// {
-//     type = newPageType;
-//     bytes.resize(PAGE_LENGTH);
-//     int iByte = 0;
-//     for (auto &byte : this->bytes)
-//         byte = newData[iByte++];
-// }
-
-// Page::Page(uint32_t iPage, const std::vector<uint8_t> &newData)
-// {
-//     if (iPage > 19)
-//         throw std::invalid_argument("Too big page index (" + std::to_string(iPage) + ")");
-
-//     if (iPage < 2)
-//     {
-//         type = SERIAL_NUMBER;
-//         readOnly = true;
-//     }
-//     else if (iPage == 2)
-//         type = LOCK;
-//     else if (iPage == 3)
-//         type = OTP;
-//     else if (iPage < 16)
-//         type = DATA;
-//     else if (iPage < 18 || iPage == 19)
-//     {
-//         type = CFG;
-//         readOnly = true;
-//     }
-//     else if (iPage == 18)
-//     {
-//         type = PWD;
-//         readOnly = true;
-//     }
-
-//     bytes.resize(PAGE_LENGTH);
-//     int iByte = 0;
-//     for (auto &byte : this->bytes)
-//         byte = newData[iByte++];
-// }
-
 Page::Page(const std::vector<uint8_t> &newData)
 {
     bytes.resize(PAGE_LENGTH);
@@ -689,26 +647,6 @@ MifareUltralightCard::MifareUltralightCard()
     this->version = "No version";
 }
 
-// MifareUltralightCard::MifareUltralightCard(MifareUltralightCard::m_ul_type newType)
-// {
-//     this->token = new contactless::token::Token();
-//     this->token->set_type(contactless::token_type::MIFARE_UL_OR_ULC);
-//     type = newType;
-//     this->version = "No version";
-
-//     switch (type)
-//     {
-//     case m_C:
-//         memoryPages.resize(16);
-//         break;
-//     case m_EV1:
-//         memoryPages.resize(20);
-//         break;
-//     default:
-//         throw ex::BadType("Unknown carddmifare ultralight type");
-//     }
-// }
-
 MifareUltralightCard::~MifareUltralightCard()
 {
     for (auto &page : memoryPages)
@@ -728,18 +666,6 @@ void MifareUltralightCard::fill_empty_memory()
         if (page == nullptr)
             page = new Page();
 }
-
-// void MifareUltralightCard::write_page(const Page &newPage, uint32_t iPage)
-// {
-//     if (memoryPages[iPage] == nullptr)
-//         delete memoryPages[iPage];
-//     memoryPages[iPage] = new Page(newPage);
-// }
-
-// void MifareUltralightCard::add_counter(uint32_t newInitialValue /* = 0*/)
-// {
-//     counters.push_back(new CounterPage(newInitialValue));
-// }
 
 void MifareUltralightCard::set_internal_register(int32_t value)
 {
@@ -795,58 +721,6 @@ const std::string &MifareUltralightCard::get_version() const
     return version;
 }
 
-// const std::vector<uint8_t> &MifareUltralightCard::get_password() const
-// {
-//     if (this->type != m_EV1)
-//         throw ex::BadType("Only EV1 type of Mifare Ultralight Card support passwords");
-//     if (this->memoryPages[18] == nullptr)
-//         throw std::runtime_error("Attempt to access undefined memory page of a Mifare Ultralight EV1 card");
-
-//     //  page 18 stores password
-//     return this->memoryPages[18]->get_data();
-// }
-
-// const std::string MifareUltralightCard::get_password_str() const
-// {
-//     std::stringstream buf;
-//     char hex[2];
-//     for (auto &byte : get_password())
-//     {
-//         sprintf(hex, "%X", byte);
-//         buf << "\\"
-//             << "0x" << hex;
-//         // buf << std::endl;
-//     }
-//     return buf.str();
-// }
-
-// const std::vector<uint8_t> MifareUltralightCard::get_pack() const
-// {
-//     std::vector<uint8_t> pack;
-//     if (!isAuth)
-//         return pack;
-
-//     //  first 2 bytes of page 19 store PACK
-//     pack.push_back(this->memoryPages[19]->get_data()[0]);
-//     pack.push_back(this->memoryPages[19]->get_data()[1]);
-
-//     return pack;
-// }
-
-// const std::string MifareUltralightCard::get_pack_str() const
-// {
-//     std::stringstream buf;
-//     char hex[2];
-//     for (auto &byte : get_pack())
-//     {
-//         sprintf(hex, "%X", byte);
-//         buf << "\\"
-//             << "0x" << hex;
-//         // buf << std::endl;
-//     }
-//     return buf.str();
-// }
-
 const std::string MifareUltralightCard::str() const
 {
     std::stringstream buf(ContactlessCard::str(), std::ios::app | std::ios::out);
@@ -866,11 +740,6 @@ const std::string MifareUltralightCard::str() const
         }
         buf << std::endl;
     }
-
-    // buf << "Counters: " << std::endl;
-    // index = 0;
-    // for (auto &counter : counters)
-    //     buf << "\tCounter #" << index++ << ": " << counter->get_value() << std::endl;
 
     return buf.str();
 }
@@ -1065,20 +934,6 @@ void MfrUl_EV1_Card::add_counter(uint32_t newInitialValue)
     counters.push_back(new CounterPage(newInitialValue));
 }
 
-// const std::string MfrUl_EV1_Card::get_password_str() const
-// {
-//     std::stringstream buf;
-//     char hex[2];
-//     for (auto &byte : get_password())
-//     {
-//         sprintf(hex, "%X", byte);
-//         buf << "\\"
-//             << "0x" << hex;
-//         // buf << std::endl;
-//     }
-//     return buf.str();
-// }
-
 const std::vector<uint8_t> MfrUl_EV1_Card::get_pack() const
 {
     std::vector<uint8_t> pack;
@@ -1172,7 +1027,6 @@ bool MfrUl_C_Card::auth(const std::vector<uint8_t> &token)
     if (token.size() < 16)
         return false;
 
-    // std::vector<uint8_t> thisKey = {0x11, 0x12, 0x13, 0x14, 0x21, 0x22, 0x23, 0x24, 0x31, 0x32, 0x33, 0x34, 0x41, 0x42, 0x43, 0x44};
     int iByte = 0;
     for (auto &thisByte : this->get_key())
         if (thisByte != token[iByte++])
@@ -1185,7 +1039,6 @@ bool MfrUl_C_Card::auth(const std::vector<uint8_t> &token)
 void MfrUl_C_Card::deauth()
 {
     isAuth = false;
-    // set_protection();
 }
 
 bool MfrUl_C_Card::write_page(const Page &newPage, uint32_t iPage)
@@ -1261,17 +1114,6 @@ void MfrUl_C_Card::set_protection()
     else
         // if the bit was 0
         protectionType = READ_WRITE;
-
-    // for (int iPage = 0; iPage < memoryPages.size(); ++iPage)
-    //     if (iPage > protectedPage)
-    //         switch (protectionType)
-    //         {
-    //         case READ_WRITE:
-    //             memoryPages[iPage]->set_readable(false);
-    //             memoryPages[iPage]->set_writable(false);
-    //         case WRITE:
-    //             memoryPages[iPage]->set_writable(false);
-    //         }
 }
 
 uint16_t MfrUl_C_Card::get_counter() const

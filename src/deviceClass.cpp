@@ -390,11 +390,6 @@ void Device::_print_scripts()
     for (auto &s : this->scripts)
     {
         std::cout << s->str() << std::endl;
-        // std::cout << "Title: " << s->getTitle() << std::endl
-        //           << "Messages: " << std::endl;
-        // for (auto &m : s->getMessages())
-        //     std::cout << "\t" << m << std::endl;
-        // std::cout << std::endl;
     }
 }
 
