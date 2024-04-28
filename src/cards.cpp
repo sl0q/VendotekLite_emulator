@@ -1023,6 +1023,22 @@ void MfrUl_EV1_Card::set_counter(uint32_t iCounter, uint32_t newInitialValue)
     counters[iCounter]->set_value(newInitialValue);
 }
 
+bool MfrUl_EV1_Card::increment_counter(uint32_t iCounter, uint32_t operand)
+{
+    if (iCounter > 2)
+        throw std::invalid_argument("There are only 3 counters");
+
+    if (!isAuth)
+        return false;
+
+    //  check for overflow
+    if (counters[iCounter]->get_value() + operand > 0x00FFFFFF)
+        return false;
+
+    counters[iCounter]->modify_value(operand);
+    return true;
+}
+
 uint32_t MfrUl_EV1_Card::get_counter(uint32_t iCounter)
 {
     if (iCounter > 2)

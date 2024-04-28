@@ -1029,10 +1029,10 @@ bool MessageIR::execute_mifare(Device &myDevice)
         responce = &execute_mfr_ul_get_counter(mifareMessage, myDevice);
         res = responce->is_failure();
         break;
-    // case Mifare::kMfrUlIncrementCounter:
-    //     responce = &execute_mfr_ul_increment_counter(mifareMessage, myDevice);
-    // res = responce->is_failure();
-    //     break;
+    case Mifare::kMfrUlIncrementCounter:
+        responce = &execute_mfr_ul_increment_counter(mifareMessage, myDevice);
+        res = responce->is_failure();
+        break;
     // case Mifare::kMfrUlBulkOperation:
     //     responce = &execute_mfr_ul_bulk_operation(mifareMessage, myDevice);
     // res = responce->is_failure();
@@ -1633,6 +1633,58 @@ const Msg &MessageIR::execute_mfr_ul_get_counter(const Mifare &mifareMessage, De
             break;
         }
         generatedResponce = &generate_responce(SUCCESS, generate_mfr_ul_get_counter_payload(value));
+    }
+
+    std::cout
+        << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    return *generatedResponce;
+}
+
+const Msg &MessageIR::execute_mfr_ul_increment_counter(const Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_ul_increment_counter]...\n\n";
+
+    auto mfrIncCounter = mifareMessage.mfr_ul_increment_counter();
+
+    auto card = myDevice.get_card_in_field();
+
+    const Msg *generatedResponce = nullptr;
+    if (dynamic_cast<MifareUltralightCard *>(card)->get_type() != MifareUltralightCard::m_EV1)
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_FEATURE, "Wrong type of Mfr UL"));
+    else
+    {
+        std::cout << "Old counters:\n"
+                  << dynamic_cast<MfrUl_EV1_Card *>(card)->get_counter(0) << std::endl
+                  << dynamic_cast<MfrUl_EV1_Card *>(card)->get_counter(1) << std::endl
+                  << dynamic_cast<MfrUl_EV1_Card *>(card)->get_counter(2) << std::endl;
+
+        switch (mfrIncCounter.counter_number())
+        {
+        case mifare::ultralight::counter::number::FIRST:
+            if (!dynamic_cast<MfrUl_EV1_Card *>(card)->increment_counter(0, mfrIncCounter.operand()))
+                generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Failed to increment"));
+            break;
+        case mifare::ultralight::counter::number::SECOND:
+            if (!dynamic_cast<MfrUl_EV1_Card *>(card)->increment_counter(1, mfrIncCounter.operand()))
+                generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Failed to increment"));
+            break;
+        case mifare::ultralight::counter::number::THIRD:
+            if (!dynamic_cast<MfrUl_EV1_Card *>(card)->increment_counter(2, mfrIncCounter.operand()))
+                generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Failed to increment"));
+            break;
+        }
+        std::cout << "New counters:\n"
+                  << dynamic_cast<MfrUl_EV1_Card *>(card)->get_counter(0) << std::endl
+                  << dynamic_cast<MfrUl_EV1_Card *>(card)->get_counter(1) << std::endl
+                  << dynamic_cast<MfrUl_EV1_Card *>(card)->get_counter(2) << std::endl;
+
+        //  if failure was not occurred
+        if (generatedResponce == nullptr)
+            generatedResponce = &generate_responce(SUCCESS);
     }
 
     std::cout

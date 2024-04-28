@@ -332,6 +332,7 @@ public:
 
     bool write_page(const Page &newPage, uint32_t iPage);
     void set_counter(uint32_t iCounter, uint32_t newInitialValue = 0);
+    bool increment_counter(uint32_t iCounter, uint32_t operand);
     uint32_t get_counter(uint32_t iCounter);
 
     const std::vector<uint8_t> get_pack() const;
