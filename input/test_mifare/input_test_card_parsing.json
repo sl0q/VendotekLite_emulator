@@ -87,12 +87,6 @@
                             "bytes": "\\0x44\\0x44\\0x44\\0x44",
                             "comment": "key .4"
                         }
-                    ],
-                    "counters":
-                    [
-                        {"initialValue": 1000},
-                        {"initialValue": 1000},
-                        {}
                     ]
                 }
             ],

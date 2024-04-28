@@ -360,7 +360,7 @@ private:
     MfrUl_C_Card::ProtectionType protectionType; //  defines what actions will be restricted without auth
     uint32_t protectedPage;                      //  defines from which page auth is required
     // const std::vector<uint8_t> &get_password() const;
-    const std::vector<uint8_t> &get_key() const;
+    std::vector<uint8_t> get_key() const;
 
 public:
     MfrUl_C_Card();

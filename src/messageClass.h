@@ -132,7 +132,7 @@ private:
     // const Msg &execute_mfr_ul_get_counter(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_increment_counter(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
-    // const Msg &execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_auth_on_sam_key(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_auth_sam_password(const Mifare &mifareMessage, Device &myDevice);

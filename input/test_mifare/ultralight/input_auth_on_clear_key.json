@@ -45,31 +45,48 @@
                             "bytes": "\\0x77\\0x77\\0x77\\0x77"
                         },
                         {
-                            "pageNumber": 16,
-                            "bytes": "\\0x04\\0x00\\0x0\\0x0",
-                            "comment": "strong modulation enabled"
+                            "bytes": "\\0x77\\0x77\\0x77\\0x77"
                         },
                         {
-                            "pageNumber": 17,
-                            "bytes": "\\0xC7\\0x05\\0x0\\0x0",
-                            "comment": "auth_lim = 7, password auth is required, config is read only"
+                            "pageNumber": 40,
+                            "bytes": "\\0x0\\0x0\\0x0\\0x0",
+                            "comment": "Lock bytes"
                         },
                         {
-                            "pageNumber": 18,
-                            "bytes": "\\0x04\\0x03\\0x02\\0x01",
-                            "comment": "password: 0x1 0x2 0x3 0x4 (least sugnificant byte first)"
+                            "pageNumber": 41,
+                            "bytes": "\\0x11\\0x11\\0x0\\0x0",
+                            "comment": "16-bit counter 1"
                         },
                         {
-                            "pageNumber": 19,
-                            "bytes": "\\0x0A\\0x00\\0x00\\0x00",
-                            "comment": "PACK: 0x0 0xA (least sugnificant byte first)"
+                            "pageNumber": 42,
+                            "bytes": "\\0x20\\0x0\\0x0\\0x0",
+                            "comment": "pages starting from 20h (#32) are protected and require auth"
+                        },
+                        {
+                            "pageNumber": 43,
+                            "bytes": "\\0x00\\0x0\\0x0\\0x0",
+                            "comment": "protection prevents from read/write pages (value 0h of the first byte)"
+                        },
+                        {
+                            "pageNumber": 44,
+                            "bytes": "\\0x11\\0x12\\0x13\\0x14",
+                            "comment": "key .1"
+                        },
+                        {
+                            "pageNumber": 45,
+                            "bytes": "\\0x21\\0x22\\0x23\\0x24",
+                            "comment": "key .2"
+                        },
+                        {
+                            "pageNumber": 46,
+                            "bytes": "\\0x31\\0x32\\0x33\\0x34",
+                            "comment": "key .3"
+                        },
+                        {
+                            "pageNumber": 47,
+                            "bytes": "\\0x41\\0x42\\0x43\\0x44",
+                            "comment": "key .4"
                         }
-                    ],
-                    "counters":
-                    [
-                        {"initialValue": 1000},
-                        {"initialValue": 1000},
-                        {}
                     ]
                 }
             ],
@@ -81,8 +98,8 @@
                     "preactions":[{"attach_card": 1}]
                 },
                 {
-                    "comment": "auth on clear key command key=\\0x11\\0x11\\0x11\\0x11\\0x22\\0x22... (correct)",
-                    "message": "SVIAWAcFAdICUgpQXDB4MTFcMHgxMVwweDExXDB4MTFcMHgyMlwweDIyXDB4MjJcMHgyMlwweDMzXDB4MzNcMHgzM1wweDMzXDB4NDRcMHg0NFwweDQ0XDB4NDSYTQ=="
+                    "comment": "auth on clear key command key=\\0x11\\0x12\\0x13\\0x14\\0x21\\0x22... (correct)",
+                    "message": "SVIAWAcFAdICUgpQXDB4MTFcMHgxMlwweDEzXDB4MTRcMHgyMVwweDIyXDB4MjNcMHgyNFwweDMxXDB4MzJcMHgzM1wweDM0XDB4NDFcMHg0MlwweDQzXDB4NDSqrg=="
                 },
                 {
                     "comment": "auth on clear key command key=\\0xFF\\0xFF\\0xFF\\0xFF (incorrect)",

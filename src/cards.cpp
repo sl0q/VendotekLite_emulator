@@ -1117,14 +1117,14 @@ const std::string MfrUl_EV1_Card::str() const
     return buf.str();
 }
 
-const std::vector<uint8_t> &MfrUl_C_Card::get_key() const
+std::vector<uint8_t> MfrUl_C_Card::get_key() const
 {
     std::vector<uint8_t> clearKey;
     clearKey.reserve(16);
-    clearKey.insert(clearKey.begin(), this->memoryPages[44]->get_data().begin(), this->memoryPages[44]->get_data().end());
-    clearKey.insert(clearKey.begin(), this->memoryPages[45]->get_data().begin(), this->memoryPages[45]->get_data().end());
-    clearKey.insert(clearKey.begin(), this->memoryPages[46]->get_data().begin(), this->memoryPages[46]->get_data().end());
-    clearKey.insert(clearKey.begin(), this->memoryPages[47]->get_data().begin(), this->memoryPages[47]->get_data().end());
+    clearKey.insert(clearKey.end(), this->memoryPages[44]->get_data().begin(), this->memoryPages[44]->get_data().end());
+    clearKey.insert(clearKey.end(), this->memoryPages[45]->get_data().begin(), this->memoryPages[45]->get_data().end());
+    clearKey.insert(clearKey.end(), this->memoryPages[46]->get_data().begin(), this->memoryPages[46]->get_data().end());
+    clearKey.insert(clearKey.end(), this->memoryPages[47]->get_data().begin(), this->memoryPages[47]->get_data().end());
     return clearKey;
 }
 
@@ -1152,7 +1152,7 @@ bool MfrUl_C_Card::auth(const std::string &token)
     char delimiter = '\\';
 
     // get a single byte from the string
-    while (std::getline(bytesString, byteStr, delimiter) && byteArray.size() < 4)
+    while (std::getline(bytesString, byteStr, delimiter) && byteArray.size() < 16)
     {
         //  convert hex string to uint8
         if (byteStr.empty())
@@ -1172,9 +1172,10 @@ bool MfrUl_C_Card::auth(const std::vector<uint8_t> &token)
     if (token.size() < 16)
         return false;
 
+    // std::vector<uint8_t> thisKey = {0x11, 0x12, 0x13, 0x14, 0x21, 0x22, 0x23, 0x24, 0x31, 0x32, 0x33, 0x34, 0x41, 0x42, 0x43, 0x44};
     int iByte = 0;
     for (auto &thisByte : this->get_key())
-        if (thisByte != token[iByte])
+        if (thisByte != token[iByte++])
             return false;
 
     isAuth = true;

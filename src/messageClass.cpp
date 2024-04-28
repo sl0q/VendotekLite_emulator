@@ -1027,9 +1027,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     // case Mifare::kMfrUlBulkOperation:
     //     res = execute_mfr_ul_bulk_operation(mifareMessage, myDevice).is_failure();
     //     break;
-    // case Mifare::kMfrUlAuthOnClearKey:
-    //     res = execute_mfr_ul_auth_on_clear_key(mifareMessage, myDevice).is_failure();
-    //     break;
+    case Mifare::kMfrUlAuthOnClearKey:
+        res = execute_mfr_ul_auth_on_clear_key(mifareMessage, myDevice).is_failure();
+        break;
     // case Mifare::kMfrUlAuthOnSamKey:
     //     res = execute_mfr_ul_auth_on_sam_key(mifareMessage, myDevice).is_failure();
     //     break;
@@ -1468,6 +1468,42 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
     return *generatedResponce;
 }
 
+const Msg &MessageIR::execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_ul_auth_on_clear_key]...\n\n";
+
+    auto mfrAuth = mifareMessage.mfr_ul_auth_on_clear_key();
+    auto storedToken = &myDevice.get_stored_token();
+
+    const Msg *generatedResponce = nullptr;
+    auto card = myDevice.get_card_in_field();
+
+    if (storedToken->type() != contactless::token_type::MIFARE_UL_OR_ULC)
+    {
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong token type"));
+    }
+    else if (dynamic_cast<MifareUltralightCard *>(card)->get_type() != MifareUltralightCard::m_C)
+    {
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong type of Mfr UL"));
+    }
+    else
+    {
+        if (dynamic_cast<MfrUl_C_Card *>(card)->auth(mfrAuth.clear_key()))
+        {
+            std::cout << "Authenticated successfully" << std::endl;
+            generatedResponce = &generate_responce(SUCCESS);
+        }
+        else
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong clear key"));
+    }
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    return *generatedResponce;
+}
+
 const Msg &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_ul_auth_clear_password]...\n\n";
@@ -1495,7 +1531,7 @@ const Msg &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMes
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong password"));
         else
         {
-            std::cout << "Authentificated successfully" << std::endl;
+            std::cout << "Authenticated successfully" << std::endl;
             generatedResponce = &generate_responce(SUCCESS, generate_mfr_ul_auth_clear_password_payload(packStr));
         }
     }
