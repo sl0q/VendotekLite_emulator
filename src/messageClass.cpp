@@ -1021,10 +1021,10 @@ bool MessageIR::execute_mifare(Device &myDevice)
         responce = &execute_mfr_ul_write_pages(mifareMessage, myDevice);
         res = responce->is_failure();
         break;
-    // case Mifare::kMfrUlGetVersion:
-    //     responce = &execute_mfr_ul_get_version(mifareMessage, myDevice);
-    // res = responce->is_failure();
-    //     break;
+    case Mifare::kMfrUlGetVersion:
+        responce = &execute_mfr_ul_get_version(mifareMessage, myDevice);
+        res = responce->is_failure();
+        break;
     case Mifare::kMfrUlGetCounter:
         responce = &execute_mfr_ul_get_counter(mifareMessage, myDevice);
         res = responce->is_failure();
@@ -1534,9 +1534,6 @@ const Msg &MessageIR::execute_mfr_ul_write_pages(const Mifare &mifareMessage, De
 
     auto card = dynamic_cast<MifareUltralightCard *>(myDevice.get_card_in_field());
 
-    std::cout << "Original card memory:\n"
-              << card->str();
-
     const Msg *generatedResponce = nullptr;
 
     std::vector<uint8_t> byteArray;
@@ -1578,8 +1575,30 @@ const Msg &MessageIR::execute_mfr_ul_write_pages(const Mifare &mifareMessage, De
 
     std::cout << "Finised execution.\n\n";
 
-    std::cout << "New card memory:\n"
-              << card->str();
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    return *generatedResponce;
+}
+
+const Msg &MessageIR::execute_mfr_ul_get_version(const Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_ul_get_version]...\n\n";
+
+    auto mfrGetVersion = mifareMessage.mfr_ul_get_version();
+
+    auto card = myDevice.get_card_in_field();
+
+    const Msg *generatedResponce = nullptr;
+    if (dynamic_cast<MifareUltralightCard *>(card)->get_type() != MifareUltralightCard::m_EV1)
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_FEATURE, "Wrong type of Mfr UL"));
+    else
+    {
+        generatedResponce = &generate_responce(SUCCESS, generate_mfr_ul_get_version_payload(dynamic_cast<MfrUl_EV1_Card *>(card)->get_version()));
+    }
+
+    std::cout
+        << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
@@ -1597,7 +1616,7 @@ const Msg &MessageIR::execute_mfr_ul_get_counter(const Mifare &mifareMessage, De
 
     const Msg *generatedResponce = nullptr;
     if (dynamic_cast<MifareUltralightCard *>(card)->get_type() != MifareUltralightCard::m_EV1)
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_FEATURE, "Failed to write page"));
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_FEATURE, "Wrong type of Mfr UL"));
     else
     {
         uint32_t value;
@@ -1963,7 +1982,17 @@ const Payload &MessageIR::generate_mfr_ul_get_counter_payload(uint32_t counterVa
     return generatedPayload;
 }
 
-const Payload &MessageIR::generate_mfr_ul_auth_clear_password_payload(std::string &newPack)
+const Payload &MessageIR::generate_mfr_ul_get_version_payload(const std::string &version)
+{
+    auto getVersion = new mifare::ultralight::version::Version();
+    getVersion->set_raw_version_data(version);
+
+    Payload &generatedPayload = *(new Payload(getVersion));
+
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_mfr_ul_auth_clear_password_payload(const std::string &newPack)
 {
     auto pack = new mifare::ultralight::password::PasswordAcknowledge();
     pack->set_password_ack(newPack);
