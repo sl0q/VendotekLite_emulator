@@ -23,7 +23,8 @@ private:
     uint32_t iScript;
     std::string title = "Untitled script";
     std::vector<Step *> steps;
-    std::vector<ContactlessCard *> contactlessCards; // Contactless cards in RF field of the terminal
+    std::vector<ContactlessCard *> originalContactlessCards; // original cards images used to rewind changed cards after script is executed
+    std::vector<ContactlessCard *> contactlessCards;         // Contactless cards in RF field of the terminal
 
 public:
     Script();
@@ -43,8 +44,11 @@ public:
     void parse_mifare_ultralight_EV1_card(json cardJson, MfrUl_EV1_Card &card);
     void parse_iso_4a_card(json cardJson, Iso_4A &card);
     void parse_step(json stepJson);
+
     void add_contactless_card(ContactlessCard &newContactlessCard);
     void add_step(Step &newStep);
+
+    void rewind_cards(); //  return cards in contactlessCards to default state
 
     void execute_script(Device &myDevice);
 };

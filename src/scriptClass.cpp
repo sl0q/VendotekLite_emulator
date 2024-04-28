@@ -16,12 +16,16 @@ Script::Script(std::string new_title)
 
 Script::~Script()
 {
+    for (auto &card : this->originalContactlessCards)
+        if (card != nullptr)
+            delete card;
     for (auto &contactlessCard : this->contactlessCards)
         if (contactlessCard != nullptr)
             delete contactlessCard;
     for (auto &step : this->steps)
         if (step)
             delete step;
+    this->originalContactlessCards.clear();
     this->contactlessCards.clear();
     this->steps.clear();
 }
@@ -38,12 +42,67 @@ const std::string Script::get_title()
 
 void Script::add_contactless_card(ContactlessCard &newContactlessCard)
 {
-    this->contactlessCards.push_back(&newContactlessCard);
+    this->originalContactlessCards.push_back(&newContactlessCard);
 }
 
 void Script::add_step(Step &newStep)
 {
     this->steps.push_back(&newStep);
+}
+
+// copies cards from originalContactlessCards to contactlessCards
+void Script::rewind_cards()
+{
+    for (auto &card : this->contactlessCards)
+        delete card;
+    this->contactlessCards.clear();
+
+    for (auto &origCard : this->originalContactlessCards)
+    {
+        switch (origCard->get_card_token()->type())
+        {
+        case contactless::token_type::ISO_14443_4A:
+            this->contactlessCards.push_back(new Iso_4A(*dynamic_cast<Iso_4A *>(origCard)));
+            break;
+        case contactless::token_type::ISO_14443_4B:
+            this->contactlessCards.push_back(new Iso_B(*dynamic_cast<Iso_B *>(origCard)));
+            break;
+        case contactless::token_type::MIFARE_CLASSIC_1K:
+            this->contactlessCards.push_back(new MifareClassicCard(*dynamic_cast<MifareClassicCard *>(origCard)));
+            break;
+        case contactless::token_type::MIFARE_CLASSIC_2K:
+            this->contactlessCards.push_back(new MifareClassicCard(*dynamic_cast<MifareClassicCard *>(origCard)));
+            break;
+        case contactless::token_type::MIFARE_CLASSIC_4K:
+            this->contactlessCards.push_back(new MifareClassicCard(*dynamic_cast<MifareClassicCard *>(origCard)));
+            break;
+        case contactless::token_type::MIFARE_CLASSIC_MINI:
+            this->contactlessCards.push_back(new MifareClassicCard(*dynamic_cast<MifareClassicCard *>(origCard)));
+            break;
+        case contactless::token_type::SMART_MX_WITH_MIFARE_1K:
+            this->contactlessCards.push_back(new SmartWithMifareCard(*dynamic_cast<SmartWithMifareCard *>(origCard)));
+            break;
+        case contactless::token_type::SMART_MX_WITH_MIFARE_4K:
+            this->contactlessCards.push_back(new SmartWithMifareCard(*dynamic_cast<SmartWithMifareCard *>(origCard)));
+            break;
+        case contactless::token_type::MIFARE_UL_OR_ULC:
+            switch (dynamic_cast<MifareUltralightCard *>(origCard)->get_type())
+            {
+            case MifareUltralightCard::m_C:
+                this->contactlessCards.push_back(new MfrUl_C_Card(*dynamic_cast<MfrUl_C_Card *>(origCard)));
+                break;
+            case MifareUltralightCard::m_EV1:
+                this->contactlessCards.push_back(new MfrUl_EV1_Card(*dynamic_cast<MfrUl_EV1_Card *>(origCard)));
+                break;
+            default:
+                throw std::invalid_argument("Unknown Mifare Ultralight card type");
+            }
+            break;
+        default:
+            this->contactlessCards.push_back(new ContactlessCard(*dynamic_cast<ContactlessCard *>(origCard)));
+            break;
+        }
+    }
 }
 
 ContactlessCard *Script::find_cl_card(uint32_t cardID)
@@ -182,7 +241,7 @@ void Script::parse_card(json cardJson)
     if (cardJson.count("sak") != 0)
         newCard->set_sak(cardJson.at("sak").get<std::string>());
 
-    this->contactlessCards.push_back(newCard);
+    this->originalContactlessCards.push_back(newCard);
 }
 
 void Script::parse_mifare_classic_card(json cardJson, MifareClassicCard &card)
@@ -322,7 +381,7 @@ const std::string Script::str()
 {
     std::string s("Title: " + this->title + "\n" +
                   "Contactless cards:\n");
-    for (auto &contactlessCard : this->contactlessCards)
+    for (auto &contactlessCard : this->originalContactlessCards)
         s += "\t" + contactlessCard->str() + "\n";
     s += "Steps:\n";
     for (auto &step : this->steps)
@@ -334,6 +393,10 @@ const std::string Script::str()
 void Script::execute_script(Device &myDevice)
 {
     std::cout << "Starting to execute script [" << this->title << "]..." << std::endl;
+
+    rewind_cards();
+
+    std::cout << "Cards rewinded to original state" << std::endl;
 
     int iStep = 0;
     for (auto &step : this->steps)

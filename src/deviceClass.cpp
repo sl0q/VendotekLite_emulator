@@ -481,7 +481,7 @@ void Device::remove_contactless_card(uint32_t cardID)
 
 ContactlessCard *Device::get_card_in_field()
 {
-    if (cardsInField.size() > 1)
+    if (cardsInField.size() != 1)
         return nullptr;
     else
         return cardsInField[0];

@@ -37,11 +37,12 @@ class ContactlessCard
 {
 protected:
     uint32_t id;
-    contactless::token::Token *token;
+    contactless::token::Token *token = nullptr;
 
 public:
     ContactlessCard();
     ContactlessCard(contactless::token_type::TokenType newTokenType);
+    ContactlessCard(const ContactlessCard &otherCard);
     virtual ~ContactlessCard();
     void set_card_ID(uint32_t newCardID);
     void set_token(contactless::token::Token &newToken);
@@ -101,6 +102,7 @@ private:
 public:
     MifareClassicCard();
     MifareClassicCard(MifareClassicCard::m_classic_K k);
+    MifareClassicCard(const MifareClassicCard &otherCard);
     ~MifareClassicCard();
 
     void fill_memory(const std::vector<std::vector<Block *>> &newData);
@@ -134,12 +136,13 @@ public:
 
 private:
     mifare::classic::auth::KeyType keyType;
-    Iso_4A *isoToken;
-    MifareClassicCard *mifareToken;
+    Iso_4A *isoToken = nullptr;
+    MifareClassicCard *mifareToken = nullptr;
 
 public:
     SmartWithMifareCard();
     SmartWithMifareCard(SmartWithMifareCard::m_smart_k k);
+    SmartWithMifareCard(const SmartWithMifareCard &otherCard);
     ~SmartWithMifareCard();
 
     Iso_4A &get_iso_token();
@@ -164,7 +167,7 @@ class Block
 {
 protected:
     bool isValue;
-    virtual void meme_method() = 0;
+    virtual void meme_method() = 0; //  does nothing now. can be removed
 
 public:
     Block();
@@ -179,7 +182,7 @@ class ValueBlock : public Block
 {
 private:
     int32_t value;
-    void meme_method();
+    void meme_method(); //  does nothing now. can be removed
 
 public:
     ValueBlock();
@@ -196,7 +199,7 @@ class ByteBlock : public Block
 {
 private:
     std::string data;
-    void meme_method();
+    void meme_method(); //  does nothing now. can be removed
 
 public:
     // ByteBlock();
@@ -289,6 +292,7 @@ protected:
 
 public:
     MifareUltralightCard();
+    MifareUltralightCard(const MifareUltralightCard &otherCard);
     ~MifareUltralightCard();
 
     virtual bool auth(const std::string &token) = 0;
@@ -319,6 +323,7 @@ private:
 
 public:
     MfrUl_EV1_Card();
+    MfrUl_EV1_Card(const MfrUl_EV1_Card &otherCard);
     ~MfrUl_EV1_Card();
 
     bool auth(const std::string &token);
@@ -345,10 +350,12 @@ private:
 
     MfrUl_C_Card::ProtectionType protectionType; //  defines what actions will be restricted without auth
     uint32_t protectedPage;                      //  defines from which page auth is required
+
     std::vector<uint8_t> get_key() const;
 
 public:
     MfrUl_C_Card();
+    MfrUl_C_Card(const MfrUl_C_Card &otherCard);
     ~MfrUl_C_Card();
 
     bool auth(const std::string &token);

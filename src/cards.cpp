@@ -13,6 +13,21 @@ ContactlessCard::ContactlessCard(contactless::token_type::TokenType newTokenType
     this->token->set_type(newTokenType);
 }
 
+ContactlessCard::ContactlessCard(const ContactlessCard &otherCard)
+{
+    this->id = otherCard.id;
+
+    if (this->token != nullptr)
+        delete this->token;
+    this->token = new contactless::token::Token(*otherCard.token);
+    // this->token = new contactless::token::Token();
+    // this->token->set_answer_to_select(otherCard.token->answer_to_select());
+    // this->token->set_atqa(otherCard.token->atqa());
+    // this->token->set_id(otherCard.token->id());
+    // this->token->set_sak(otherCard.token->sak());
+    // this->token->set_type(otherCard.token->type());
+}
+
 ContactlessCard::~ContactlessCard()
 {
     delete this->token;
@@ -192,6 +207,32 @@ MifareClassicCard::MifareClassicCard(MifareClassicCard::m_classic_K k)
             sector.resize(4);
             for (auto &block : sector)
                 block = new ByteBlock(true);
+        }
+    }
+}
+
+MifareClassicCard::MifareClassicCard(const MifareClassicCard &otherCard)
+    : ContactlessCard(otherCard)
+{
+    this->iSector = otherCard.iSector;
+    this->internalRegister = otherCard.internalRegister;
+
+    //  delete old memory blocks
+    for (auto &sector : memorySectors)
+        for (auto &block : sector)
+            delete block;
+    this->memorySectors.clear();
+
+    // init new
+    for (auto &otherSector : otherCard.memorySectors)
+    {
+        this->memorySectors.push_back(*(new std::vector<Block *>));
+        for (auto &otherBlock : otherSector)
+        {
+            if (otherBlock->is_value())
+                (this->memorySectors.end() - 1)->push_back(new ValueBlock(*dynamic_cast<const ValueBlock *>(otherBlock)));
+            else
+                (this->memorySectors.end() - 1)->push_back(new ByteBlock(*dynamic_cast<const ByteBlock *>(otherBlock)));
         }
     }
 }
@@ -410,6 +451,20 @@ SmartWithMifareCard::SmartWithMifareCard(SmartWithMifareCard::m_smart_k k)
         this->token->set_type(contactless::token_type::SMART_MX_WITH_MIFARE_1K);
         this->mifareToken = new MifareClassicCard(MifareClassicCard::m_1K);
     }
+}
+
+SmartWithMifareCard::SmartWithMifareCard(const SmartWithMifareCard &otherCard)
+    : ContactlessCard(otherCard)
+{
+    this->keyType = otherCard.keyType;
+
+    if (this->isoToken != nullptr)
+        delete this->isoToken;
+    if (this->mifareToken != nullptr)
+        delete this->mifareToken;
+
+    this->isoToken = new Iso_4A(*otherCard.isoToken);
+    this->mifareToken = new MifareClassicCard(*otherCard.mifareToken);
 }
 
 SmartWithMifareCard::~SmartWithMifareCard()
@@ -647,6 +702,23 @@ MifareUltralightCard::MifareUltralightCard()
     this->version = "No version";
 }
 
+MifareUltralightCard::MifareUltralightCard(const MifareUltralightCard &otherCard)
+    : ContactlessCard(otherCard)
+{
+    this->version = otherCard.version;
+    this->type = otherCard.type;
+    this->isAuth = otherCard.isAuth;
+    this->internalRegister = otherCard.internalRegister;
+
+    //  delete old pages;
+    for (auto &page : this->memoryPages)
+        delete page;
+    this->memoryPages.clear();
+
+    for (auto &otherPage : otherCard.memoryPages)
+        this->memoryPages.push_back(new Page(*otherPage));
+}
+
 MifareUltralightCard::~MifareUltralightCard()
 {
     for (auto &page : memoryPages)
@@ -822,6 +894,17 @@ MfrUl_EV1_Card::MfrUl_EV1_Card()
     this->version = "No version";
 }
 
+MfrUl_EV1_Card::MfrUl_EV1_Card(const MfrUl_EV1_Card &otherCard)
+    : MifareUltralightCard(otherCard)
+{
+    for (auto &counter : this->counters)
+        delete counter;
+    counters.clear();
+
+    for (auto &otherCounter : otherCard.counters)
+        this->counters.push_back(new CounterPage(*otherCounter));
+}
+
 MfrUl_EV1_Card::~MfrUl_EV1_Card()
 {
     for (auto &counter : counters)
@@ -993,6 +1076,13 @@ MfrUl_C_Card::MfrUl_C_Card()
     type = m_C;
     memoryPages.resize(48);
     this->version = "No version";
+}
+
+MfrUl_C_Card::MfrUl_C_Card(const MfrUl_C_Card &otherCard)
+    : MifareUltralightCard(otherCard)
+{
+    this->protectionType = otherCard.protectionType;
+    this->protectedPage = otherCard.protectedPage;
 }
 
 MfrUl_C_Card::~MfrUl_C_Card()
