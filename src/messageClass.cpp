@@ -1017,10 +1017,10 @@ bool MessageIR::execute_mifare(Device &myDevice)
         responce = &execute_mfr_ul_read_pages(mifareMessage, myDevice);
         res = responce->is_failure();
         break;
-    // case Mifare::kMfrUlWritePages:
-    //     responce = &execute_mfr_ul_write_pages(mifareMessage, myDevice);
-    // res = responce->is_failure();
-    //     break;
+    case Mifare::kMfrUlWritePages:
+        responce = &execute_mfr_ul_write_pages(mifareMessage, myDevice);
+        res = responce->is_failure();
+        break;
     // case Mifare::kMfrUlGetVersion:
     //     responce = &execute_mfr_ul_get_version(mifareMessage, myDevice);
     // res = responce->is_failure();
@@ -1519,6 +1519,67 @@ const Msg &MessageIR::execute_mfr_ul_read_pages(const Mifare &mifareMessage, Dev
         generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
 
     std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    return *generatedResponce;
+}
+
+const Msg &MessageIR::execute_mfr_ul_write_pages(const Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_ul_write_pages]...\n\n";
+
+    auto mfrWritePages = mifareMessage.mfr_ul_write_pages();
+
+    auto card = dynamic_cast<MifareUltralightCard *>(myDevice.get_card_in_field());
+
+    std::cout << "Original card memory:\n"
+              << card->str();
+
+    const Msg *generatedResponce = nullptr;
+
+    std::vector<uint8_t> byteArray;
+    std::stringstream bytesString(mfrWritePages.data());
+    std::string byteStr;
+    char delimiter = '\\';
+    int iPage = mfrWritePages.start_address();
+
+    while (std::getline(bytesString, byteStr, delimiter))
+    {
+        //  convert hex string to uint8
+        if (byteStr.empty())
+            continue;
+        uint8_t byte = std::stoul(byteStr, nullptr, 16);
+
+        byteArray.push_back(byte);
+        if (byteArray.size() == 4)
+        {
+            if (!card->write_page(Page(byteArray), iPage))
+                generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Failed to write page"));
+
+            byteArray.clear();
+            ++iPage;
+        }
+    }
+
+    //  if at the end there were less than 4 bytes - fill to 4 with 0x00 and write the last page
+    if (byteArray.size() > 0)
+    {
+        while (byteArray.size() < 4)
+            byteArray.push_back(0);
+        if (!card->write_page(Page(byteArray), iPage))
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Failed to write page"));
+    }
+
+    //  if failure didn't occurred
+    if (generatedResponce == nullptr)
+        generatedResponce = &generate_responce(SUCCESS);
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "New card memory:\n"
+              << card->str();
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();

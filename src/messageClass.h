@@ -107,7 +107,7 @@ private:
 
     //  Ultralight
     const Msg &execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice);
-    // const Msg &execute_mfr_ul_write_pages(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_write_pages(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_get_version(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_get_counter(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_increment_counter(const Mifare &mifareMessage, Device &myDevice);

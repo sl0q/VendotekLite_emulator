@@ -1137,7 +1137,7 @@ bool MfrUl_C_Card::write_page(const Page &newPage, uint32_t iPage)
     if (iPage > 47)
         return false;
 
-    // if it is initialization of a completly new page
+    // if it is initialization of a completely new page
     if (memoryPages[iPage] == nullptr)
     {
         memoryPages[iPage] = new Page(newPage);
