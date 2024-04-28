@@ -1031,9 +1031,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
     case Mifare::kMfrUlAuthClearPassword:
         res = execute_mfr_ul_auth_clear_password(mifareMessage, myDevice).is_failure();
         break;
-        // case Mifare::kMfrUlAuthSamPassword:
-        //     res = execute_mfr_ul_auth_sam_password(mifareMessage, myDevice).is_failure();
-        //     break;
+    case Mifare::kMfrUlAuthSamPassword:
+        res = execute_mfr_ul_auth_sam_password(mifareMessage, myDevice).is_failure();
+        break;
 
     default:
         res = false;
@@ -1546,6 +1546,16 @@ const Msg &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMes
     generatedResponce->print_MSG();
 
     return *generatedResponce;
+}
+
+const Msg &MessageIR::execute_mfr_ul_auth_sam_password(const Mifare &mifareMessage, Device &myDevice)
+{
+    std::string errorMessage("Command [mfr_ul_auth_sam_password] of module [Mifare] is not supported. MSG_ID: " + std::to_string(this->msgID));
+    const Msg &generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage));
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce.print_MSG();
+
+    return generatedResponce;
 }
 
 const Payload &MessageIR::generate_failure_payload(common::failure::Error errorType, const std::string errorString)
