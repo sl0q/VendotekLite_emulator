@@ -106,7 +106,7 @@ private:
     const Msg &execute_mfr_classic_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
 
     //  Ultralight
-    // const Msg &execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_write_pages(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_get_version(const Mifare &mifareMessage, Device &myDevice);
     // const Msg &execute_mfr_ul_get_counter(const Mifare &mifareMessage, Device &myDevice);
@@ -144,6 +144,7 @@ private:
     const Payload &generate_mfr_classic_bulk_operation_payload(mifare::classic::bulk::BulkResult &results);
 
     // Mifare ultralight util
+    const Payload &generate_mfr_ul_read_pages_payload(std::string &newData);
     const Payload &generate_mfr_ul_auth_clear_password_payload(std::string &newPack);
 
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());

@@ -303,7 +303,7 @@ public:
     void set_version(const std::string &newVersion);
 
     MifareUltralightCard::m_ul_type get_type() const;
-    const Page *read_page(uint32_t iPage) const;
+    virtual const Page *read_page(uint32_t iPage) const;
     int32_t get_internal_register() const; //  exist?
     const std::string &get_version() const;
 

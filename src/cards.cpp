@@ -705,7 +705,8 @@ MifareUltralightCard::m_ul_type MifareUltralightCard::get_type() const
 
 const Page *MifareUltralightCard::read_page(uint32_t iPage) const
 {
-    if (isAuth && memoryPages[iPage]->is_readable())
+
+    if (iPage < memoryPages.size() && isAuth && memoryPages[iPage]->is_readable())
         return memoryPages[iPage];
 
     return nullptr;

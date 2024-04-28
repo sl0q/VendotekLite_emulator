@@ -965,74 +965,93 @@ bool MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessag
 
 bool MessageIR::execute_mifare(Device &myDevice)
 {
+    const Msg *responce = nullptr;
     bool res;
     Mifare mifareMessage = *(dynamic_cast<Mifare *>(this->msg));
     switch (mifareMessage.mifare_cmd_case())
     {
         //  Classic
     case Mifare::kMfrClassicAuthOnClearKey:
-        res = execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrClassicAuthOnSamKey:
-        res = execute_mfr_classic_auth_on_sam_key(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_auth_on_sam_key(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrClassicReadBlocks:
-        // analyse return value
-        res = execute_mfr_classic_read_blocks(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_read_blocks(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrClassicWriteBlocks:
-        res = execute_mfr_classic_write_blocks(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_write_blocks(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrClassicGetCounter:
-        // analyse return value
-        res = execute_mfr_classic_get_counter(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_get_counter(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrClassicSetCounter:
-        res = execute_mfr_classic_set_counter(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_set_counter(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrClassicModifyCounter:
-        res = execute_mfr_classic_modify_counter(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_modify_counter(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrClassicCopyCounter:
-        res = execute_mfr_classic_copy_counter(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_copy_counter(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrClassicCommitCounter:
-        res = execute_mfr_classic_commit_counter(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_commit_counter(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrClassicBulkOperation:
-        res = execute_mfr_classic_bulk_operation(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_classic_bulk_operation(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
 
         // Ultralight
-    // case Mifare::kMfrUlReadPages:
-    //     res = execute_mfr_ul_read_pages(mifareMessage, myDevice).is_failure();
-    //     break;
+    case Mifare::kMfrUlReadPages:
+        responce = &execute_mfr_ul_read_pages(mifareMessage, myDevice);
+        res = responce->is_failure();
+        break;
     // case Mifare::kMfrUlWritePages:
-    //     res = execute_mfr_ul_write_pages(mifareMessage, myDevice).is_failure();
+    //     responce = &execute_mfr_ul_write_pages(mifareMessage, myDevice);
+    // res = responce->is_failure();
     //     break;
     // case Mifare::kMfrUlGetVersion:
-    //     res = execute_mfr_ul_get_version(mifareMessage, myDevice).is_failure();
+    //     responce = &execute_mfr_ul_get_version(mifareMessage, myDevice);
+    // res = responce->is_failure();
     //     break;
     // case Mifare::kMfrUlGetCounter:
-    //     res = execute_mfr_ul_get_counter(mifareMessage, myDevice).is_failure();
+    //     responce = &execute_mfr_ul_get_counter(mifareMessage, myDevice);
+    // res = responce->is_failure();
     //     break;
     // case Mifare::kMfrUlIncrementCounter:
-    //     res = execute_mfr_ul_increment_counter(mifareMessage, myDevice).is_failure();
+    //     responce = &execute_mfr_ul_increment_counter(mifareMessage, myDevice);
+    // res = responce->is_failure();
     //     break;
     // case Mifare::kMfrUlBulkOperation:
-    //     res = execute_mfr_ul_bulk_operation(mifareMessage, myDevice).is_failure();
+    //     responce = &execute_mfr_ul_bulk_operation(mifareMessage, myDevice);
+    // res = responce->is_failure();
     //     break;
     case Mifare::kMfrUlAuthOnClearKey:
-        res = execute_mfr_ul_auth_on_clear_key(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_ul_auth_on_clear_key(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrUlAuthOnSamKey:
-        res = execute_mfr_ul_auth_on_sam_key(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_ul_auth_on_sam_key(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrUlAuthClearPassword:
-        res = execute_mfr_ul_auth_clear_password(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_ul_auth_clear_password(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
     case Mifare::kMfrUlAuthSamPassword:
-        res = execute_mfr_ul_auth_sam_password(mifareMessage, myDevice).is_failure();
+        responce = &execute_mfr_ul_auth_sam_password(mifareMessage, myDevice);
+        res = responce->is_failure();
         break;
 
     default:
@@ -1046,6 +1065,9 @@ bool MessageIR::execute_mifare(Device &myDevice)
         generatedResponce.print_MSG();
         throw ex::FailedExecution(errorMessage.str());
     }
+
+    if (responce != nullptr)
+        delete responce;
 
     return res;
 }
@@ -1135,7 +1157,6 @@ const Msg &MessageIR::execute_mfr_classic_read_blocks(const Mifare &mifareMessag
 
     std::cout << "Finised execution.\n\n";
 
-    // res = true;
     std::cout << "Generated responce:" << std::endl;
     const Msg &generatedResponce = generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
     generatedResponce.print_MSG();
@@ -1446,7 +1467,7 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
         }
         }
 
-        //  if failure responce already was generated (failure occired): exit loop
+        //  if failure responce already was generated (failure occurred): exit loop
         if (generatedResponce != nullptr)
             break;
     }
@@ -1454,6 +1475,48 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
     //  if there was no failure
     if (generatedResponce == nullptr)
         generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_bulk_operation_payload(*results));
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    return *generatedResponce;
+}
+
+const Msg &MessageIR::execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_ul_read_pages]...\n\n";
+
+    auto mfrReadPages = mifareMessage.mfr_ul_read_pages();
+
+    auto card = myDevice.get_card_in_field();
+
+    // mifare ul C allows to read no more than 4 pages at once
+    uint32_t numberOfPagesToRead = (dynamic_cast<MifareUltralightCard *>(card)->get_type() == MifareUltralightCard::m_C ? 4 : mfrReadPages.page_count());
+
+    std::string readData = "";
+
+    const Msg *generatedResponce = nullptr;
+    for (int i = 0; i < numberOfPagesToRead; ++i)
+    {
+        // auth and read rights will be checked inside read_page()
+        auto page = dynamic_cast<MifareUltralightCard *>(card)->read_page(mfrReadPages.start_address() + i);
+
+        //  if reading failed
+        if (page == nullptr)
+        {
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Failed to read page"));
+            break;
+        }
+
+        readData += page->get_data_str();
+        std::cout << "readData: " << readData << std::endl;
+    }
+
+    //  if failure didn't occurred
+    if (generatedResponce == nullptr)
+        generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
 
     std::cout << "Finised execution.\n\n";
 
@@ -1475,11 +1538,11 @@ const Msg &MessageIR::execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessa
 
     if (storedToken->type() != contactless::token_type::MIFARE_UL_OR_ULC)
     {
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong token type"));
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Wrong token type"));
     }
     else if (dynamic_cast<MifareUltralightCard *>(card)->get_type() != MifareUltralightCard::m_C)
     {
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong type of Mfr UL"));
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Wrong type of Mfr UL"));
     }
     else
     {
@@ -1489,7 +1552,7 @@ const Msg &MessageIR::execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessa
             generatedResponce = &generate_responce(SUCCESS);
         }
         else
-            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong clear key"));
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Wrong clear key"));
     }
     std::cout << "Finised execution.\n\n";
 
@@ -1521,11 +1584,11 @@ const Msg &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMes
 
     if (storedToken->type() != contactless::token_type::MIFARE_UL_OR_ULC)
     {
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong token type"));
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Wrong token type"));
     }
     else if (card->get_type() != MifareUltralightCard::m_EV1)
     {
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong type of Mfr UL"));
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Wrong type of Mfr UL"));
     }
     else
     {
@@ -1533,7 +1596,7 @@ const Msg &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMes
 
         auto packStr = dynamic_cast<MfrUl_EV1_Card *>(card)->get_pack_str();
         if (packStr.empty())
-            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Wrong password"));
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MIFARE_CARD_NOT_ACKNOWLEDGE_COMMAND, "Wrong password"));
         else
         {
             std::cout << "Authenticated successfully" << std::endl;
@@ -1777,6 +1840,16 @@ const Payload &MessageIR::generate_mfr_classic_get_counter_payload(int32_t count
 const Payload &MessageIR::generate_mfr_classic_bulk_operation_payload(mifare::classic::bulk::BulkResult &results)
 {
     Payload &generatedPayload = *(new Payload(&results));
+
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_mfr_ul_read_pages_payload(std::string &newData)
+{
+    auto pages = new mifare::ultralight::read::Pages();
+    pages->set_data(newData);
+
+    Payload &generatedPayload = *(new Payload(pages));
 
     return generatedPayload;
 }
