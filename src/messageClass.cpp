@@ -1148,20 +1148,31 @@ const Msg &MessageIR::execute_mfr_classic_read_blocks(const Mifare &mifareMessag
     auto card = myDevice.get_card_in_field();
 
     std::string readData = "";
-
+    const Msg *generatedResponce = nullptr;
     for (int i = 0; i < mfrReadBlocks.block_count(); ++i)
     {
-        readData += dynamic_cast<MifareClassicCard *>(card)->get_block_data(mfrReadBlocks.start_block() + i);
+        // auth and read rights will be checked inside read_page()
+        auto block = dynamic_cast<MifareClassicCard *>(card)->read_block(mfrReadBlocks.start_block() + i);
+
+        //  if reading failed
+        if (block == nullptr)
+        {
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to read block"));
+            break;
+        }
+        // else
+        readData += block->get_data();
         std::cout << "readData: " << readData << std::endl;
     }
+    if (generatedResponce == nullptr)
+        generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
 
     std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;
-    const Msg &generatedResponce = generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
-    generatedResponce.print_MSG();
+    generatedResponce->print_MSG();
 
-    return generatedResponce;
+    return *generatedResponce;
 }
 
 const Msg &MessageIR::execute_mfr_classic_write_blocks(const Mifare &mifareMessage, Device &myDevice)

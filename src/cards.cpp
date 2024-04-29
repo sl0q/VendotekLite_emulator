@@ -407,6 +407,19 @@ void MifareClassicCard::authorize_sector(uint32_t iSector)
     this->iSector = iSector;
 }
 
+const Block *MifareClassicCard::read_block(uint32_t iBlock)
+{
+    //  if sector is out of range OR is not authenticated
+    if (this->iSector > this->memorySectors.size())
+        return nullptr;
+    if (iBlock > this->memorySectors[this->iSector].size())
+        return nullptr;
+    // if (memorySectors[iSector][iBlock]->is_value())
+    //     throw ex::BadType("Memory block " + std::to_string(iSector) + " of sector " + std::to_string(iSector) + " stores a numeric value");
+
+    return memorySectors[iSector][iBlock];
+}
+
 void MifareClassicCard::deauth()
 {
     reset_sector();
@@ -613,7 +626,7 @@ void ByteBlock::set_data(const std::string &newData)
     data.resize(16, PLACEHOLDER);
 }
 
-const std::string &ByteBlock::get_data() const
+const std::string ByteBlock::get_data() const
 {
     return this->data;
 }

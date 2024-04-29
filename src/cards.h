@@ -119,6 +119,7 @@ public:
     int32_t get_internal_register() const;
 
     void authorize_sector(uint32_t iSector);
+    const Block *read_block(uint32_t iBlock);
     void reset_sector();
     void deauth();
 
@@ -174,6 +175,8 @@ public:
     ~Block();
     bool is_value();
 
+    virtual const std::string get_data() const = 0;
+
     virtual std::string str() const = 0;
 };
 
@@ -207,7 +210,7 @@ public:
     ByteBlock(const std::string &newData);
     ~ByteBlock();
     void set_data(const std::string &newData);
-    const std::string &get_data() const;
+    const std::string get_data() const;
     std::string str() const;
 };
 
