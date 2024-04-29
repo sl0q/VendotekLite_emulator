@@ -9,19 +9,22 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
 {
     wxPanel *panel = new wxPanel(this);
 
-    wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Input file path:", wxPoint(50, 25), wxDefaultSize);
-    this->_configPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/config.json", wxPoint(150, 50), wxSize(200, -1));
-    this->_inputPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/test_mifare/classic/input_auth_on_clear_key.json", wxPoint(150, 75), wxSize(200, -1));
-
-    // wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Config path", wxPoint(50, 50), wxDefaultSize);
+    wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Config file path:", wxPoint(25, 50), wxDefaultSize);
+    wxStaticText *scriptsPathST = new wxStaticText(panel, wxID_ANY, "Scripts file path:", wxPoint(25, 100), wxDefaultSize);
+    this->_configPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/config.json", wxPoint(150, 50), wxSize(300, -1));
+    this->_scriptsPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/test_mifare/classic/input_auth_on_clear_key.json", wxPoint(150, 100), wxSize(300, -1));
 
     wxButton *startB = new wxButton(panel, wxID_ANY, "Start", wxPoint(300, 275), wxSize(200, 50));
     wxButton *loadConfigB = new wxButton(panel, wxID_ANY, "Load config", wxPoint(300, 350), wxSize(200, 50));
-    wxButton *loadInputB = new wxButton(panel, wxID_ANY, "Load scripts", wxPoint(300, 425), wxSize(200, 50));
+    wxButton *loadScriptsB = new wxButton(panel, wxID_ANY, "Load scripts", wxPoint(300, 425), wxSize(200, 50));
+    wxButton *fileDialogConfigB = new wxButton(panel, wxID_ANY, "Open", wxPoint(470, 50), wxSize(60, 25));
+    wxButton *fileDialogScriptsB = new wxButton(panel, wxID_ANY, "Open", wxPoint(470, 100), wxSize(60, 25));
 
     startB->Bind(wxEVT_BUTTON, &MainFrame::OnStartButtonClicked, this);
     loadConfigB->Bind(wxEVT_BUTTON, &MainFrame::OnLoadConfigButtonClicked, this);
-    loadInputB->Bind(wxEVT_BUTTON, &MainFrame::OnLoadScriptsButtonClicked, this);
+    loadScriptsB->Bind(wxEVT_BUTTON, &MainFrame::OnLoadScriptsButtonClicked, this);
+    fileDialogConfigB->Bind(wxEVT_BUTTON, &MainFrame::OnOpenDialogConfigButtonClicked, this);
+    fileDialogScriptsB->Bind(wxEVT_BUTTON, &MainFrame::OnOpenDialogScriptsButtonClicked, this);
 
     CreateStatusBar();
 
@@ -35,8 +38,8 @@ MainFrame::~MainFrame()
 
     if (_configPathTC != nullptr)
         delete _configPathTC;
-    if (_inputPathTC != nullptr)
-        delete _inputPathTC;
+    if (_scriptsPathTC != nullptr)
+        delete _scriptsPathTC;
 }
 
 void MainFrame::OnStartButtonClicked(wxCommandEvent &evt)
@@ -79,7 +82,9 @@ void MainFrame::OnLoadConfigButtonClicked(wxCommandEvent &evt)
 
     if (this->_configPathTC->GetLineLength(0) == 0)
     {
-        wxFileDialog openFileDialog(this, "Load config .json", "../input", "", "JSON files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+        if (!lastConfigDir.IsEmpty())
+            defaultDir = lastConfigDir;
+        wxFileDialog openFileDialog(this, "Load config .json", defaultDir, "", "JSON files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
         if (openFileDialog.ShowModal() == wxID_CANCEL)
             return; // the user changed idea...
 
@@ -94,6 +99,7 @@ void MainFrame::OnLoadConfigButtonClicked(wxCommandEvent &evt)
         }
 
         configPath = openFileDialog.GetPath().ToStdString();
+        lastConfigDir = openFileDialog.GetDirectory().ToStdString();
         this->_configPathTC->WriteText(configPath);
     }
     else
@@ -135,11 +141,13 @@ void MainFrame::OnLoadConfigButtonClicked(wxCommandEvent &evt)
 
 void MainFrame::OnLoadScriptsButtonClicked(wxCommandEvent &evt)
 {
-    std::string inputPath;
+    std::string filePath;
 
-    if (this->_inputPathTC->GetLineLength(0) == 0)
+    if (this->_scriptsPathTC->GetLineLength(0) == 0)
     {
-        wxFileDialog openFileDialog(this, "Load input scripts .json", "../input", "", "JSON files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+        if (!lastScriptDir.IsEmpty())
+            defaultDir = lastScriptDir;
+        wxFileDialog openFileDialog(this, "Load input scripts .json", defaultDir, "", "JSON files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
         if (openFileDialog.ShowModal() == wxID_CANCEL)
             return; // the user changed idea...
 
@@ -153,17 +161,18 @@ void MainFrame::OnLoadScriptsButtonClicked(wxCommandEvent &evt)
             return;
         }
 
-        inputPath = openFileDialog.GetPath().ToStdString();
-        this->_inputPathTC->WriteText(inputPath);
+        filePath = openFileDialog.GetPath().ToStdString();
+        lastScriptDir = openFileDialog.GetDirectory().ToStdString();
+        this->_scriptsPathTC->WriteText(filePath);
     }
     else
-        inputPath = this->_inputPathTC->GetLineText(0).ToStdString();
+        filePath = this->_scriptsPathTC->GetLineText(0).ToStdString();
 
     wxLogStatus("Loading scripts...");
 
     try
     {
-        this->myDevice->load_input_script_file(inputPath);
+        this->myDevice->load_input_script_file(filePath);
         wxLogStatus("Scripts were loaded successfuly.");
     }
     catch (const ex::CantOpenFile &ex)
@@ -191,4 +200,52 @@ void MainFrame::OnLoadScriptsButtonClicked(wxCommandEvent &evt)
         wxLogMessage("Unknown problem");
         wxLogStatus("Error");
     }
+}
+
+void MainFrame::OnOpenDialogConfigButtonClicked(wxCommandEvent &evt)
+{
+    std::string filePath;
+    if (!lastConfigDir.IsEmpty())
+        defaultDir = lastConfigDir;
+    wxFileDialog openFileDialog(this, "Load config .json", defaultDir, "", "JSON files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
+        return; // the user changed idea...
+
+    // proceed loading the file chosen by the user;
+    // this can be done with e.g. wxWidgets input streams:
+
+    wxFileInputStream input_stream(openFileDialog.GetPath());
+    if (!input_stream.IsOk())
+    {
+        wxLogError("Cannot open file '%s'.", openFileDialog.GetPath());
+        return;
+    }
+
+    filePath = openFileDialog.GetPath().ToStdString();
+    lastConfigDir = openFileDialog.GetDirectory().ToStdString();
+    this->_configPathTC->WriteText(filePath);
+}
+
+void MainFrame::OnOpenDialogScriptsButtonClicked(wxCommandEvent &evt)
+{
+    std::string filePath;
+    if (!lastScriptDir.IsEmpty())
+        defaultDir = lastScriptDir;
+    wxFileDialog openFileDialog(this, "Load scripts .json", defaultDir, "", "JSON files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
+        return; // the user changed idea...
+
+    // proceed loading the file chosen by the user;
+    // this can be done with e.g. wxWidgets input streams:
+
+    wxFileInputStream input_stream(openFileDialog.GetPath());
+    if (!input_stream.IsOk())
+    {
+        wxLogError("Cannot open file '%s'.", openFileDialog.GetPath());
+        return;
+    }
+
+    filePath = openFileDialog.GetPath().ToStdString();
+    lastScriptDir = openFileDialog.GetDirectory().ToStdString();
+    this->_scriptsPathTC->WriteText(filePath);
 }

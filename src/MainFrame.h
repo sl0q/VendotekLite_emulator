@@ -20,11 +20,17 @@ class MainFrame : public wxFrame
 private:
     Device *myDevice;
     wxTextCtrl *_configPathTC;
-    wxTextCtrl *_inputPathTC;
+    wxTextCtrl *_scriptsPathTC;
+
+    wxString defaultDir;
+    wxString lastConfigDir;
+    wxString lastScriptDir;
 
     void OnStartButtonClicked(wxCommandEvent &evt);
     void OnLoadConfigButtonClicked(wxCommandEvent &evt);
     void OnLoadScriptsButtonClicked(wxCommandEvent &evt);
+    void OnOpenDialogConfigButtonClicked(wxCommandEvent &evt);
+    void OnOpenDialogScriptsButtonClicked(wxCommandEvent &evt);
 
 public:
     // MainFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
