@@ -1186,7 +1186,6 @@ const Msg &MessageIR::execute_mfr_classic_write_blocks(const Mifare &mifareMessa
     uint32_t numBlocks = (mfrWriteBlocks.data().length() + BLOCK_SIZE - 1) / BLOCK_SIZE; // number of blocks to write
     for (uint32_t i = 0; i < numBlocks; ++i)
     {
-        std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_block_data(mfrWriteBlocks.start_block() + i) << std::endl;
         size_t startIndex = i * BLOCK_SIZE;
         size_t endIndex = std::min(startIndex + BLOCK_SIZE, mfrWriteBlocks.data().length());
 
@@ -1195,14 +1194,14 @@ const Msg &MessageIR::execute_mfr_classic_write_blocks(const Mifare &mifareMessa
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Auth required"));
             break;
         }
-        std::cout << "Rewrited\n";
-        std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_block_data(mfrWriteBlocks.start_block() + i) << std::endl;
     }
+
+    if (generatedResponce != nullptr)
+        generatedResponce = &generate_responce(SUCCESS);
 
     std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;
-    generatedResponce = &generate_responce(SUCCESS);
     generatedResponce->print_MSG();
 
     return *generatedResponce;
@@ -1363,7 +1362,6 @@ const Msg &MessageIR::execute_mfr_classic_commit_counter(const Mifare &mifareMes
 
     std::cout << "Finised execution.\n\n";
 
-    const Msg &generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
 

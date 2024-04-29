@@ -114,8 +114,8 @@ public:
 
     const std::string get_clear_key_A(uint32_t iSector) const;
     const std::string get_clear_key_B(uint32_t iSector) const;
-    const std::string &get_block_data(uint32_t iBlock) const;
-    int32_t get_block_value(uint32_t iBlock) const;
+    // const std::string &get_block_data(uint32_t iBlock) const;
+    // int32_t get_block_value(uint32_t iBlock) const;
     int32_t get_internal_register() const;
 
     void authorize_sector(uint32_t iSector);
