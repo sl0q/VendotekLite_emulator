@@ -1243,16 +1243,19 @@ const Msg &MessageIR::execute_mfr_classic_set_counter(const Mifare &mifareMessag
 
     auto mfrSetCounter = mifareMessage.mfr_classic_set_counter();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
+    const Msg *generatedResponce = nullptr;
 
-    card->write_value_block(mfrSetCounter.value(), mfrSetCounter.dst_block());
+    if (!card->write_value_block(mfrSetCounter.value(), mfrSetCounter.dst_block()))
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to set counter"));
+    else
+        generatedResponce = &generate_responce(SUCCESS);
 
     std::cout << "Finised execution.\n\n";
 
-    const Msg &generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
-    generatedResponce.print_MSG();
+    generatedResponce->print_MSG();
 
-    return generatedResponce;
+    return *generatedResponce;
 }
 
 const Msg &MessageIR::execute_mfr_classic_modify_counter(const Mifare &mifareMessage, Device &myDevice)
