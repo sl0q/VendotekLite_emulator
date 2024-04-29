@@ -315,13 +315,15 @@ void MifareClassicCard::write_sector(const std::vector<Block *> &newSector, uint
     }
 }
 
-void MifareClassicCard::write_data_block(const std::string &newData, uint32_t iBlock)
+bool MifareClassicCard::write_data_block(const std::string &newData, uint32_t iBlock)
 {
+    // check if sector is authenticated OR is index is out of range
     if (iSector > this->memorySectors.size())
-        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map");
+        return false;
     if (iBlock > this->memorySectors[iSector].size())
-        throw std::out_of_range("Provided memory block index is out of range of mifare card memory map");
+        return false;
 
+    //  check if the block is a value block
     if (this->memorySectors[iSector][iBlock]->is_value())
     {
         delete this->memorySectors[iSector][iBlock];
@@ -329,22 +331,23 @@ void MifareClassicCard::write_data_block(const std::string &newData, uint32_t iB
     }
     else
     {
+        //  reinit block as a regular block
         dynamic_cast<ByteBlock *>(this->memorySectors[iSector][iBlock])->set_data(newData);
     }
+    return true;
 }
 
-void MifareClassicCard::write_value_block(int32_t newValue, uint32_t iBlock)
+bool MifareClassicCard::write_value_block(int32_t newValue, uint32_t iBlock)
 {
     if (iSector > this->memorySectors.size())
-        throw std::out_of_range("Memory sector " + std::to_string(iSector) + " is unauthorized or located outside of range of mifare card memory map");
+        return false;
     if (iBlock > this->memorySectors[iSector].size())
-        throw std::out_of_range("Provided memory block index is out of range of mifare card memory map");
+        return false;
 
     //  check if the block is a value block
     if (this->memorySectors[iSector][iBlock]->is_value())
     {
-        auto ffsPointer = this->memorySectors[iSector][iBlock];
-        dynamic_cast<ValueBlock *>(ffsPointer)->set_value(newValue);
+        dynamic_cast<ValueBlock *>(this->memorySectors[iSector][iBlock])->set_value(newValue);
     }
     else
     {
@@ -352,6 +355,7 @@ void MifareClassicCard::write_value_block(int32_t newValue, uint32_t iBlock)
         delete this->memorySectors[iSector][iBlock];
         this->memorySectors[iSector][iBlock] = new ValueBlock(newValue);
     }
+    return true;
 }
 
 void MifareClassicCard::set_internal_register(int32_t value)

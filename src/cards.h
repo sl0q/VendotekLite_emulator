@@ -108,8 +108,8 @@ public:
     void fill_memory(const std::vector<std::vector<Block *>> &newData);
     void fill_empty_memory();
     void write_sector(const std::vector<Block *> &newSector, uint32_t iSector);
-    void write_data_block(const std::string &newData, uint32_t iBlock);
-    void write_value_block(int32_t newValue, uint32_t iBlock);
+    bool write_data_block(const std::string &newData, uint32_t iBlock);
+    bool write_value_block(int32_t newValue, uint32_t iBlock);
     void set_internal_register(int32_t value);
 
     const std::string get_clear_key_A(uint32_t iSector) const;

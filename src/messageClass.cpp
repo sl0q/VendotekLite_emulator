@@ -1182,13 +1182,19 @@ const Msg &MessageIR::execute_mfr_classic_write_blocks(const Mifare &mifareMessa
     auto mfrWriteBlocks = mifareMessage.mfr_classic_write_blocks();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
 
-    uint32_t numBlocks = (mfrWriteBlocks.data().length() + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    const Msg *generatedResponce = nullptr;
+    uint32_t numBlocks = (mfrWriteBlocks.data().length() + BLOCK_SIZE - 1) / BLOCK_SIZE; // number of blocks to write
     for (uint32_t i = 0; i < numBlocks; ++i)
     {
         std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_block_data(mfrWriteBlocks.start_block() + i) << std::endl;
         size_t startIndex = i * BLOCK_SIZE;
         size_t endIndex = std::min(startIndex + BLOCK_SIZE, mfrWriteBlocks.data().length());
-        card->write_data_block(mfrWriteBlocks.data().substr(startIndex, endIndex - startIndex), mfrWriteBlocks.start_block() + i);
+
+        if (!card->write_data_block(mfrWriteBlocks.data().substr(startIndex, endIndex - startIndex), mfrWriteBlocks.start_block() + i))
+        {
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to write block"));
+            break;
+        }
         std::cout << "Rewrited\n";
         std::cout << "Block " << mfrWriteBlocks.start_block() + i << ": " << card->get_block_data(mfrWriteBlocks.start_block() + i) << std::endl;
     }
@@ -1196,10 +1202,10 @@ const Msg &MessageIR::execute_mfr_classic_write_blocks(const Mifare &mifareMessa
     std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;
-    const Msg &generatedResponce = generate_responce(SUCCESS);
-    generatedResponce.print_MSG();
+    generatedResponce = &generate_responce(SUCCESS);
+    generatedResponce->print_MSG();
 
-    return generatedResponce;
+    return *generatedResponce;
 }
 
 const Msg &MessageIR::execute_mfr_classic_get_counter(const Mifare &mifareMessage, Device &myDevice)
