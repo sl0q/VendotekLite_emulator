@@ -57,8 +57,12 @@
                     "message": "SVIACQcFAUIECAEQAVWe"
                 },
                 {
-                    "comment": "commit value from internal register to block 2",
+                    "comment": "commit value from internal register to block 2 (which is not counter)",
                     "message": "SVIABwkFAVICCAJcSA=="
+                },
+                {
+                    "comment": "commit value from internal register to block 1 (which is counter)",
+                    "message": "SVIABwkFAVICCAFsKw=="
                 }
             ]
         }

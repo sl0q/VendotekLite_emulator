@@ -185,6 +185,7 @@ void Script::parse_card(json cardJson)
         newCard = new SmartWithMifareCard();
         dynamic_cast<SmartWithMifareCard *>(newCard)->set_allocated_iso(newIsoCard);
         dynamic_cast<SmartWithMifareCard *>(newCard)->set_allocated_mifare(newMifareCard);
+
         break;
     }
     case contactless::token_type::SMART_MX_WITH_MIFARE_4K:
@@ -441,8 +442,11 @@ Step::~Step()
 
 const std::string Step::str() const
 {
-    std::string s = "Message:\n";
-    s += this->origMsg + "\n";
+    std::string s = "Messages:\n";
+    if (this->messageIR != nullptr)
+        s += this->messageIR->str() + "\n";
+    for (auto &message : messagesIR)
+        s += message->str() + "\n";
     // инфа о сообщении
     // ...
     // s += "\t" + messageIR->str() + "\n";

@@ -226,7 +226,7 @@ MifareClassicCard::MifareClassicCard(const MifareClassicCard &otherCard)
     // init new
     for (auto &otherSector : otherCard.memorySectors)
     {
-        this->memorySectors.push_back(*(new std::vector<Block *>));
+        this->memorySectors.push_back(std::vector<Block *>());
         for (auto &otherBlock : otherSector)
         {
             if (otherBlock->is_value())
@@ -436,10 +436,20 @@ void MifareClassicCard::reset_sector()
 
 const std::string MifareClassicCard::str() const
 {
-    return std::string("TokenType: " + contactless::token_type::TokenType_Name(this->token->type()) + "\n" +
-                       "TokenID: " + this->token->id() + "\n" +
-                       "ATQA: " + this->token->atqa() + "\n" +
-                       "SAK: " + this->token->sak() + "\n");
+    std::stringstream buf(ContactlessCard::str(), std::ios::app | std::ios::out);
+
+    buf << "Memory:" << std::endl;
+
+    int iSector = 0;
+    for (auto &sector : memorySectors)
+    {
+        buf << "\tSector #" << iSector++ << ":\n";
+        int iBlock = 0;
+        for (auto &block : sector)
+            buf << "\t\tBlock #" << iBlock++ << ": " << block->get_data() << std::endl;
+    }
+
+    return buf.str();
 }
 
 SmartWithMifareCard::SmartWithMifareCard()

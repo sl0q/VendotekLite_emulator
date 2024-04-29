@@ -218,7 +218,7 @@ void MessageIR::add_action(Action &newAction)
 
 const std::string MessageIR::str() const
 {
-    return "executed message information here";
+    return this->msg->DebugString();
 }
 
 bool MessageIR::execute_misc(Device &myDevice)
@@ -973,97 +973,96 @@ bool MessageIR::execute_mifare(Device &myDevice)
         //  Classic
     case Mifare::kMfrClassicAuthOnClearKey:
         responce = &execute_mfr_classic_auth_on_clear_key(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrClassicAuthOnSamKey:
         responce = &execute_mfr_classic_auth_on_sam_key(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrClassicReadBlocks:
         responce = &execute_mfr_classic_read_blocks(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrClassicWriteBlocks:
         responce = &execute_mfr_classic_write_blocks(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrClassicGetCounter:
         responce = &execute_mfr_classic_get_counter(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrClassicSetCounter:
         responce = &execute_mfr_classic_set_counter(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrClassicModifyCounter:
         responce = &execute_mfr_classic_modify_counter(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrClassicCopyCounter:
         responce = &execute_mfr_classic_copy_counter(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrClassicCommitCounter:
         responce = &execute_mfr_classic_commit_counter(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrClassicBulkOperation:
         responce = &execute_mfr_classic_bulk_operation(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
 
         // Ultralight
     case Mifare::kMfrUlReadPages:
         responce = &execute_mfr_ul_read_pages(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrUlWritePages:
         responce = &execute_mfr_ul_write_pages(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrUlGetVersion:
         responce = &execute_mfr_ul_get_version(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrUlGetCounter:
         responce = &execute_mfr_ul_get_counter(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrUlIncrementCounter:
         responce = &execute_mfr_ul_increment_counter(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrUlBulkOperation:
         responce = &execute_mfr_ul_bulk_operation(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrUlAuthOnClearKey:
         responce = &execute_mfr_ul_auth_on_clear_key(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrUlAuthOnSamKey:
         responce = &execute_mfr_ul_auth_on_sam_key(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrUlAuthClearPassword:
         responce = &execute_mfr_ul_auth_clear_password(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
     case Mifare::kMfrUlAuthSamPassword:
         responce = &execute_mfr_ul_auth_sam_password(mifareMessage, myDevice);
-        res = responce->is_failure();
+        res = !responce->is_failure();
         break;
 
     default:
         res = false;
         std::ostringstream errorMessage;
-        errorMessage << "Failed to execute [Mifare] command message. Unrecognised [command]."
+        errorMessage << "Unrecognised [command]."
                      << "\nMSG_ID: " << std::to_string(this->msgID)
                      << "\nmifare_cmd_case: " << std::to_string(mifareMessage.mifare_cmd_case());
         Msg generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage.str()));
         std::cout << "Generated responce:" << std::endl;
         generatedResponce.print_MSG();
-        throw ex::FailedExecution(errorMessage.str());
     }
 
     if (responce != nullptr)
@@ -1090,7 +1089,13 @@ const Msg &MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifare
     }
     else
     {
+
+        // auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
         auto card = myDevice.get_card_in_field();
+
+        if (card->get_card_token()->type() == contactless::token_type::SMART_MX_WITH_MIFARE_1K ||
+            card->get_card_token()->type() == contactless::token_type::SMART_MX_WITH_MIFARE_4K)
+            card = &dynamic_cast<SmartWithMifareCard *>(card)->get_mifare_token();
 
         switch (mfrAuth.key_type())
         {
@@ -1107,7 +1112,7 @@ const Msg &MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifare
             }
             break;
         case mifare::classic::auth::TYPE_B:
-            if (dynamic_cast<const MifareClassicCard *>(card)->get_clear_key_B(mfrAuth.sector_number()) != mfrAuth.clear_key())
+            if (dynamic_cast<MifareClassicCard *>(card)->get_clear_key_B(mfrAuth.sector_number()) != mfrAuth.clear_key())
             {
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Mismatch of clear key type_b"));
             }
@@ -1196,7 +1201,7 @@ const Msg &MessageIR::execute_mfr_classic_write_blocks(const Mifare &mifareMessa
         }
     }
 
-    if (generatedResponce != nullptr)
+    if (generatedResponce == nullptr)
         generatedResponce = &generate_responce(SUCCESS);
 
     std::cout << "Finised execution.\n\n";
