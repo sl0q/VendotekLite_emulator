@@ -1157,7 +1157,7 @@ const Msg &MessageIR::execute_mfr_classic_read_blocks(const Mifare &mifareMessag
         //  if reading failed
         if (block == nullptr)
         {
-            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to read block"));
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Auth required"));
             break;
         }
         // else
@@ -1192,7 +1192,7 @@ const Msg &MessageIR::execute_mfr_classic_write_blocks(const Mifare &mifareMessa
 
         if (!card->write_data_block(mfrWriteBlocks.data().substr(startIndex, endIndex - startIndex), mfrWriteBlocks.start_block() + i))
         {
-            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to write block"));
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Auth required"));
             break;
         }
         std::cout << "Rewrited\n";
@@ -1219,7 +1219,7 @@ const Msg &MessageIR::execute_mfr_classic_get_counter(const Mifare &mifareMessag
 
     auto block = card->read_block(mfrGetCounter.src_block());
     if (block == nullptr)
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to read block"));
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Auth required"));
     else if (!block->is_value())
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
     else
@@ -1246,7 +1246,7 @@ const Msg &MessageIR::execute_mfr_classic_set_counter(const Mifare &mifareMessag
     const Msg *generatedResponce = nullptr;
 
     if (!card->write_value_block(mfrSetCounter.value(), mfrSetCounter.dst_block()))
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to set counter"));
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Auth required"));
     else
         generatedResponce = &generate_responce(SUCCESS);
 
@@ -1269,7 +1269,7 @@ const Msg &MessageIR::execute_mfr_classic_modify_counter(const Mifare &mifareMes
 
     auto block = card->read_block(mfrModCounter.src_block());
     if (block == nullptr)
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to mod block"));
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Auth required"));
     else if (!block->is_value())
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
     else
@@ -1310,7 +1310,7 @@ const Msg &MessageIR::execute_mfr_classic_copy_counter(const Mifare &mifareMessa
 
     auto block = card->read_block(mfrCopyCounter.src_block());
     if (block == nullptr)
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to copy block"));
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Auth required"));
     else if (!block->is_value())
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
     else
