@@ -1133,7 +1133,7 @@ const Msg &MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifare
 const Msg &MessageIR::execute_mfr_classic_auth_on_sam_key(const Mifare &mifareMessage, Device &myDevice)
 {
     std::string errorMessage("Command [mfr_classic_auth_on_sam_key] of module [Mifare] is not supported. MSG_ID: " + std::to_string(this->msgID));
-    const Msg &generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, errorMessage));
+    const Msg &generatedResponce = generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_FEATURE, errorMessage));
     std::cout << "Generated responce:" << std::endl;
     generatedResponce.print_MSG();
 
@@ -1331,20 +1331,36 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
         {
         case mifare::classic::bulk::Command::kAuthOnClearKey:
         {
-            std::cout << "[auth_on_clear]\n"
+            std::cout << "[auth_on_clear_key]\n"
                       << operation.auth_on_clear_key().DebugString() << std::endl;
             //  extract mifare command from operation and pass it to exe method
             auto tempMifare = new Mifare();
             auto tempCommand = new mifare::classic::auth::ClearKey(operation.auth_on_clear_key());
             tempMifare->set_allocated_mfr_classic_auth_on_clear_key(tempCommand);
-            execute_mfr_classic_auth_on_clear_key(*tempMifare, myDevice);
+            auto responce = execute_mfr_classic_auth_on_clear_key(*tempMifare, myDevice);
 
             delete tempMifare;
+
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
             break;
         }
         case mifare::classic::bulk::Command::kAuthOnSamKey:
         {
-            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_FEATURE, "No physical card slot"));
+            std::cout << "[auth_on_sam_key]\n"
+                      << operation.auth_on_sam_key().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::classic::auth::SamKey(operation.auth_on_sam_key());
+            tempMifare->set_allocated_mfr_classic_auth_on_sam_key(tempCommand);
+            auto responce = execute_mfr_classic_auth_on_sam_key(*tempMifare, myDevice);
+
+            delete tempMifare;
+
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
             break;
         }
         case mifare::classic::bulk::Command::kReadBlocks:
@@ -1357,6 +1373,14 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
             tempMifare->set_allocated_mfr_classic_read_blocks(tempCommand);
             auto responce = execute_mfr_classic_read_blocks(*tempMifare, myDevice);
 
+            delete tempMifare;
+
+            if (responce.is_failure())
+            {
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+                break;
+            }
+
             // get read data from responce of exe method
             auto commandResult = results->add_results();
             auto newBlocks = new mifare::classic::read::Blocks();
@@ -1364,7 +1388,6 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
 
             newBlocks->set_data(dynamic_cast<const mifare::classic::read::Blocks *>(responce.get_payload().get_responce_msg())->data());
 
-            delete tempMifare;
             break;
         }
         case mifare::classic::bulk::Command::kWriteBlocks:
@@ -1375,9 +1398,13 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
             auto tempMifare = new Mifare();
             auto tempCommand = new mifare::classic::write::WriteBlocks(operation.write_blocks());
             tempMifare->set_allocated_mfr_classic_write_blocks(tempCommand);
-            execute_mfr_classic_write_blocks(*tempMifare, myDevice);
+            auto responce = execute_mfr_classic_write_blocks(*tempMifare, myDevice);
 
             delete tempMifare;
+
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
             break;
         }
         case mifare::classic::bulk::Command::kGetCounter:
@@ -1389,6 +1416,8 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
             auto tempCommand = new mifare::classic::counter::get::GetCounter(operation.get_counter());
             tempMifare->set_allocated_mfr_classic_get_counter(tempCommand);
             auto responce = execute_mfr_classic_get_counter(*tempMifare, myDevice);
+
+            delete tempMifare;
 
             //  if failed return error
             if (responce.is_failure())
@@ -1403,7 +1432,6 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
             commandResult->set_allocated_get_counter(newCounter);
             newCounter->set_value(dynamic_cast<const mifare::classic::counter::get::Counter *>(responce.get_payload().get_responce_msg())->value());
 
-            delete tempMifare;
             break;
         }
         case mifare::classic::bulk::Command::kSetCounter:
@@ -1414,9 +1442,13 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
             auto tempMifare = new Mifare();
             auto tempCommand = new mifare::classic::counter::set::SetCounter(operation.set_counter());
             tempMifare->set_allocated_mfr_classic_set_counter(tempCommand);
-            execute_mfr_classic_set_counter(*tempMifare, myDevice);
+            auto responce = execute_mfr_classic_set_counter(*tempMifare, myDevice);
 
             delete tempMifare;
+
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
             break;
         }
         case mifare::classic::bulk::Command::kModifyCounter:
@@ -1427,9 +1459,13 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
             auto tempMifare = new Mifare();
             auto tempCommand = new mifare::classic::counter::modify::ModifyCounter(operation.modify_counter());
             tempMifare->set_allocated_mfr_classic_modify_counter(tempCommand);
-            execute_mfr_classic_modify_counter(*tempMifare, myDevice);
+            auto responce = execute_mfr_classic_modify_counter(*tempMifare, myDevice);
 
             delete tempMifare;
+
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
             break;
         }
         case mifare::classic::bulk::Command::kCopyCounter:
@@ -1440,9 +1476,13 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
             auto tempMifare = new Mifare();
             auto tempCommand = new mifare::classic::counter::copy::CopyCounter(operation.copy_counter());
             tempMifare->set_allocated_mfr_classic_copy_counter(tempCommand);
-            execute_mfr_classic_copy_counter(*tempMifare, myDevice);
+            auto responce = execute_mfr_classic_copy_counter(*tempMifare, myDevice);
 
             delete tempMifare;
+
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
             break;
         }
         case mifare::classic::bulk::Command::kCommitCounter:
@@ -1453,9 +1493,13 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
             auto tempMifare = new Mifare();
             auto tempCommand = new mifare::classic::counter::commit::CommitCounter(operation.commit_counter());
             tempMifare->set_allocated_mfr_classic_commit_counter(tempCommand);
-            execute_mfr_classic_commit_counter(*tempMifare, myDevice);
+            auto responce = execute_mfr_classic_commit_counter(*tempMifare, myDevice);
 
             delete tempMifare;
+
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
             break;
         }
         default:
