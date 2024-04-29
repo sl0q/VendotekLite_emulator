@@ -1265,22 +1265,35 @@ const Msg &MessageIR::execute_mfr_classic_modify_counter(const Mifare &mifareMes
     auto mfrModCounter = mifareMessage.mfr_classic_modify_counter();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
 
-    int32_t counterValue = card->get_block_value(mfrModCounter.src_block());
+    const Msg *generatedResponce = nullptr;
 
-    counterValue += mfrModCounter.operand();
-
-    if (mfrModCounter.has_dst_block())
-        card->write_value_block(counterValue, mfrModCounter.dst_block());
+    auto block = card->read_block(mfrModCounter.src_block());
+    if (block == nullptr)
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to mod block"));
+    else if (!block->is_value())
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
     else
-        card->set_internal_register(counterValue);
+    {
+        int counterValue;
+        counterValue = dynamic_cast<const ValueBlock *>(block)->get_value();
+        counterValue += mfrModCounter.operand();
+        if (mfrModCounter.has_dst_block())
+        {
+            if (!card->write_value_block(counterValue, mfrModCounter.dst_block()))
+                generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Failed to mod block"));
+        }
+        else
+            card->set_internal_register(counterValue);
+
+        generatedResponce = &generate_responce(SUCCESS);
+    }
 
     std::cout << "Finised execution.\n\n";
 
-    const Msg &generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
-    generatedResponce.print_MSG();
+    generatedResponce->print_MSG();
 
-    return generatedResponce;
+    return *generatedResponce;
 }
 
 const Msg &MessageIR::execute_mfr_classic_copy_counter(const Mifare &mifareMessage, Device &myDevice)
