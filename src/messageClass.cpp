@@ -1346,15 +1346,28 @@ const Msg &MessageIR::execute_mfr_classic_commit_counter(const Mifare &mifareMes
     auto mfrCommitCounter = mifareMessage.mfr_classic_commit_counter();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
 
-    card->write_value_block(card->get_internal_register(), mfrCommitCounter.dst_block());
+    const Msg *generatedResponce = nullptr;
+
+    auto block = card->read_block(mfrCommitCounter.dst_block());
+    if (block == nullptr)
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Auth required"));
+    else if (!block->is_value())
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
+    else
+    {
+        if (!card->write_value_block(card->get_internal_register(), mfrCommitCounter.dst_block()))
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Failed to commit block"));
+        else
+            generatedResponce = &generate_responce(SUCCESS);
+    }
 
     std::cout << "Finised execution.\n\n";
 
     const Msg &generatedResponce = generate_responce(SUCCESS);
     std::cout << "Generated responce:" << std::endl;
-    generatedResponce.print_MSG();
+    generatedResponce->print_MSG();
 
-    return generatedResponce;
+    return *generatedResponce;
 }
 
 const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMessage, Device &myDevice)
