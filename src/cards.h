@@ -173,7 +173,7 @@ protected:
 public:
     Block();
     ~Block();
-    bool is_value();
+    bool is_value() const;
 
     virtual const std::string get_data() const = 0;
 

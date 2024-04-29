@@ -1214,22 +1214,21 @@ const Msg &MessageIR::execute_mfr_classic_get_counter(const Mifare &mifareMessag
 
     auto mfrGetCounter = mifareMessage.mfr_classic_get_counter();
     auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
-    int counter;
 
     const Msg *generatedResponce = nullptr;
-    try
-    {
-        counter = card->get_block_value(mfrGetCounter.src_block());
-    }
-    catch (const ex::BadType &ex)
-    {
-        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
-    }
 
-    if (generatedResponce == nullptr)
+    auto block = card->read_block(mfrGetCounter.src_block());
+    if (block == nullptr)
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::MFC_AUTHENTICATION_ERROR, "Failed to read block"));
+    else if (!block->is_value())
+        generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::CONFIGURATION_ERROR, "Block is not a counter"));
+    else
     {
+        int counter;
+        counter = dynamic_cast<const ValueBlock *>(block)->get_value();
         generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_get_counter_payload(counter));
     }
+
     std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;

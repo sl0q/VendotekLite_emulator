@@ -545,7 +545,7 @@ Block::~Block()
 {
 }
 
-bool Block::is_value()
+bool Block::is_value() const
 {
     return isValue;
 }
