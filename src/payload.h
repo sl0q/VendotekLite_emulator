@@ -11,11 +11,12 @@ class Payload
 private:
     std::string debugString;
     std::vector<uint8_t> data;
-    const google::protobuf::Message *responceMsg = nullptr;
+    google::protobuf::Message *responceMsg = nullptr;
 
 public:
     Payload();
     Payload(google::protobuf::Message *newResponceData);
+    Payload(const Payload &otherPayload);
     ~Payload();
 
     const std::string &get_debug_string() const;

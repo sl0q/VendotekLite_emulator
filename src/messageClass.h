@@ -111,7 +111,7 @@ private:
     const Msg &execute_mfr_ul_get_version(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_get_counter(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_increment_counter(const Mifare &mifareMessage, Device &myDevice);
-    // const Msg &execute_mfr_ul_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
+    const Msg &execute_mfr_ul_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_auth_on_sam_key(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice);
@@ -148,6 +148,7 @@ private:
     const Payload &generate_mfr_ul_get_counter_payload(uint32_t counterValue);
     const Payload &generate_mfr_ul_get_version_payload(const std::string &version);
     const Payload &generate_mfr_ul_auth_clear_password_payload(const std::string &newPack);
+    const Payload &generate_mfr_ul_bulk_operation_payload(mifare::ultralight::bulk::BulkResult &results);
 
     const Msg &generate_responce(uint8_t responseType, const Payload &generatedPayload = Payload());
 

@@ -1033,10 +1033,10 @@ bool MessageIR::execute_mifare(Device &myDevice)
         responce = &execute_mfr_ul_increment_counter(mifareMessage, myDevice);
         res = responce->is_failure();
         break;
-    // case Mifare::kMfrUlBulkOperation:
-    //     responce = &execute_mfr_ul_bulk_operation(mifareMessage, myDevice);
-    // res = responce->is_failure();
-    //     break;
+    case Mifare::kMfrUlBulkOperation:
+        responce = &execute_mfr_ul_bulk_operation(mifareMessage, myDevice);
+        res = responce->is_failure();
+        break;
     case Mifare::kMfrUlAuthOnClearKey:
         responce = &execute_mfr_ul_auth_on_clear_key(mifareMessage, myDevice);
         res = responce->is_failure();
@@ -1322,7 +1322,6 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
     std::cout << "Executing [mfr_classic_bulk_operation]...\n\n";
 
     auto mfrBulk = mifareMessage.mfr_classic_bulk_operation();
-    auto card = dynamic_cast<MifareClassicCard *>(myDevice.get_card_in_field());
     const Msg *generatedResponce = nullptr;
     auto results = new mifare::classic::bulk::BulkResult();
 
@@ -1462,14 +1461,17 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
         default:
         {
             // failure UNSUPPORTED COMMAND
-            std::cout << "unsopported command" << std::endl;
+            std::cout << "Unsupported command" << std::endl;
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, "Bulk operation has unsupported command"));
         }
         }
 
         //  if failure responce already was generated (failure occurred): exit loop
         if (generatedResponce != nullptr)
+        {
+            delete results;
             break;
+        }
     }
 
     //  if there was no failure
@@ -1516,12 +1518,14 @@ const Msg &MessageIR::execute_mfr_ul_read_pages(const Mifare &mifareMessage, Dev
 
     //  if failure didn't occurred
     if (generatedResponce == nullptr)
-        generatedResponce = &generate_responce(SUCCESS, generate_mfr_classic_read_blocks_payload(readData));
+        generatedResponce = &generate_responce(SUCCESS, generate_mfr_ul_read_pages_payload(readData));
 
     std::cout << "Finised execution.\n\n";
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
+
+    // delete generatedResponce;
 
     return *generatedResponce;
 }
@@ -1696,6 +1700,213 @@ const Msg &MessageIR::execute_mfr_ul_increment_counter(const Mifare &mifareMessa
     return *generatedResponce;
 }
 
+const Msg &MessageIR::execute_mfr_ul_bulk_operation(const Mifare &mifareMessage, Device &myDevice)
+{
+    std::cout << "Executing [mfr_ul_bulk_operation]...\n\n";
+
+    auto mfrBulk = mifareMessage.mfr_ul_bulk_operation();
+    const Msg *generatedResponce = nullptr;
+    auto results = new mifare::ultralight::bulk::BulkResult(); //  no need to delete this one, since it will be passed to generatedResponce
+
+    for (auto &operation : mfrBulk.operations())
+    {
+        switch (operation.MfrCmd_case())
+        {
+        case mifare::ultralight::bulk::Command::kReadPages:
+        {
+            std::cout << "[read_pages]\n"
+                      << operation.read_pages().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::ultralight::read::ReadPages(operation.read_pages());
+            tempMifare->set_allocated_mfr_ul_read_pages(tempCommand);
+            auto responce = execute_mfr_ul_read_pages(*tempMifare, myDevice);
+
+            delete tempMifare;
+
+            //  if failed - return error
+            if (responce.is_failure())
+            {
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+                break;
+            }
+
+            // get read data from responce of exe method
+            auto commandResult = results->add_results();
+            auto newPages = new mifare::ultralight::read::Pages();
+            commandResult->set_allocated_pages(newPages);
+            newPages->set_data(dynamic_cast<const mifare::ultralight::read::Pages *>(responce.get_payload().get_responce_msg())->data());
+
+            break;
+        }
+        case mifare::ultralight::bulk::Command::kWritePages:
+        {
+            std::cout << "[write_pages]\n"
+                      << operation.write_pages().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::ultralight::write::WritePages(operation.write_pages());
+            tempMifare->set_allocated_mfr_ul_write_pages(tempCommand);
+            auto responce = execute_mfr_ul_write_pages(*tempMifare, myDevice);
+
+            delete tempMifare;
+
+            //  if failed - return error
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
+            break;
+        }
+        case mifare::ultralight::bulk::Command::kGetCounter:
+        {
+            std::cout << "[get_counter]\n"
+                      << operation.get_counter().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::ultralight::counter::get::GetCounter(operation.get_counter());
+            tempMifare->set_allocated_mfr_ul_get_counter(tempCommand);
+            auto responce = execute_mfr_ul_get_counter(*tempMifare, myDevice);
+
+            delete tempMifare;
+
+            //  if failed - return error
+            if (responce.is_failure())
+            {
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+                break;
+            }
+
+            // else
+            //   get counter value from responce of exe method
+            auto commandResult = results->add_results();
+            auto newCounterValue = new mifare::ultralight::counter::get::CounterValue();
+            commandResult->set_allocated_counter_value(newCounterValue);
+            newCounterValue->set_value(dynamic_cast<const mifare::ultralight::counter::get::CounterValue *>(responce.get_payload().get_responce_msg())->value());
+
+            break;
+        }
+        case mifare::ultralight::bulk::Command::kIncrementCounter:
+        {
+            std::cout << "[increment_counter]\n"
+                      << operation.increment_counter().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::ultralight::counter::increment::IncrementCounter(operation.increment_counter());
+            tempMifare->set_allocated_mfr_ul_increment_counter(tempCommand);
+            auto responce = execute_mfr_ul_increment_counter(*tempMifare, myDevice);
+
+            delete tempMifare;
+
+            //  if failed - return error
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
+            break;
+        }
+        case mifare::ultralight::bulk::Command::kAuthOnClearKey:
+        {
+            std::cout << "[auth_on_clear_key]\n"
+                      << operation.auth_on_clear_key().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::ultralight::auth::ClearKey(operation.auth_on_clear_key());
+            tempMifare->set_allocated_mfr_ul_auth_on_clear_key(tempCommand);
+            auto responce = execute_mfr_ul_auth_on_clear_key(*tempMifare, myDevice);
+
+            delete tempMifare;
+
+            //  if failed - return error
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
+            break;
+        }
+        case mifare::ultralight::bulk::Command::kAuthOnSamKey:
+        {
+            std::cout << "[auth_on_sam_key]\n"
+                      << operation.auth_on_sam_key().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::ultralight::auth::SamKey(operation.auth_on_sam_key());
+            tempMifare->set_allocated_mfr_ul_auth_on_sam_key(tempCommand);
+            auto responce = execute_mfr_ul_auth_on_sam_key(*tempMifare, myDevice);
+
+            delete tempMifare;
+
+            //  if failed - return error (it will fail anyway)
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
+            break;
+        }
+        case mifare::ultralight::bulk::Command::kAuthClearPassword:
+        {
+            std::cout << "[auth_clear_password]\n"
+                      << operation.auth_clear_password().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::ultralight::password::ClearPassword(operation.auth_clear_password());
+            tempMifare->set_allocated_mfr_ul_auth_clear_password(tempCommand);
+            auto responce = execute_mfr_ul_auth_clear_password(*tempMifare, myDevice);
+
+            delete tempMifare;
+
+            //  if failed - return error
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
+            //  bulk operation results don't need PACK value
+
+            break;
+        }
+        case mifare::ultralight::bulk::Command::kAuthSamPassword:
+        {
+            std::cout << "[auth_sam_password]\n"
+                      << operation.auth_sam_password().DebugString() << std::endl;
+            //  extract mifare command from operation and pass it to exe method
+            auto tempMifare = new Mifare();
+            auto tempCommand = new mifare::ultralight::password::SamPassword(operation.auth_sam_password());
+            tempMifare->set_allocated_mfr_ul_auth_sam_password(tempCommand);
+            auto responce = execute_mfr_ul_auth_sam_password(*tempMifare, myDevice);
+
+            delete tempMifare;
+
+            //  if failed - return error
+            if (responce.is_failure())
+                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+
+            //  bulk operation results don't need PACK value
+
+            break;
+        }
+        default:
+        {
+            // failure UNSUPPORTED COMMAND
+            std::cout << "Unsupported command" << std::endl;
+            generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::UNSUPPORTED_COMMAND, "Bulk operation has unsupported command"));
+        }
+        }
+
+        //  if failure responce already was generated (failure occurred): exit loop
+        if (generatedResponce != nullptr)
+        {
+            delete results;
+            break;
+        }
+    }
+
+    //  if there was no failure
+    if (generatedResponce == nullptr)
+        generatedResponce = &generate_responce(SUCCESS, generate_mfr_ul_bulk_operation_payload(*results));
+
+    std::cout << "Finised execution.\n\n";
+
+    std::cout << "Generated responce:" << std::endl;
+    generatedResponce->print_MSG();
+
+    return *generatedResponce;
+}
+
 const Msg &MessageIR::execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice)
 {
     std::cout << "Executing [mfr_ul_auth_on_clear_key]...\n\n";
@@ -1798,9 +2009,10 @@ const Payload &MessageIR::generate_failure_payload(common::failure::Error errorT
     if (!errorString.empty())
         failureResponce->set_error_string(errorString);
 
-    Payload &generatedPayload = *(new Payload(failureResponce));
+    Payload *generatedPayload = new Payload(failureResponce);
+    // Payload &generatedPayload = *(new Payload(failureResponce));
 
-    return generatedPayload;
+    return *generatedPayload;
 }
 
 const Payload &MessageIR::generate_log_notification_payload(common::notification::LogMessage_Importance importance, const std::string msgString)
@@ -2050,6 +2262,13 @@ const Payload &MessageIR::generate_mfr_ul_auth_clear_password_payload(const std:
     pack->set_password_ack(newPack);
 
     Payload &generatedPayload = *(new Payload(pack));
+
+    return generatedPayload;
+}
+
+const Payload &MessageIR::generate_mfr_ul_bulk_operation_payload(mifare::ultralight::bulk::BulkResult &results)
+{
+    Payload &generatedPayload = *(new Payload(&results));
 
     return generatedPayload;
 }

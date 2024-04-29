@@ -7,7 +7,7 @@ Msg::Msg()
 Msg::Msg(const Payload &newPayload, const std::vector<uint8_t> &newMsgBytes, bool isFailure)
 {
     this->isFailure = isFailure;
-    this->payload = newPayload;
+    this->payload = *(new Payload(newPayload));
     this->msgBytes = newMsgBytes;
     this->encodedMsgBytes = bs64::base64_encode(newMsgBytes);
 }

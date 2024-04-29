@@ -13,6 +13,22 @@ Payload::Payload(google::protobuf::Message *newResponceData)
     this->debugString = newResponceData->DebugString();
 }
 
+Payload::Payload(const Payload &otherPayload)
+{
+    this->debugString = otherPayload.debugString;
+    this->data = otherPayload.data;
+
+    if (this->responceMsg != nullptr)
+        delete this->responceMsg;
+    this->responceMsg = nullptr;
+
+    if (otherPayload.responceMsg != nullptr) //  check if otherPayload is empty
+    {
+        this->responceMsg = otherPayload.responceMsg->New();
+        this->responceMsg->CopyFrom(*otherPayload.responceMsg);
+    }
+}
+
 Payload::~Payload()
 {
     if (responceMsg != nullptr)
