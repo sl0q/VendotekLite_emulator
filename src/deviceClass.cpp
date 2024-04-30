@@ -244,7 +244,7 @@ void Device::load_config(std::string configFilePath)
     this->configFilePath = configFilePath;
 }
 
-void Device::load_input_script_file(std::string inputScriptFilePath)
+std::vector<std::string> Device::load_input_script_file(std::string inputScriptFilePath)
 {
     this->inputFilePath = inputScriptFilePath;
 
@@ -272,6 +272,8 @@ void Device::load_input_script_file(std::string inputScriptFilePath)
         std::cout << "Old scripts were deleted.\n";
     }
 
+    std::vector<std::string> scriptTitles;
+
     for (const auto &scriptJson : json_content["scripts"])
     {
         std::string newTitle;
@@ -280,6 +282,7 @@ void Device::load_input_script_file(std::string inputScriptFilePath)
         else
             newTitle = "Unnamed script";
 
+        scriptTitles.push_back(newTitle);
         auto newScript = new Script(newTitle);
 
         // adding cards
@@ -309,6 +312,8 @@ void Device::load_input_script_file(std::string inputScriptFilePath)
 
     std::cout << "Scripts were successfuly loaded." << std::endl;
     this->inputFilePath = inputScriptFilePath;
+
+    return scriptTitles;
 }
 
 misc::lwip::ProtocolStats *Device::parseProtocolStatsJson(json &protocolStatsJson, const std::string protocolStatsName)
@@ -393,21 +398,25 @@ void Device::_print_scripts()
     }
 }
 
-void Device::execute_scripts()
+void Device::execute_scripts(std::ostream &logStream)
 {
     if (this->scripts.size() == 0)
     {
         std::cout << "No scripts are available" << std::endl;
+        logStream << "No scripts are available" << std::endl;
         return;
     }
     iScript = 0;
     for (auto &s : this->scripts)
     {
         std::cout << "Loading default device state from config..." << std::endl;
+        logStream << "Loading default device state from config..." << std::endl;
         load_configured_state();
         std::cout << "Script #" << iScript << ":\n"
                   << s->get_title() << std::endl;
-        s->execute_script(*this);
+        logStream << "Script #" << iScript << ":\n"
+                  << s->get_title() << std::endl;
+        s->execute_script(*this, logStream);
         ++iScript;
     }
 }

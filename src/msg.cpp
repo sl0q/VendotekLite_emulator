@@ -4,12 +4,25 @@ Msg::Msg()
 {
 }
 
-Msg::Msg(const Payload &newPayload, const std::vector<uint8_t> &newMsgBytes, bool isFailure)
+Msg::Msg(const Payload &newPayload, const std::vector<uint8_t> &newMsgBytes, std::string &typeStr, bool isFailure)
 {
     this->isFailure = isFailure;
     this->payload = *(new Payload(newPayload));
     this->msgBytes = newMsgBytes;
     this->encodedMsgBytes = bs64::base64_encode(newMsgBytes);
+    this->typeStr = typeStr;
+}
+
+Msg::Msg(const Msg &otherMsg)
+{
+    this->msgBytes.clear();
+    for (auto &byte : otherMsg.msgBytes)
+        this->msgBytes.push_back(byte);
+
+    this->encodedMsgBytes = otherMsg.encodedMsgBytes;
+    this->typeStr = otherMsg.typeStr;
+    this->payload = otherMsg.payload;
+    this->isFailure = otherMsg.isFailure;
 }
 
 Msg::~Msg()
@@ -60,6 +73,11 @@ const std::string &Msg::get_encoded_msg_bytes() const
     return this->encodedMsgBytes;
 }
 
+const std::string &Msg::get_type_str() const
+{
+    return typeStr;
+}
+
 const Payload &Msg::get_payload() const
 {
     return this->payload;
@@ -67,7 +85,8 @@ const Payload &Msg::get_payload() const
 
 void Msg::print_MSG() const
 {
-    std::cout << this->get_debug_string() << std::endl
+    std::cout << this->typeStr << std::endl
+              << this->get_debug_string() << std::endl
               << this->get_msg_bytes_as_string() << std::endl
               << this->encodedMsgBytes << std::endl
               << std::endl;

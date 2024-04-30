@@ -107,12 +107,12 @@ public:
     bool is_script_loaded();
 
     void load_config(std::string configFilePath);
-    void load_input_script_file(std::string inputScriptFilePath);
+    std::vector<std::string> load_input_script_file(std::string inputScriptFilePath);
     misc::lwip::ProtocolStats *parseProtocolStatsJson(json &protocolStatsJson, const std::string protocolStatsName);
     misc::ethernet::PortStats *parsePortStatsJson(json &portStatsJson, const std::string portName);
 
     void _print_scripts();
-    void execute_scripts();
+    void execute_scripts(std::ostream &logStream);
     void load_default_state();
     void load_configured_state();
     void attach_contactless_card(uint32_t cardID);

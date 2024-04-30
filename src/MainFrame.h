@@ -19,18 +19,28 @@ class MainFrame : public wxFrame
 {
 private:
     Device *myDevice;
+
+    wxButton *_exeAllB;
+
     wxTextCtrl *_configPathTC;
     wxTextCtrl *_scriptsPathTC;
+    wxListBox *_loadedScriptsLB;
+
+    wxTextCtrl *_exeLog;
 
     wxString defaultDir;
     wxString lastConfigDir;
     wxString lastScriptDir;
+
+    // wxArrayString loadedScripts;
+    std::ostream *logStream;
 
     void OnStartButtonClicked(wxCommandEvent &evt);
     void OnLoadConfigButtonClicked(wxCommandEvent &evt);
     void OnLoadScriptsButtonClicked(wxCommandEvent &evt);
     void OnOpenDialogConfigButtonClicked(wxCommandEvent &evt);
     void OnOpenDialogScriptsButtonClicked(wxCommandEvent &evt);
+    void OnClearLogButtonClicked(wxCommandEvent &evt);
 
 public:
     // MainFrame(const wxString &title, const wxPoint &pos, const wxSize &size);

@@ -26,7 +26,7 @@ file(GLOB SRV_SRC CONFIGURE_DEPENDS "../proto_src/intellireader/srv/*.cc")
 file(GLOB GUI_SRC CONFIGURE_DEPENDS "../proto_src/intellireader/gui/*.cc")
 
 # set(SRCS main.cpp MainFrame.cpp)
-set(SRCS App.cpp MainFrame.cpp deviceClass.cpp scriptClass.cpp messageClass.cpp checksum.cpp payload.cpp msg.cpp cards.cpp actionClass.cpp
+set(SRCS App.cpp MainFrame.cpp deviceClass.cpp scriptClass.cpp messageClass.cpp checksum.cpp payload.cpp msg.cpp cards.cpp actionClass.cpp report.cpp
     ../proto_src/intellireader/commands7.pb.cc
     # ../proto_src/intellireader/commands4.pb.cc
     # ../proto_src/intellireader/commands3.pb.cc

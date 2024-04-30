@@ -50,7 +50,7 @@ public:
 
     void rewind_cards(); //  return cards in contactlessCards to default state
 
-    void execute_script(Device &myDevice);
+    void execute_script(Device &myDevice, std::ostream &logStream);
 };
 /////////////////////////////////////////////////////////////
 
@@ -77,5 +77,5 @@ public:
     void add_message(const std::string newMsg);
     void add_preaction(Action &newPreaction);
 
-    void execute_step(Device &myDevice);
+    void execute_step(Device &myDevice, std::ostream &logStream);
 };

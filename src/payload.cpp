@@ -10,7 +10,7 @@ Payload::Payload(google::protobuf::Message *newResponceData)
     this->data.resize(newResponceData->ByteSizeLong());
     int buf_size = this->data.size();
     this->responceMsg->SerializeToArray(this->data.data(), buf_size);
-    this->debugString = newResponceData->DebugString();
+    this->debugString = this->responceMsg->GetTypeName() + "\n" + newResponceData->DebugString();
 }
 
 Payload::Payload(const Payload &otherPayload)

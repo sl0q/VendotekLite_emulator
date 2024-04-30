@@ -175,9 +175,10 @@ bool MessageIR::parse_payload()
     return true;
 }
 
-bool MessageIR::execute_message(Device &myDevice)
+const Report &MessageIR::execute_message(Device &myDevice)
 {
     bool res;
+    const Report *report = nullptr;
 
     switch (this->moduleID)
     {
@@ -189,13 +190,13 @@ bool MessageIR::execute_message(Device &myDevice)
         res = execute_contact();
     }
     case 3:
-        res = execute_contactless_1(myDevice);
+        report = &execute_contactless_1(myDevice);
         break;
     case 4:
         res = execute_contactless_2(myDevice);
         break;
     case 5:
-        res = execute_mifare(myDevice);
+        report = &execute_mifare(myDevice);
         break;
     default:
         res = false;
@@ -208,7 +209,7 @@ bool MessageIR::execute_message(Device &myDevice)
         generatedResponce.print_MSG();
         throw ex::FailedExecution(errorMessage.str());
     }
-    return res;
+    return *report;
 }
 
 void MessageIR::add_action(Action &newAction)
@@ -626,14 +627,15 @@ bool MessageIR::execute_contact()
 //     generatedResponce.print_MSG();
 // }
 
-bool MessageIR::execute_contactless_1(Device &myDevice)
+const Report &MessageIR::execute_contactless_1(Device &myDevice)
 {
+    const Report *report = nullptr;
     bool res;
     ContactlessLevel1 contactlessLvl1Message = *(dynamic_cast<ContactlessLevel1 *>(this->msg));
     switch (contactlessLvl1Message.contactless_level1_cmd_case())
     {
     case ContactlessLevel1::kPollForToken:
-        res = execute_poll_for_token(contactlessLvl1Message, myDevice);
+        report = &execute_poll_for_token(contactlessLvl1Message, myDevice);
         break;
     case ContactlessLevel1::kEmvRemoval:
         res = execute_emv_removal(contactlessLvl1Message, myDevice);
@@ -662,12 +664,15 @@ bool MessageIR::execute_contactless_1(Device &myDevice)
         throw ex::FailedExecution(errorMessage.str());
     }
 
-    return res;
+    return *report;
 }
 
-bool MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice)
+const Report &MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &myDevice)
 {
+    Report *newReport = new Report();
+
     std::cout << "Executing [poll_for_token]...\n\n";
+    newReport->append_log_entry("Executing [poll_for_token]...", true);
 
     bool res;
     auto pollForToken = miscMessage.poll_for_token();
@@ -678,12 +683,18 @@ bool MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
         newLeds.set_blue(true);
         myDevice.set_leds_state(newLeds);
         std::cout << "blue led is ON" << std::endl;
+        newReport->append_log_entry("blue led is ON", true);
     }
 
     std::cout << "Returning Pending message..." << std::endl;
-    generate_responce(PENDING).print_MSG();
+    auto pending = generate_responce(PENDING);
+    pending.print_MSG();
+
+    newReport->append_log_entry("Returning Pending message...", true);
+    newReport->append_log_entry(pending.get_encoded_msg_bytes(), false);
 
     const Msg *generatedResponce = nullptr;
+    newReport->set_allocated_msg(generatedResponce);
 
     bool preferMifare = pollForToken.prefer_mifare();
 
@@ -702,7 +713,12 @@ bool MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
             if (myDevice.how_many_cards() > 1) // send notification
             {
                 std::cout << "Returning Notification message..." << std::endl;
-                generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY)).print_MSG();
+                auto notification = generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY));
+                notification.print_MSG();
+
+                newReport->append_log_entry("Returning Notification message...", true);
+                newReport->append_log_entry(notification.get_type_str(), true);
+                newReport->append_log_entry(notification.get_debug_string(), true);
             }
 
             if (myDevice.how_many_cards() == 1) // get token, send success message
@@ -710,15 +726,18 @@ bool MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                 generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
                 res = true;
             }
-            else
+            else //  if there are some actions to make
                 for (auto &action : this->actions)
                 {
                     bool actionSuccess = action->make_action(myDevice);
                     std::cout << "Action {" << action->str() << "} was made\n";
+                    newReport->append_log_entry("Action {" + action->str() + "} was made\n", true);
 
                     if (action->get_type() == SEND_CANCEL_MESSAGE && actionSuccess) // if cancelation was successful
                     {
                         std::cout << "[poll_for_token] was canceled by HOST" << std::endl;
+                        newReport->append_log_entry("[poll_for_token] was canceled by HOST", true);
+
                         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
                         res = false;
                         break;
@@ -726,7 +745,14 @@ bool MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                     else if (myDevice.how_many_cards() > 1) // send notification
                     {
                         std::cout << "Returning Notification message..." << std::endl;
-                        generatedResponce = &generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY));
+
+                        auto notification = generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY));
+
+                        notification.print_MSG();
+
+                        newReport->append_log_entry("Returning Notification message...", true);
+                        newReport->append_log_entry(notification.get_type_str(), true);
+                        newReport->append_log_entry(notification.get_debug_string(), true);
                     }
                     else if (myDevice.how_many_cards() == 1)
                     {
@@ -740,35 +766,48 @@ bool MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
     }
     else
     {
-        // if there is no timeout - poll forever
+        // if there is no timeout - poll forever*
         if (myDevice.how_many_cards() > 1) // send notification
         {
             std::cout << "Returning Notification message..." << std::endl;
-            generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY)).print_MSG();
+            auto notification = generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY));
+            notification.print_MSG();
+
+            newReport->append_log_entry("Returning Notification message...", true);
+            newReport->append_log_entry(notification.get_type_str(), true);
+            newReport->append_log_entry(notification.get_debug_string(), true);
         }
 
         if (myDevice.how_many_cards() == 1)
         {
+            //  if there is a single card in field - get token and return success
             generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
             res = true;
         }
         else if (this->actions.empty())
         {
-            std::cout << "In the script command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST" << std::endl;
+            //  if there is no actions to make
+            //  report what terminal has stuck in poll mode and command was canceled by HOST with cancel message. send failure(processing_stopped)
+            std::cout << "Command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST" << std::endl;
+            newReport->append_log_entry("Command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST", true);
+
             generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
             res = false;
-            // report what terminal has stuck in poll mode and command was canceled by HOST with cancel message. send failure(processing_stopped)
         }
         else
         {
+            //  if there are still some actions to make
             for (auto &action : this->actions)
             {
                 bool actionSuccess = action->make_action(myDevice);
                 std::cout << "Action {" << action->str() << "} was made\n";
+                newReport->append_log_entry("Action {" + action->str() + "} was made", true);
 
                 if (action->get_type() == SEND_CANCEL_MESSAGE && actionSuccess) // if cancelation was successful
                 {
                     std::cout << "[poll_for_token] was canceled by HOST" << std::endl;
+                    newReport->append_log_entry("[poll_for_token] was canceled by HOST", true);
+
                     generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
                     res = false;
                     break;
@@ -776,26 +815,33 @@ bool MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
                 else if (myDevice.how_many_cards() > 1) // send notification
                 {
                     std::cout << "Returning Notification message..." << std::endl;
-                    generatedResponce = &generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY));
+                    auto notification = generate_responce(NOTIFICATION, generate_user_notification_payload(common::notification::UserMessage_MessageId_PRESENT_ONE_CARD_ONLY));
+                    notification.print_MSG();
+
+                    newReport->append_log_entry("Returning Notification message...", true);
+                    newReport->append_log_entry(notification.get_type_str(), true);
+                    newReport->append_log_entry(notification.get_debug_string(), true);
                 }
                 else if (myDevice.how_many_cards() == 1)
                 {
+                    // get token and break, send success message
                     generatedResponce = &generate_responce(SUCCESS, generate_poll_for_token_payload(myDevice, preferMifare));
                     res = true;
                     break;
-                    // get token and break, send success message
                 }
             }
 
             if (generatedResponce == nullptr)
             {
-                std::cout << "In current script command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST" << std::endl;
+                std::cout << "Command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST" << std::endl;
+                newReport->append_log_entry("Command [poll_for_token] had no timeout, did not get card token and was eventualy canceled by HOST", true);
                 generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::PROCESSING_STOPPED, "Execution was canceled"));
                 res = false;
             }
         }
     }
 
+    //  if after all actions a token wasn't received
     if (generatedResponce == nullptr)
     {
         generatedResponce = &generate_responce(FAILURE, generate_failure_payload(common::failure::TIMEOUT_EXPIRED, "Timeout has expired"));
@@ -808,15 +854,21 @@ bool MessageIR::execute_poll_for_token(ContactlessLevel1 &miscMessage, Device &m
         newLeds.set_blue(false);
         myDevice.set_leds_state(newLeds);
         std::cout << "blue led is OFF" << std::endl;
+        newReport->append_log_entry("blue led is OFF", true);
     }
 
     std::cout << "Finised execution.\n\n";
+    newReport->append_log_entry("Finised execution.", true);
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
-    delete generatedResponce;
 
-    return res;
+    newReport->append_log_entry("Generated responce:", true);
+    newReport->append_log_entry(generatedResponce->get_type_str(), true);
+    newReport->append_log_entry(generatedResponce->get_debug_string(), true);
+    // delete generatedResponce;
+
+    return *newReport;
 }
 
 bool MessageIR::execute_emv_removal(ContactlessLevel1 &miscMessage, Device &myDevice)
@@ -963,9 +1015,10 @@ bool MessageIR::execute_perform_transaction(ContactlessLevel2 &contactlessMessag
     return res;
 }
 
-bool MessageIR::execute_mifare(Device &myDevice)
+const Report &MessageIR::execute_mifare(Device &myDevice)
 {
-    const Msg *responce = nullptr;
+    const Report *report = nullptr;
+    const Msg *responce = nullptr; //  to be removed
     bool res;
     Mifare mifareMessage = *(dynamic_cast<Mifare *>(this->msg));
     switch (mifareMessage.mifare_cmd_case())
@@ -1014,8 +1067,8 @@ bool MessageIR::execute_mifare(Device &myDevice)
 
         // Ultralight
     case Mifare::kMfrUlReadPages:
-        responce = &execute_mfr_ul_read_pages(mifareMessage, myDevice);
-        res = !responce->is_failure();
+        report = &execute_mfr_ul_read_pages(mifareMessage, myDevice);
+        // res = !responce->is_failure();
         break;
     case Mifare::kMfrUlWritePages:
         responce = &execute_mfr_ul_write_pages(mifareMessage, myDevice);
@@ -1046,8 +1099,8 @@ bool MessageIR::execute_mifare(Device &myDevice)
         res = !responce->is_failure();
         break;
     case Mifare::kMfrUlAuthClearPassword:
-        responce = &execute_mfr_ul_auth_clear_password(mifareMessage, myDevice);
-        res = !responce->is_failure();
+        report = &execute_mfr_ul_auth_clear_password(mifareMessage, myDevice);
+        // res = !responce->is_failure();
         break;
     case Mifare::kMfrUlAuthSamPassword:
         responce = &execute_mfr_ul_auth_sam_password(mifareMessage, myDevice);
@@ -1065,10 +1118,11 @@ bool MessageIR::execute_mifare(Device &myDevice)
         generatedResponce.print_MSG();
     }
 
+    //  to be removed
     if (responce != nullptr)
         delete responce;
 
-    return res;
+    return *report;
 }
 
 const Msg &MessageIR::execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice)
@@ -1586,12 +1640,14 @@ const Msg &MessageIR::execute_mfr_classic_bulk_operation(const Mifare &mifareMes
     return *generatedResponce;
 }
 
-const Msg &MessageIR::execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice)
+const Report &MessageIR::execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice)
 {
-    std::cout << "Executing [mfr_ul_read_pages]...\n\n";
+    Report *newReport = new Report();
+
+    std::cout << "Executing [mfr_ul_read_pages]...\n";
+    newReport->append_log_entry("Executing [mfr_ul_read_pages]...", true);
 
     auto mfrReadPages = mifareMessage.mfr_ul_read_pages();
-
     auto card = myDevice.get_card_in_field();
 
     // mifare ul C allows to read no more than 4 pages at once
@@ -1600,6 +1656,8 @@ const Msg &MessageIR::execute_mfr_ul_read_pages(const Mifare &mifareMessage, Dev
     std::string readData = "";
 
     const Msg *generatedResponce = nullptr;
+    newReport->set_allocated_msg(generatedResponce);
+
     for (int i = 0; i < numberOfPagesToRead; ++i)
     {
         // auth and read rights will be checked inside read_page()
@@ -1614,20 +1672,24 @@ const Msg &MessageIR::execute_mfr_ul_read_pages(const Mifare &mifareMessage, Dev
 
         readData += page->get_data_str();
         std::cout << "readData: " << readData << std::endl;
+        newReport->append_log_entry("readData: " + readData);
     }
 
     //  if failure didn't occurred
     if (generatedResponce == nullptr)
         generatedResponce = &generate_responce(SUCCESS, generate_mfr_ul_read_pages_payload(readData));
 
-    std::cout << "Finised execution.\n\n";
+    std::cout << "Finised execution.\n";
+    newReport->append_log_entry("Finised execution.", true);
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
 
-    // delete generatedResponce;
+    newReport->append_log_entry("GeneratedResponce:\n", true);
+    newReport->append_log_entry(generatedResponce->get_type_str(), true);
+    newReport->append_log_entry(generatedResponce->get_debug_string(), true);
 
-    return *generatedResponce;
+    return *newReport;
 }
 
 const Msg &MessageIR::execute_mfr_ul_write_pages(const Mifare &mifareMessage, Device &myDevice)
@@ -1820,14 +1882,14 @@ const Msg &MessageIR::execute_mfr_ul_bulk_operation(const Mifare &mifareMessage,
             auto tempMifare = new Mifare();
             auto tempCommand = new mifare::ultralight::read::ReadPages(operation.read_pages());
             tempMifare->set_allocated_mfr_ul_read_pages(tempCommand);
-            auto responce = execute_mfr_ul_read_pages(*tempMifare, myDevice);
+            auto report = execute_mfr_ul_read_pages(*tempMifare, myDevice);
 
             delete tempMifare;
 
             //  if failed - return error
-            if (responce.is_failure())
+            if (report.get_msg().is_failure())
             {
-                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+                generatedResponce = &generate_responce(FAILURE, report.get_msg().get_payload());
                 break;
             }
 
@@ -1835,7 +1897,7 @@ const Msg &MessageIR::execute_mfr_ul_bulk_operation(const Mifare &mifareMessage,
             auto commandResult = results->add_results();
             auto newPages = new mifare::ultralight::read::Pages();
             commandResult->set_allocated_pages(newPages);
-            newPages->set_data(dynamic_cast<const mifare::ultralight::read::Pages *>(responce.get_payload().get_responce_msg())->data());
+            newPages->set_data(dynamic_cast<const mifare::ultralight::read::Pages *>(report.get_msg().get_payload().get_responce_msg())->data());
 
             break;
         }
@@ -1947,13 +2009,13 @@ const Msg &MessageIR::execute_mfr_ul_bulk_operation(const Mifare &mifareMessage,
             auto tempMifare = new Mifare();
             auto tempCommand = new mifare::ultralight::password::ClearPassword(operation.auth_clear_password());
             tempMifare->set_allocated_mfr_ul_auth_clear_password(tempCommand);
-            auto responce = execute_mfr_ul_auth_clear_password(*tempMifare, myDevice);
+            auto report = execute_mfr_ul_auth_clear_password(*tempMifare, myDevice);
 
             delete tempMifare;
 
             //  if failed - return error
-            if (responce.is_failure())
-                generatedResponce = &generate_responce(FAILURE, responce.get_payload());
+            if (report.get_msg().is_failure())
+                generatedResponce = &generate_responce(FAILURE, report.get_msg().get_payload());
 
             //  bulk operation results don't need PACK value
 
@@ -2053,15 +2115,19 @@ const Msg &MessageIR::execute_mfr_ul_auth_on_sam_key(const Mifare &mifareMessage
     return generatedResponce;
 }
 
-const Msg &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice)
+const Report &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice)
 {
+    Report *newReport = new Report();
+
     std::cout << "Executing [mfr_ul_auth_clear_password]...\n\n";
+    newReport->append_log_entry("Executing [mfr_ul_auth_clear_password]...", true);
 
     auto mfrAuth = mifareMessage.mfr_ul_auth_clear_password();
     auto storedToken = &myDevice.get_stored_token();
+    auto card = dynamic_cast<MifareUltralightCard *>(myDevice.get_card_in_field());
 
     const Msg *generatedResponce = nullptr;
-    auto card = dynamic_cast<MifareUltralightCard *>(myDevice.get_card_in_field());
+    newReport->set_allocated_msg(generatedResponce);
 
     if (storedToken->type() != contactless::token_type::MIFARE_UL_OR_ULC)
     {
@@ -2081,15 +2147,21 @@ const Msg &MessageIR::execute_mfr_ul_auth_clear_password(const Mifare &mifareMes
         else
         {
             std::cout << "Authenticated successfully" << std::endl;
+            newReport->append_log_entry("Authenticated successfully", true);
             generatedResponce = &generate_responce(SUCCESS, generate_mfr_ul_auth_clear_password_payload(packStr));
         }
     }
     std::cout << "Finised execution.\n\n";
+    newReport->append_log_entry("Finised execution.", true);
 
     std::cout << "Generated responce:" << std::endl;
     generatedResponce->print_MSG();
 
-    return *generatedResponce;
+    newReport->append_log_entry("GeneratedResponce:", true);
+    newReport->append_log_entry(generatedResponce->get_type_str(), true);
+    newReport->append_log_entry(generatedResponce->get_debug_string(), true);
+
+    return *newReport;
 }
 
 const Msg &MessageIR::execute_mfr_ul_auth_sam_password(const Mifare &mifareMessage, Device &myDevice)
@@ -2389,6 +2461,8 @@ const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &gen
         newModuleID,
         newMessageType;
 
+    std::string typeStr;
+
     if (NOTIFICATION == responseType)
     {
         newMsgID = 0;
@@ -2405,16 +2479,20 @@ const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &gen
     {
     case SUCCESS: // Success
         newMessageType = SUCCESS;
+        typeStr = "Success";
         break;
     case FAILURE: // Failure
         newMessageType = FAILURE;
+        typeStr = "Failure";
         isFailure = true;
         break;
     case PENDING: // Pending
         newMessageType = PENDING;
+        typeStr = "Pending";
         break;
     case NOTIFICATION:
         newMessageType = NOTIFICATION;
+        typeStr = "Notification";
         break;
     default: // Command, Control or unrecognised
         throw new std::invalid_argument(std::string("Cannot create responce message with type ID 0x" + responseType));
@@ -2428,7 +2506,7 @@ const Msg &MessageIR::generate_responce(uint8_t responseType, const Payload &gen
     uint16_t crc = crc::calcCrc16(buf);
     append_big_endian(buf, crc);
 
-    return *(new Msg(generatedPayload, buf, isFailure));
+    return *(new Msg(generatedPayload, buf, typeStr, isFailure));
 }
 
 void MessageIR::append_big_endian(std::vector<uint8_t> &buf, uint16_t n)

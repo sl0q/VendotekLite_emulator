@@ -1,45 +1,57 @@
 #include "MainFrame.h"
 
-/*
-    unknown error
-    go debugging
-*/
-
 MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
 {
     wxPanel *panel = new wxPanel(this);
 
-    wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Config file path:", wxPoint(25, 50), wxDefaultSize);
-    wxStaticText *scriptsPathST = new wxStaticText(panel, wxID_ANY, "Scripts file path:", wxPoint(25, 100), wxDefaultSize);
+    wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Config file path:", wxPoint(40, 50), wxDefaultSize);
+    wxStaticText *scriptsPathST = new wxStaticText(panel, wxID_ANY, "Scripts file path:", wxPoint(40, 100), wxDefaultSize);
     this->_configPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/config.json", wxPoint(150, 50), wxSize(300, -1));
-    this->_scriptsPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/test_mifare/classic/input_auth_on_clear_key.json", wxPoint(150, 100), wxSize(300, -1));
+    this->_scriptsPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/test_mifare/ultralight/input_auth_clear_password.json", wxPoint(150, 100), wxSize(300, -1));
 
-    wxButton *startB = new wxButton(panel, wxID_ANY, "Start", wxPoint(300, 275), wxSize(200, 50));
-    wxButton *loadConfigB = new wxButton(panel, wxID_ANY, "Load config", wxPoint(300, 350), wxSize(200, 50));
-    wxButton *loadScriptsB = new wxButton(panel, wxID_ANY, "Load scripts", wxPoint(300, 425), wxSize(200, 50));
+    _loadedScriptsLB = new wxListBox(panel, wxID_ANY, wxPoint(40, 150), wxSize(200, 200));
+
+    _exeAllB = new wxButton(panel, wxID_ANY, "Execute All", wxPoint(40, 375), wxSize(200, 50));
+    wxButton *loadConfigB = new wxButton(panel, wxID_ANY, "Load config", wxPoint(40, 450), wxSize(200, 50));
+    wxButton *loadScriptsB = new wxButton(panel, wxID_ANY, "Load scripts", wxPoint(40, 525), wxSize(200, 50));
+
     wxButton *fileDialogConfigB = new wxButton(panel, wxID_ANY, "Open", wxPoint(470, 50), wxSize(60, 25));
     wxButton *fileDialogScriptsB = new wxButton(panel, wxID_ANY, "Open", wxPoint(470, 100), wxSize(60, 25));
+    wxButton *clearLogB = new wxButton(panel, wxID_ANY, "Clear Log", wxPoint(300, 300), wxSize(100, 50));
 
-    startB->Bind(wxEVT_BUTTON, &MainFrame::OnStartButtonClicked, this);
+    _exeLog = new wxTextCtrl(panel, wxID_ANY, "", wxPoint(555, 50), wxSize(300, 525), wxTE_MULTILINE | wxTE_READONLY);
+
+    logStream = new std::ostream(_exeLog);
+
+    _exeAllB->Bind(wxEVT_BUTTON, &MainFrame::OnStartButtonClicked, this);
     loadConfigB->Bind(wxEVT_BUTTON, &MainFrame::OnLoadConfigButtonClicked, this);
     loadScriptsB->Bind(wxEVT_BUTTON, &MainFrame::OnLoadScriptsButtonClicked, this);
     fileDialogConfigB->Bind(wxEVT_BUTTON, &MainFrame::OnOpenDialogConfigButtonClicked, this);
     fileDialogScriptsB->Bind(wxEVT_BUTTON, &MainFrame::OnOpenDialogScriptsButtonClicked, this);
+    clearLogB->Bind(wxEVT_BUTTON, &MainFrame::OnClearLogButtonClicked, this);
 
     CreateStatusBar();
 
     this->myDevice = new Device();
+
+    _exeAllB->Enable(false);
 }
 
 MainFrame::~MainFrame()
 {
-    if (myDevice != nullptr)
-        delete myDevice;
+    // if (myDevice != nullptr)
+    delete myDevice;
 
-    if (_configPathTC != nullptr)
-        delete _configPathTC;
-    if (_scriptsPathTC != nullptr)
-        delete _scriptsPathTC;
+    delete _exeAllB;
+
+    // if (_configPathTC != nullptr)
+    delete _configPathTC;
+    // if (_scriptsPathTC != nullptr)
+    delete _scriptsPathTC;
+    // if (_loadedScriptsLB != nullptr)
+    delete _loadedScriptsLB;
+
+    delete logStream;
 }
 
 void MainFrame::OnStartButtonClicked(wxCommandEvent &evt)
@@ -50,7 +62,7 @@ void MainFrame::OnStartButtonClicked(wxCommandEvent &evt)
         if (!this->myDevice->is_config_loaded())
             std::cout << "WARNING: configuration file was not provided. Default device settings will be used." << std::endl;
         this->myDevice->_print_scripts();
-        this->myDevice->execute_scripts();
+        this->myDevice->execute_scripts(*logStream);
         wxLogStatus("Scripts were executed.");
     }
     catch (const ex::JsonParsingException &ex)
@@ -100,6 +112,7 @@ void MainFrame::OnLoadConfigButtonClicked(wxCommandEvent &evt)
 
         configPath = openFileDialog.GetPath().ToStdString();
         lastConfigDir = openFileDialog.GetDirectory().ToStdString();
+        this->_configPathTC->Clear();
         this->_configPathTC->WriteText(configPath);
     }
     else
@@ -163,6 +176,7 @@ void MainFrame::OnLoadScriptsButtonClicked(wxCommandEvent &evt)
 
         filePath = openFileDialog.GetPath().ToStdString();
         lastScriptDir = openFileDialog.GetDirectory().ToStdString();
+        this->_scriptsPathTC->Clear();
         this->_scriptsPathTC->WriteText(filePath);
     }
     else
@@ -172,8 +186,14 @@ void MainFrame::OnLoadScriptsButtonClicked(wxCommandEvent &evt)
 
     try
     {
-        this->myDevice->load_input_script_file(filePath);
+        // this->myDevice->load_input_script_file(filePath);
+        // loadedScripts.Clear();
+        _loadedScriptsLB->Clear();
+        for (auto &scriptTitle : this->myDevice->load_input_script_file(filePath))
+            _loadedScriptsLB->AppendString(scriptTitle);
+
         wxLogStatus("Scripts were loaded successfuly.");
+        _exeAllB->Enable(true);
     }
     catch (const ex::CantOpenFile &ex)
     {
@@ -223,6 +243,7 @@ void MainFrame::OnOpenDialogConfigButtonClicked(wxCommandEvent &evt)
 
     filePath = openFileDialog.GetPath().ToStdString();
     lastConfigDir = openFileDialog.GetDirectory().ToStdString();
+    this->_configPathTC->Clear();
     this->_configPathTC->WriteText(filePath);
 }
 
@@ -247,5 +268,11 @@ void MainFrame::OnOpenDialogScriptsButtonClicked(wxCommandEvent &evt)
 
     filePath = openFileDialog.GetPath().ToStdString();
     lastScriptDir = openFileDialog.GetDirectory().ToStdString();
+    this->_scriptsPathTC->Clear();
     this->_scriptsPathTC->WriteText(filePath);
+}
+
+void MainFrame::OnClearLogButtonClicked(wxCommandEvent &evt)
+{
+    _exeLog->Clear();
 }

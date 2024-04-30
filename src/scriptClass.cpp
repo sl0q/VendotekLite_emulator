@@ -395,24 +395,31 @@ const std::string Script::str()
     return s;
 }
 
-void Script::execute_script(Device &myDevice)
+void Script::execute_script(Device &myDevice, std::ostream &logStream)
 {
     std::cout << "Starting to execute script [" << this->title << "]..." << std::endl;
+    logStream << "Starting to execute script [" << this->title << "]..." << std::endl;
 
     rewind_cards();
 
-    std::cout << "Cards rewinded to original state" << std::endl;
+    std::cout << "Cards were rewinded to original state" << std::endl;
+    logStream << "Cards were rewinded to original state" << std::endl;
 
     int iStep = 0;
     for (auto &step : this->steps)
     {
         std::cout << "Executing step #" << iStep << ":\n"
                   << step->str() << std::endl;
-        step->execute_step(myDevice);
+        logStream << "Executing step #" << iStep << ":\n"
+                  << step->str() << std::endl;
+        step->execute_step(myDevice, logStream);
         ++iStep;
     }
 
-    std::cout << "Script [" << this->title << "] has been executed.\n\n";
+    std::cout << "Script [" << this->title << "] has been executed.\n"
+              << std::endl;
+    logStream << "Script [" << this->title << "] has been executed.\n"
+              << std::endl;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -447,9 +454,9 @@ const std::string Step::str() const
         s += this->messageIR->str() + "\n";
     for (auto &message : messagesIR)
         s += message->str() + "\n";
-    // инфа о сообщении
-    // ...
-    // s += "\t" + messageIR->str() + "\n";
+
+    s.pop_back(); //  delete last \n character
+
     return s;
 }
 
@@ -495,25 +502,52 @@ void Step::add_preaction(Action &newPreaction)
     this->preactions.push_back(&newPreaction);
 }
 
-void Step::execute_step(Device &myDevice)
+void Step::execute_step(Device &myDevice, std::ostream &logStream)
 {
-    //  exe preacitons
+    //  exe preactions
     for (auto &preaction : this->preactions)
     {
         preaction->make_action(myDevice);
-        std::cout << "Action {" << preaction->str() << "} was made\n";
+        std::cout << "Preaction {" << preaction->str() << "} was made\n";
+        logStream << "Preaction {" << preaction->str() << "} was made" << std::endl;
     }
 
     //  if there is a single message
     if (this->messageIR != nullptr)
-        this->messageIR->execute_message(myDevice);
+    {
+        const Report *report = &this->messageIR->execute_message(myDevice);
+        for (auto &logEntry : report->get_log())
+        {
+            if (logEntry->is_visible())
+                logStream << logEntry->get_text() << "\n";
+            logStream.flush();
+        }
+        delete report;
+    }
     else if (!messagesIR.empty())
     {
         //  if there is a message barrage
         auto message = messagesIR.begin();
 
         // execute messages until one of them is successful (returns TRUE)
-        while (!(*message)->execute_message(myDevice) && message != messagesIR.end())
+        bool failed = true;
+        do
+        {
+            const Report *report = &(*message)->execute_message(myDevice);
+            for (auto &logEntry : report->get_log())
+            {
+                if (logEntry->is_visible())
+                    logStream << logEntry->get_text() << "\n";
+                logStream.flush();
+            }
+
+            failed = report->get_msg().is_failure();
             ++message;
+
+            delete report;
+        } while (!failed && message != messagesIR.end());
+
+        // while (!(*message)->execute_message(myDevice) && message != messagesIR.end())
+        //     ++message;
     }
 }

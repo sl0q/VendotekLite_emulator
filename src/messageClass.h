@@ -23,6 +23,7 @@ class Action;
 #include "msg.h"
 #include "cards.h"
 #include "actionClass.h"
+#include "report.h"
 
 #define IR "IR"
 
@@ -78,8 +79,8 @@ private:
     bool execute_contact();
 
     //  ContactlessLevel1
-    bool execute_contactless_1(Device &myDevice);
-    bool execute_poll_for_token(ContactlessLevel1 &contactlessMessage, Device &myDevice);
+    const Report &execute_contactless_1(Device &myDevice);
+    const Report &execute_poll_for_token(ContactlessLevel1 &contactlessMessage, Device &myDevice);
     bool execute_emv_removal(ContactlessLevel1 &contactlessMessage, Device &myDevice);
     bool execute_tsv_bit_array(ContactlessLevel1 &contactlessMessage, Device &myDevice);   //  not implemented
     bool execute_tsv_iso_command(ContactlessLevel1 &contactlessMessage, Device &myDevice); // not implemented
@@ -91,7 +92,7 @@ private:
     bool execute_perform_transaction(ContactlessLevel2 &contactlessMessage, Device &myDevice);
 
     //  Mifare
-    bool execute_mifare(Device &myDevice);
+    const Report &execute_mifare(Device &myDevice);
 
     //  Classic
     const Msg &execute_mfr_classic_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
@@ -106,7 +107,7 @@ private:
     const Msg &execute_mfr_classic_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
 
     //  Ultralight
-    const Msg &execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice);
+    const Report &execute_mfr_ul_read_pages(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_write_pages(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_get_version(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_get_counter(const Mifare &mifareMessage, Device &myDevice);
@@ -114,7 +115,7 @@ private:
     const Msg &execute_mfr_ul_bulk_operation(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_auth_on_clear_key(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_auth_on_sam_key(const Mifare &mifareMessage, Device &myDevice);
-    const Msg &execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice);
+    const Report &execute_mfr_ul_auth_clear_password(const Mifare &mifareMessage, Device &myDevice);
     const Msg &execute_mfr_ul_auth_sam_password(const Mifare &mifareMessage, Device &myDevice);
 
     const Payload &generate_failure_payload(common::failure::Error errorType, const std::string errorString = "");
@@ -160,7 +161,7 @@ public:
     bool is_command();
     bool is_control();
 
-    bool execute_message(Device &myDevice);
+    const Report &execute_message(Device &myDevice);
     void add_action(Action &newAction);
     const std::string str() const;
 };
