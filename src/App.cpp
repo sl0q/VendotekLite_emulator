@@ -7,7 +7,7 @@ bool App::OnInit()
 {
     // MainFrame *mainFrame = new MainFrame("My best window", wxPoint(50, 50), wxSize(450, 340));
     MainFrame *mainFrame = new MainFrame("Vendotek emulator");
-    mainFrame->SetClientSize(900, 600);
+    // mainFrame->SetClientSize(1000, 700);
     mainFrame->Center();
 
     mainFrame->Show();

@@ -2,33 +2,67 @@
 
 MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
 {
+    this->SetClientSize(horizontalSize, verticalSize);
+
     wxPanel *panel = new wxPanel(this);
 
-    wxStaticText *configPathST = new wxStaticText(panel, wxID_ANY, "Config file path:", wxPoint(40, 50), wxDefaultSize);
-    wxStaticText *scriptsPathST = new wxStaticText(panel, wxID_ANY, "Scripts file path:", wxPoint(40, 100), wxDefaultSize);
-    this->_configPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/config.json", wxPoint(150, 50), wxSize(300, -1));
-    this->_scriptsPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/test_mifare/ultralight/input_auth_clear_password.json", wxPoint(150, 100), wxSize(300, -1));
+    uint32_t leftPadding = 40,
+             rightPadding = horizontalSize - 25,
+             topPadding = 25,
+             bottomPadding = verticalSize - 50;
 
-    _loadedScriptsLB = new wxListBox(panel, wxID_ANY, wxPoint(40, 150), wxSize(200, 200));
+    //  static text
+    _configPathST = new wxStaticText(panel, wxID_ANY, "Config path:", wxPoint(leftPadding, topPadding), wxDefaultSize);
+    _scriptsPathST = new wxStaticText(panel, wxID_ANY, "Scripts path:", wxPoint(leftPadding, topPadding + 50), wxDefaultSize);
+    _refDumpPathST = new wxStaticText(panel, wxID_ANY, "Ref dump path:", wxPoint(leftPadding, topPadding + 100), wxDefaultSize);
 
-    _exeAllB = new wxButton(panel, wxID_ANY, "Execute All", wxPoint(40, 375), wxSize(200, 50));
-    wxButton *loadConfigB = new wxButton(panel, wxID_ANY, "Load config", wxPoint(40, 450), wxSize(200, 50));
-    wxButton *loadScriptsB = new wxButton(panel, wxID_ANY, "Load scripts", wxPoint(40, 525), wxSize(200, 50));
+    //  path text controls
+    _configPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/config.json", wxPoint(150, topPadding), wxSize(300, -1));
+    _scriptsPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/test_mifare/ultralight/input_auth_clear_password.json", wxPoint(150, topPadding + 50), wxSize(300, -1));
+    _refDumpPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/reference_dumps/refDump1.txt", wxPoint(150, topPadding + 100), wxSize(300, -1));
 
-    wxButton *fileDialogConfigB = new wxButton(panel, wxID_ANY, "Open", wxPoint(470, 50), wxSize(60, 25));
-    wxButton *fileDialogScriptsB = new wxButton(panel, wxID_ANY, "Open", wxPoint(470, 100), wxSize(60, 25));
-    wxButton *clearLogB = new wxButton(panel, wxID_ANY, "Clear Log", wxPoint(300, 300), wxSize(100, 50));
+    // loaded scripts list (titles)
+    uint32_t loadedScriptsLB_vertical = _refDumpPathTC->GetPosition().y + _refDumpPathTC->GetSize().y + 25;
+    _loadedScriptsLB = new wxListBox(panel, wxID_ANY, wxPoint(leftPadding, loadedScriptsLB_vertical), wxSize(505, 150));
 
-    _exeLog = new wxTextCtrl(panel, wxID_ANY, "", wxPoint(555, 50), wxSize(300, 525), wxTE_MULTILINE | wxTE_READONLY);
+    //  dump comparison results
+    uint32_t compareResultLB_vertical = _loadedScriptsLB->GetPosition().y + _loadedScriptsLB->GetSize().y + 25;
+    _compareResultLC = new wxListCtrl(panel, wxID_ANY, wxPoint(leftPadding + 250, compareResultLB_vertical), wxSize(255, bottomPadding - compareResultLB_vertical), wxLC_REPORT);
+    _compareResultLC->InsertColumn(0, "Message index");
+    _compareResultLC->InsertColumn(1, "Status");
+    _compareResultLC->SetColumnWidth(0, 180);
+    _compareResultLC->SetColumnWidth(1, 75);
 
+    uint32_t menu_vertical = _loadedScriptsLB->GetPosition().y + _loadedScriptsLB->GetSize().y + 25;
+    // menu buttons
+    _exeAllB = new wxButton(panel, wxID_ANY, "Execute All", wxPoint(leftPadding, menu_vertical), wxSize(200, 50));
+    _compareB = new wxButton(panel, wxID_ANY, "Compare dumps", wxPoint(leftPadding, menu_vertical + 75), wxSize(200, 50));
+    _loadConfigB = new wxButton(panel, wxID_ANY, "Load config", wxPoint(leftPadding, menu_vertical + 150), wxSize(200, 50));
+    _loadScriptsB = new wxButton(panel, wxID_ANY, "Load scripts", wxPoint(leftPadding, menu_vertical + 225), wxSize(200, 50));
+
+    //  file dialog buttons
+    _fileDialogConfigB = new wxButton(panel, wxID_ANY, "Open", wxPoint(470, topPadding), wxSize(60, 25));
+    _fileDialogScriptsB = new wxButton(panel, wxID_ANY, "Open", wxPoint(470, topPadding + 50), wxSize(60, 25));
+    _fileDialogRefDumpB = new wxButton(panel, wxID_ANY, "Open", wxPoint(470, topPadding + 100), wxSize(60, 25));
+
+    //  log box
+    _exeLog = new wxTextCtrl(panel, wxID_ANY, "", wxPoint(555, topPadding), wxSize(rightPadding - 555, 525), wxTE_MULTILINE | wxTE_READONLY);
+
+    uint32_t clearLogB_vertical = _exeLog->GetPosition().y + _exeLog->GetSize().y + 25;
+    //  clear log button
+    _clearLogB = new wxButton(panel, wxID_ANY, "Clear Log", wxPoint(rightPadding - 100, clearLogB_vertical), wxSize(100, 50));
+
+    //  stream for log
     logStream = new std::ostream(_exeLog);
 
+    //  button binding
     _exeAllB->Bind(wxEVT_BUTTON, &MainFrame::OnStartButtonClicked, this);
-    loadConfigB->Bind(wxEVT_BUTTON, &MainFrame::OnLoadConfigButtonClicked, this);
-    loadScriptsB->Bind(wxEVT_BUTTON, &MainFrame::OnLoadScriptsButtonClicked, this);
-    fileDialogConfigB->Bind(wxEVT_BUTTON, &MainFrame::OnOpenDialogConfigButtonClicked, this);
-    fileDialogScriptsB->Bind(wxEVT_BUTTON, &MainFrame::OnOpenDialogScriptsButtonClicked, this);
-    clearLogB->Bind(wxEVT_BUTTON, &MainFrame::OnClearLogButtonClicked, this);
+    _compareB->Bind(wxEVT_BUTTON, &MainFrame::OnCompareButtonClicked, this);
+    _loadConfigB->Bind(wxEVT_BUTTON, &MainFrame::OnLoadConfigButtonClicked, this);
+    _loadScriptsB->Bind(wxEVT_BUTTON, &MainFrame::OnLoadScriptsButtonClicked, this);
+    _fileDialogConfigB->Bind(wxEVT_BUTTON, &MainFrame::OnOpenDialogConfigButtonClicked, this);
+    _fileDialogScriptsB->Bind(wxEVT_BUTTON, &MainFrame::OnOpenDialogScriptsButtonClicked, this);
+    _clearLogB->Bind(wxEVT_BUTTON, &MainFrame::OnClearLogButtonClicked, this);
 
     CreateStatusBar();
 
@@ -43,13 +77,24 @@ MainFrame::~MainFrame()
     delete myDevice;
 
     delete _exeAllB;
+    delete _compareB;
+    delete _loadConfigB;
+    delete _loadScriptsB;
+    delete _fileDialogConfigB;
+    delete _fileDialogScriptsB;
+    delete _fileDialogRefDumpB;
+    delete _clearLogB;
 
-    // if (_configPathTC != nullptr)
+    delete _configPathST;
+    delete _scriptsPathST;
+    delete _refDumpPathST;
+
     delete _configPathTC;
-    // if (_scriptsPathTC != nullptr)
     delete _scriptsPathTC;
-    // if (_loadedScriptsLB != nullptr)
+    delete _refDumpPathTC;
+
     delete _loadedScriptsLB;
+    delete _compareResultLC;
 
     delete logStream;
 }
@@ -86,6 +131,24 @@ void MainFrame::OnStartButtonClicked(wxCommandEvent &evt)
         wxLogStatus("Error");
     }
     wxLogStatus("Finished execution.");
+}
+
+void MainFrame::OnCompareButtonClicked(wxCommandEvent &evt)
+{
+    for (int i = 0; i < 3; ++i)
+    {
+        _compareResultLC->InsertItem(i, std::to_string(i) + " message");
+        _compareResultLC->SetItem(i, 1, "OK");
+        // Set the background color of an item
+        _compareResultLC->SetItemBackgroundColour(i, wxColour(0, 255, 70, 100));
+    }
+    // for (int i = 3; i < 6; ++i)
+    // {
+    //     _compareResultLC->InsertItem(i, std::to_string(i) + " message");
+    //     _compareResultLC->SetItem(i, 1, "NOT OK");
+    //     // Set the background color of an item
+    //     _compareResultLC->SetItemBackgroundColour(i, wxColour(255, 50, 50, 100));
+    // }
 }
 
 void MainFrame::OnLoadConfigButtonClicked(wxCommandEvent &evt)
