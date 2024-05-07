@@ -1,1 +1,1 @@
-#VendoteckLite_emulator
+#VendotekLite_emulator
