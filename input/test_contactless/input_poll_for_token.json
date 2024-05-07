@@ -2,7 +2,7 @@
     "scripts": 
     [
         {
-            "title": "test poll for token double card with no timeout",
+            "title": "test poll for token double card with no timeout, prefer mifare",
             "cards":
             [
                 {
@@ -27,7 +27,7 @@
             "steps":
             [
                 {
-                    "message": "SVIABwMDAQoCIANNcQ==",
+                    "message": "4952000B0103010A06100120023001E8BE",
                     "actions":
                     [
                         {"attach_card": 1}
@@ -37,7 +37,7 @@
             ]
         },
         {
-            "title": "test poll for token with timeout = 0",
+            "title": "test get prev result poll for token",
             "cards":
             [
                 {
@@ -50,14 +50,16 @@
             "steps":
             [
                 {
-                    "message": "SVIABwMDAQoCIANNcQ==",
+                    "comment": "poll without timeout",
+                    "message": "495200070303010A0220034D71",
                     "preactions":
                     [
                         {"attach_card": 1}
                     ]
                 },
                 {
-                    "message": "SVIABwIDAQoCCABKPA=="
+                    "comment": "poll with timeout = 0",
+                    "message": "495200070203010A0208004A3C"
                 }
             ]
         },
@@ -66,12 +68,12 @@
             "steps":
             [
                 {
-                    "message": "SVIABwIDAQoCCABKPA=="
+                    "message": "495200070203010A0208004A3C"
                 }
             ]
         },
         {
-            "title": "test poll for token cancelation",
+            "title": "test poll for token with cancelation",
             "cards":
             [
                 {
@@ -84,10 +86,10 @@
             "steps":
             [
                 {
-                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "message": "4952000C0103010A0708E8072002300110F7",
                     "actions":
                     [
-                        {"send_cancel_message": "SVIAAwAABvbu"}
+                        {"send_cancel_message": ""}
                     ]
 
                 }
@@ -107,7 +109,7 @@
             "steps":
             [
                 {
-                    "message": "SVIABwMDAQoCIANNcQ==",
+                    "message": "495200070303010A0220034D71",
                     "actions":
                     [
                         {"attach_card": 1}
@@ -121,7 +123,7 @@
             "steps":
             [
                 {
-                    "message": "SVIABwMDAQoCIANNcQ=="
+                    "message": "495200070303010A0220034D71"
                 }
             ]
         },
@@ -139,7 +141,7 @@
             "steps":
             [
                 {
-                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "message": "4952000C0103010A0708E8072002300110F7",
                     "actions":
                     [
                         {"attach_card": 1}
@@ -153,7 +155,7 @@
             "steps":
             [
                 {
-                    "message": "SVIACgEDAQoFCOgHIAJqhw=="
+                    "message": "4952000C0103010A0708E8072002300110F7"
                 }
             ]
         },
@@ -178,7 +180,7 @@
             "steps":
             [
                 {
-                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "message": "4952000C0103010A0708E8072002300110F7",
                     "preactions":
                     [
                         {"attach_card": 1},

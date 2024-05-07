@@ -5,7 +5,8 @@
             "steps":
             [
                 {
-                    "message": "SVIADwEBAQoKCAEQARgBIAEoAYbX"
+                    "comment": "Зажечь все индикаторы",
+                    "message": "4952000F0101010A0A0801100118012001280186D7"
                 }
             ]
         }

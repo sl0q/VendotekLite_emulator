@@ -57,12 +57,12 @@
             [
                 {
                     "comment": "poll for token (timeout 1s), prefer mifare",
-                    "message": "SVIACwEDAQoGEAEgAjAB6L4=",
+                    "message": "4952000B0103010A06100120023001E8BE",
                     "preactions":[{"attach_card": 1}]
                 },
                 {
                     "comment": "auth on clear key with correct key=aaaaaa, sector #1",
-                    "message": "SVIAEQEFAQoMCAEQABoGYWFhYWFhD9g="
+                    "message": "495200110105010A0C080010001A06616161616161D791"
                 }
             ]
         },
@@ -110,12 +110,12 @@
             [
                 {
                     "comment": "poll for token (timeout 1s)",
-                    "message": "SVIACwEDAQoGEAEgAjAB6L4=",
+                    "message": "4952000B0103010A06100120023001E8BE",
                     "preactions":[{"attach_card": 1}]
                 },
                 {
                     "comment": "auth on clear key with correct key=aaaaaa, sector #1",
-                    "message": "SVIAEQEFAQoMCAEQABoGYWFhYWFhD9g="
+                    "message": "495200110105010A0C080010001A06616161616161D791"
                 }
             ]
         },
@@ -163,15 +163,15 @@
             [
                 {
                     "comment": "poll for token (timeout 1s)",
-                    "message": "SVIACwEDAQoGEAEgAjAB6L4=",
+                    "message": "4952000B0103010A06100120023001E8BE",
                     "preactions":[{"attach_card": 1}]
                 },
                 {
                     "comment": "auth on clear key command with wrong key (ffffff), then try right key (aaaaaa). The third message will be ignored",
                     "messages": [
-                        "SVIAEQEFAQoMCAAQABoGZmZmZmZmRck=",
-                        "SVIAEQEFAQoMCAEQABoGYWFhYWFhD9g=",
-                        "SVIAEQEFAQoMCAAQABoGZmZmZmZmRck="
+                        "495200110105010A0C080010001A0666666666666645C9",
+                        "495200110105010A0C080010001A06616161616161D791",
+                        "495200110105010A0C080010001A0666666666666645C9"
                     ]
                 }
             ]

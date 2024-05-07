@@ -19,7 +19,7 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
     //  path text controls
     _configPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/config.json", wxPoint(150, topPadding), wxSize(300, -1));
     _scriptsPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/test_mifare/ultralight/input_auth_clear_password.json", wxPoint(150, topPadding + 50), wxSize(300, -1));
-    _refDumpPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/reference_dumps/refDump1.txt", wxPoint(150, topPadding + 100), wxSize(300, -1));
+    _refDumpPathTC = new wxTextCtrl(panel, wxID_ANY, "/home/inf/Projects/vendotek/input/reference_dumps/dump 1 - mfr_ul_auth_clear_password.json", wxPoint(150, topPadding + 100), wxSize(300, -1));
 
     // loaded scripts list (titles)
     uint32_t loadedScriptsLB_vertical = _refDumpPathTC->GetPosition().y + _refDumpPathTC->GetSize().y + 25;
@@ -69,6 +69,7 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
     this->myDevice = new Device();
 
     _exeAllB->Enable(false);
+    _compareB->Enable(false);
 }
 
 MainFrame::~MainFrame()
@@ -108,6 +109,7 @@ void MainFrame::OnStartButtonClicked(wxCommandEvent &evt)
             std::cout << "WARNING: configuration file was not provided. Default device settings will be used." << std::endl;
         this->myDevice->_print_scripts();
         this->myDevice->execute_scripts(*logStream);
+        _compareB->Enable(true);
         wxLogStatus("Scripts were executed.");
     }
     catch (const ex::JsonParsingException &ex)
@@ -135,7 +137,7 @@ void MainFrame::OnStartButtonClicked(wxCommandEvent &evt)
 
 void MainFrame::OnCompareButtonClicked(wxCommandEvent &evt)
 {
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 21; ++i)
     {
         _compareResultLC->InsertItem(i, std::to_string(i) + " message");
         _compareResultLC->SetItem(i, 1, "OK");
