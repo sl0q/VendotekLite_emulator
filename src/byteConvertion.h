@@ -1,10 +1,11 @@
-#pragma once 
+#pragma once
 
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 
-namespace bs64
+namespace bc //  bc for Byte Convertion
 {
     typedef unsigned char BYTE;
 
@@ -26,7 +27,7 @@ namespace bs64
         BYTE char_array_3[3];
         BYTE char_array_4[4];
 
-        for(auto &c : buf)
+        for (auto &c : buf)
         {
             char_array_3[i++] = c;
             if (i == 3)
@@ -107,5 +108,34 @@ namespace bs64
         }
 
         return ret;
+    }
+
+    inline std::vector<uint8_t> hex_string_decode(std::string const &hexString)
+    {
+        std::vector<uint8_t> buf;
+        char hex[3];
+        hex[2] = '\0';
+        uint8_t byte;
+        for (int i = 0; i < hexString.length() >> 1; ++i)
+        {
+            hex[0] = hexString[i * 2];
+            hex[1] = hexString[i * 2 + 1];
+            sscanf(hex, "%x", &byte);
+            buf.push_back(byte);
+        }
+
+        return buf;
+    }
+
+    inline std::string hex_string_encode(std::vector<uint8_t> const &byteVector)
+    {
+        char hex[2];
+        std::stringstream buf;
+        for (auto &e : byteVector)
+        {
+            sprintf(hex, "%X", e);
+            buf << (e < 0x10 ? "0" : "") << hex;
+        }
+        return buf.str();
     }
 }

@@ -15,7 +15,7 @@
 class Device;
 class Action;
 
-#include "base64.h"
+#include "byteConvertion.h"
 #include "checksum.h"
 #include "myExceptions.h"
 #include "deviceClass.h"

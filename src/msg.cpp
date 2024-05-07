@@ -9,7 +9,8 @@ Msg::Msg(const Payload &newPayload, const std::vector<uint8_t> &newMsgBytes, std
     this->isFailure = isFailure;
     this->payload = *(new Payload(newPayload));
     this->msgBytes = newMsgBytes;
-    this->encodedMsgBytes = bs64::base64_encode(newMsgBytes);
+    // this->encodedMsgBytes = bc::base64_encode(newMsgBytes);
+    this->encodedMsgBytes = bc::hex_string_encode(newMsgBytes);
     this->typeStr = typeStr;
 }
 

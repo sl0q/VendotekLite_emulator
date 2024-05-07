@@ -93,7 +93,8 @@ bool Canceller::make_action(Device &myDevice)
     //  if encoded message was provided in script check if it's valid
     if (!this->cancelMessage.empty())
     {
-        auto msgBytes = bs64::base64_decode(this->cancelMessage);
+        // auto msgBytes = bc::base64_decode(this->cancelMessage);
+        auto msgBytes = bc::hex_string_decode(this->cancelMessage);
 
         // check header
         if (msgBytes[0] != 'I' || msgBytes[1] != 'R')

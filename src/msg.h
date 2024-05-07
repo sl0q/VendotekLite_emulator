@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <sstream>
 
-#include "base64.h"
+#include "byteConvertion.h"
 #include "payload.h"
 
 class Msg

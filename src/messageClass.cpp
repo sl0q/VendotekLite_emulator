@@ -4,9 +4,10 @@ MessageIR::MessageIR()
 {
 }
 
-MessageIR::MessageIR(std::string encodedStringMessage)
+MessageIR::MessageIR(std::string stringMessage)
 {
-    this->origMsg = bs64::base64_decode(encodedStringMessage);
+    // this->origMsg = bc::base64_decode(stringMessage);
+    this->origMsg = bc::hex_string_decode(stringMessage);
 
     // check header
     if (this->origMsg[0] != 'I' || this->origMsg[1] != 'R')
