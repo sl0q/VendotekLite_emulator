@@ -82,15 +82,15 @@
                 },
                 {
                     "comment": "BEFORE AUTH. get value of FIRST counter (#0)",
-                    "message": "SVIACAMFAboCAggAy3o="
+                    "message": "49520008030501BA02020800CB7A"
                 },
                 {
                     "comment": "auth on clear password command key=\\0x04\\0x03\\0x02\\0x01 (correct)",
-                    "message": "SVIAHAkFAeICFgoUXDB4MDRcMHgwM1wweDAyXDB4MDFBIw=="
+                    "message": "4952001C090501E202160A145C307830345C307830335C307830325C307830314123"
                 },
                 {
                     "comment": "AFTER SUCCESFUL AUTH. get value of FIRST counter (#0)",
-                    "message": "SVIACAMFAboCAggAy3o="
+                    "message": "49520008030501BA02020800CB7A"
                 }
             ]
         }
