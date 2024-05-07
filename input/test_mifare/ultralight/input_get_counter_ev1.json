@@ -77,7 +77,7 @@
             [
                 {
                     "comment": "poll for token (timeout 1s)",
-                    "message": "SVIACgEDAQoFCOgHIAJqhw==",
+                    "message": "4952000B0103010A06100120023001E8BE",
                     "preactions":[{"attach_card": 1}]
                 },
                 {
