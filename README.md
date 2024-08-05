@@ -16,4 +16,4 @@
 
 Так выглядит программа после того, как загруженные сценарии были выполнены, а сгенерированные дампы проанализированы
 
-![finalUI|400]("https://github.com/user-attachments/assets/8ce7e7f1-06e3-410f-921e-b6b7794095c8")
+![finalUI|400](https://github.com/user-attachments/assets/8ce7e7f1-06e3-410f-921e-b6b7794095c8)
