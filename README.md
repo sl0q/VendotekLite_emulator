@@ -12,8 +12,9 @@
 
 Так выглядит интерфейс программы
 
-<img src="https://github.com/user-attachments/assets/b5adb248-fc6c-4f76-bb10-47db28a12503" alt="launchUI" width="600" align="middle"/>
+<img src="https://github.com/user-attachments/assets/b5adb248-fc6c-4f76-bb10-47db28a12503" alt="launchUI" width="600"/>
+
+
 
 Так выглядит программа после того, как загруженные сценарии были выполнены, а сгенерированные дампы проанализированы
-
-![finalUI|400](https://github.com/user-attachments/assets/8ce7e7f1-06e3-410f-921e-b6b7794095c8)
+<img src="https://github.com/user-attachments/assets/8ce7e7f1-06e3-410f-921e-b6b7794095c8" alt="finalUI" width="600"/>
