@@ -11,7 +11,7 @@
 Для реализации был использован следующий стек:
  - С++17
  - Google Protocol Buffers (https://github.com/protocolbuffers/protobuf) - библиотека для работы с протоколом в коде
- - wxWidgets - легковесный фреймворк для UI
+ - wxWidgets (https://github.com/wxWidgets/wxWidgets) - легковесный фреймворк для UI
  - nlohmann's JSON for modern C++ (https://github.com/nlohmann/json) - библиотека для работы с JSON
 
 Так выглядит интерфейс программы при запуске
