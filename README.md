@@ -12,7 +12,7 @@
 
 Так выглядит интерфейс программы
 
-<img src="https://github.com/user-attachments/assets/b5adb248-fc6c-4f76-bb10-47db28a12503" alt="launchUI" width="600" class="center"/>
+<img src="https://github.com/user-attachments/assets/b5adb248-fc6c-4f76-bb10-47db28a12503" alt="launchUI" width="600" style="display: block;  margin-left: auto;  margin-right: auto;  width: 50%;"/>
 
 Так выглядит программа после того, как загруженные сценарии были выполнены, а сгенерированные дампы проанализированы
 
