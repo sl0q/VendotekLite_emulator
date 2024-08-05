@@ -11,11 +11,7 @@
 Протокол Intellireader, в котором описаны сообщения-команды, а также порядок их обработки, был разработан компанией ГК "Терминальные Технологии" (https://termt.ru) и был предоставлен мне для выполнения данной работы.
 
 Так выглядит интерфейс программы
-```
-![start up screen with lables](https://github.com/user-attachments/assets/b5adb248-fc6c-4f76-bb10-47db28a12503)
-```
-<img src="https://github.com/user-attachments/assets/b5adb248-fc6c-4f76-bb10-47db28a12503" alt="launchUI" width="200"/>
+<img src="https://github.com/user-attachments/assets/b5adb248-fc6c-4f76-bb10-47db28a12503" alt="launchUI" width="600" class="center"/>
 
 Так выглядит программа после того, как загруженные сценарии были выполнены, а сгенерированные дампы проанализированы
-
-![dumps compared](https://github.com/user-attachments/assets/8ce7e7f1-06e3-410f-921e-b6b7794095c8)
+<img src="https://github.com/user-attachments/assets/8ce7e7f1-06e3-410f-921e-b6b7794095c8" alt="finalUI" width="600" class="center"/>
